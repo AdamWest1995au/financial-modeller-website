@@ -1,103 +1,166 @@
-// Save this as: pages/assets/js/logo.js
+// Complete Logo Script - Save as: pages/assets/js/logo.js
+
+console.log('Logo script starting to load...');
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Generate dots for the logo
+    console.log('DOM loaded, initializing logo animations...');
+    
+    // Initialize all components
+    initializeLogo();
+    initializeAnimatedPanes();
+    initializeFloatingStats();
+    initializeMouseTracking();
+    
+    console.log('All logo components initialized');
+});
+
+// Logo dot grid generation
+function initializeLogo() {
+    console.log('Initializing logo...');
+    
     const dotGrid = document.getElementById('dotGrid');
-    if (dotGrid) {
-        // Clear existing content
-        dotGrid.innerHTML = '';
-        
-        // Create 96 dots (12 columns × 8 rows)
-        for (let i = 0; i < 96; i++) {
-            const dot = document.createElement('div');
-            dot.className = 'dot';
-            
-            // Set CSS custom properties for the dot
-            const column = (i % 12) + 1;
-            const row = Math.floor(i / 12) + 1;
-            
-            // Set wave animation delay based on position
-            dot.style.setProperty('--delay', `${(column + row) * 0.05}`);
-            
-            dotGrid.appendChild(dot);
-        }
-        
-        console.log('Logo dots generated successfully');
-    } else {
+    if (!dotGrid) {
         console.error('Logo dot grid element not found');
+        return;
     }
     
-    // Initialize animated panes
-    initializeAnimatedPanes();
+    // Clear existing content
+    dotGrid.innerHTML = '';
     
-    // Initialize floating stats background
-    initializeFloatingStats();
+    // Create 96 dots (12 columns × 8 rows)
+    for (let i = 0; i < 96; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        
+        // Set CSS custom properties for wave animation
+        const column = (i % 12) + 1;
+        const row = Math.floor(i / 12) + 1;
+        dot.style.setProperty('--delay', `${(column + row) * 0.05}s`);
+        
+        dotGrid.appendChild(dot);
+    }
     
-    // Initialize mouse tracking
-    initializeMouseTracking();
-});
+    console.log('Logo: Created 96 dots successfully');
+}
 
 // Animated panes functionality
 function initializeAnimatedPanes() {
+    console.log('Initializing animated panes...');
+    
     const panes = document.querySelectorAll('.model-pane');
+    const paneStack = document.getElementById('paneStack');
+    
+    console.log('Found elements:', {
+        panes: panes.length,
+        paneStack: !!paneStack
+    });
+    
+    if (panes.length === 0) {
+        console.error('No model panes found');
+        return;
+    }
+    
     let currentIndex = 0;
-    let intervalId;
+    let intervalId = null;
+    let isHovered = false;
     
     function showPaneContent(index) {
+        console.log(`Showing pane ${index + 1} of ${panes.length}`);
+        
         panes.forEach((pane, i) => {
             const bullets = pane.querySelectorAll('.bullet-point');
             const content = pane.querySelector('.pane-content');
             
             if (i === index) {
-                // Show content for current pane
-                content.style.opacity = '1';
+                // Activate current pane
+                console.log(`Activating pane ${i}: ${bullets.length} bullets, content: ${!!content}`);
+                
+                if (content) {
+                    content.style.opacity = '1';
+                    content.style.transition = 'opacity 0.5s ease';
+                }
+                
+                // Animate bullets with stagger
                 bullets.forEach((bullet, bulletIndex) => {
                     setTimeout(() => {
                         bullet.style.opacity = '1';
                         bullet.style.transform = 'translateY(0)';
-                    }, bulletIndex * 200);
+                        bullet.style.transition = 'all 0.4s ease';
+                    }, bulletIndex * 150);
                 });
+                
             } else {
-                // Hide content for other panes
-                content.style.opacity = '0';
+                // Hide other panes
+                if (content) {
+                    content.style.opacity = '0';
+                    content.style.transition = 'opacity 0.3s ease';
+                }
+                
                 bullets.forEach(bullet => {
                     bullet.style.opacity = '0';
                     bullet.style.transform = 'translateY(10px)';
+                    bullet.style.transition = 'all 0.3s ease';
                 });
             }
         });
     }
     
     function nextPane() {
+        if (isHovered) {
+            console.log('Skipping pane change - mouse is hovering');
+            return;
+        }
+        
         currentIndex = (currentIndex + 1) % panes.length;
+        console.log(`Moving to pane ${currentIndex + 1}`);
         showPaneContent(currentIndex);
     }
     
-    // Start the animation cycle
-    if (panes.length > 0) {
-        showPaneContent(0); // Show first pane initially
-        intervalId = setInterval(nextPane, 4000); // Change every 4 seconds
-        
-        // Pause animation on hover
-        const paneStack = document.getElementById('paneStack');
-        if (paneStack) {
-            paneStack.addEventListener('mouseenter', () => {
-                clearInterval(intervalId);
-            });
-            
-            paneStack.addEventListener('mouseleave', () => {
-                intervalId = setInterval(nextPane, 4000);
-            });
-        }
-        
-        console.log('Animated panes initialized');
+    function startAnimation() {
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(nextPane, 4000);
+        console.log('Pane animation started (4s intervals)');
     }
+    
+    function stopAnimation() {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+        console.log('Pane animation stopped');
+    }
+    
+    // Initialize first pane
+    showPaneContent(0);
+    startAnimation();
+    
+    // Add hover controls
+    if (paneStack) {
+        paneStack.addEventListener('mouseenter', () => {
+            console.log('Mouse entered pane stack - pausing animation');
+            isHovered = true;
+            stopAnimation();
+        });
+        
+        paneStack.addEventListener('mouseleave', () => {
+            console.log('Mouse left pane stack - resuming animation');
+            isHovered = false;
+            startAnimation();
+        });
+    }
+    
+    console.log('Animated panes initialized successfully');
 }
 
 // Floating stats background
 function initializeFloatingStats() {
+    console.log('Initializing floating stats...');
+    
     const floatingStats = document.getElementById('floatingStats');
-    if (!floatingStats) return;
+    if (!floatingStats) {
+        console.error('Floating stats container not found');
+        return;
+    }
     
     const stats = [
         'ROI: 234%', 'NPV: $2.4M', 'IRR: 18.5%', 'Payback: 2.3 years',
@@ -106,15 +169,17 @@ function initializeFloatingStats() {
         'P/E: 16.8', 'FCF: $890K', 'ROIC: 21%', 'Debt/Equity: 0.4'
     ];
     
+    let statsCount = 0;
+    
     function createFloatingStat() {
         const stat = document.createElement('div');
         stat.className = 'floating-stat';
         stat.textContent = stats[Math.floor(Math.random() * stats.length)];
         
-        // Random size
+        // Random size variations
         const sizes = ['small', '', 'large'];
-        const sizeClass = sizes[Math.floor(Math.random() * sizes.length)];
-        if (sizeClass) stat.classList.add(sizeClass);
+        const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+        if (randomSize) stat.classList.add(randomSize);
         
         // Random direction
         if (Math.random() > 0.5) {
@@ -125,47 +190,57 @@ function initializeFloatingStats() {
         stat.style.left = Math.random() * 100 + '%';
         
         floatingStats.appendChild(stat);
+        statsCount++;
         
-        // Remove after animation completes
+        // Clean up after animation
         setTimeout(() => {
             if (stat.parentNode) {
                 stat.parentNode.removeChild(stat);
+                statsCount--;
             }
         }, 20000);
+        
+        if (statsCount % 10 === 0) {
+            console.log(`Created ${statsCount} floating stats`);
+        }
     }
     
-    // Create stats periodically
+    // Create stats every 2 seconds
     setInterval(createFloatingStat, 2000);
     
-    console.log('Floating stats initialized');
+    console.log('Floating stats initialized - creating stats every 2 seconds');
 }
 
-// Mouse tracking for illumination effects
+// Mouse tracking and illumination effects
 function initializeMouseTracking() {
+    console.log('Initializing mouse tracking...');
+    
     let mouseX = 0;
     let mouseY = 0;
     let trails = [];
+    let mouseActive = false;
     
-    document.addEventListener('mousemove', (e) => {
+    function updateMousePosition(e) {
         mouseX = e.clientX;
         mouseY = e.clientY;
         
-        // Update CSS custom properties for mouse position
-        document.body.style.setProperty('--mouse-x', mouseX + 'px');
-        document.body.style.setProperty('--mouse-y', mouseY + 'px');
+        // Update CSS custom properties
+        document.documentElement.style.setProperty('--mouse-x', mouseX + 'px');
+        document.documentElement.style.setProperty('--mouse-y', mouseY + 'px');
         
-        // Add mouse active class
-        document.body.classList.add('mouse-active');
+        // Add active class
+        if (!mouseActive) {
+            document.body.classList.add('mouse-active');
+            mouseActive = true;
+        }
         
-        // Create trail effect
+        // Create trail and illuminate stats
         createTrail(mouseX, mouseY);
-        
-        // Illuminate floating stats near mouse
         illuminateNearbyStats(mouseX, mouseY);
-    });
+    }
     
     function createTrail(x, y) {
-        // Limit number of trails
+        // Limit trails to prevent performance issues
         if (trails.length >= 3) {
             const oldTrail = trails.shift();
             if (oldTrail && oldTrail.parentNode) {
@@ -196,25 +271,40 @@ function initializeMouseTracking() {
                     }
                 }, 800);
             }
-        }, 1000);
+            const index = trails.indexOf(trail);
+            if (index > -1) trails.splice(index, 1);
+        }, 1200);
     }
     
     function illuminateNearbyStats(x, y) {
         const stats = document.querySelectorAll('.floating-stat');
+        let illuminatedCount = 0;
+        
         stats.forEach(stat => {
             const rect = stat.getBoundingClientRect();
             const statX = rect.left + rect.width / 2;
             const statY = rect.top + rect.height / 2;
             
-            const distance = Math.sqrt(Math.pow(x - statX, 2) + Math.pow(y - statY, 2));
+            const distance = Math.sqrt(
+                Math.pow(x - statX, 2) + Math.pow(y - statY, 2)
+            );
             
-            if (distance < 150) {
+            if (distance < 120) {
                 stat.classList.add('illuminated');
+                illuminatedCount++;
             } else {
                 stat.classList.remove('illuminated');
             }
         });
+        
+        // Optional: log illumination activity
+        if (illuminatedCount > 0 && Math.random() < 0.01) {
+            console.log(`Illuminating ${illuminatedCount} stats near mouse`);
+        }
     }
+    
+    // Mouse event listeners
+    document.addEventListener('mousemove', updateMousePosition);
     
     // Remove mouse active class when mouse stops
     let mouseTimeout;
@@ -222,8 +312,11 @@ function initializeMouseTracking() {
         clearTimeout(mouseTimeout);
         mouseTimeout = setTimeout(() => {
             document.body.classList.remove('mouse-active');
-        }, 100);
+            mouseActive = false;
+        }, 150);
     });
     
     console.log('Mouse tracking initialized');
 }
+
+console.log('Logo script fully loaded');
