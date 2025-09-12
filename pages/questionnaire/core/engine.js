@@ -1,396 +1,330 @@
 // /pages/questionnaire/core/engine.js
-class QuestionnaireEngine {
+
+export class QuestionnaireEngine {
     constructor(config = {}) {
         this.config = {
-            saveToStorage: true,
-            storageKey: 'questionnaire_state',
-            autoSave: true,
+            apiEndpoint: config.apiEndpoint || '/api/submit-questionnaire',
+            recaptchaSiteKey: config.recaptchaSiteKey || '',
+            debug: config.debug || false,
             ...config
         };
         
-        this.modules = new Map();
-        this.state = new QuestionnaireState(this.config);
-        this.conditionalLogic = new ConditionalLogic();
-        this.validator = new QuestionnaireValidator();
-        this.security = new SecurityManager();
-        this.ui = new UIManager();
-        
-        this.currentModuleId = null;
-        this.currentQuestionIndex = 0;
+        this.modules = [];
+        this.currentModuleIndex = 0;
+        this.responses = {};
         this.isInitialized = false;
         
-        this.initializeEventHandlers();
+        // UI Elements
+        this.questionModal = null;
+        this.questionTitle = null;
+        this.questionDescription = null;
+        this.questionContent = null;
+        this.nextBtn = null;
+        this.backBtn = null;
+        this.progressFill = null;
+        this.progressText = null;
     }
 
     async initialize() {
         try {
-            console.log('🚀 Initializing Questionnaire Engine...');
+            console.log('Initializing Simple Questionnaire Engine...');
             
-            // Initialize security (honeypot, reCAPTCHA)
-            await this.security.initialize();
+            // Get UI elements
+            this.questionModal = document.getElementById('questionModal');
+            this.questionTitle = document.getElementById('questionTitle');
+            this.questionDescription = document.getElementById('questionDescription');
+            this.questionContent = document.getElementById('questionContent');
+            this.nextBtn = document.getElementById('nextBtn');
+            this.backBtn = document.getElementById('backBtn');
+            this.progressFill = document.getElementById('modalProgressFill');
+            this.progressText = document.getElementById('modalProgressText');
             
-            // Load saved state if available
-            await this.state.loadFromStorage();
+            if (!this.questionModal) {
+                throw new Error('Question modal not found');
+            }
             
-            // Initialize UI components
-            this.ui.initialize();
-            
-            // Register conditional logic handlers
-            this.setupConditionalLogic();
+            // Setup event listeners
+            this.setupEventListeners();
             
             this.isInitialized = true;
-            console.log('✅ Questionnaire Engine initialized successfully');
+            console.log('Simple Questionnaire Engine initialized successfully');
             
             return true;
         } catch (error) {
-            console.error('❌ Failed to initialize Questionnaire Engine:', error);
+            console.error('Failed to initialize Simple Questionnaire Engine:', error);
             throw error;
         }
     }
 
     registerModule(moduleInstance) {
-        if (!moduleInstance.id) {
+        if (!moduleInstance || !moduleInstance.id) {
             throw new Error('Module must have an id property');
         }
         
-        console.log(`📦 Registering module: ${moduleInstance.id}`);
+        console.log(`Registering module: ${moduleInstance.id}`);
+        this.modules.push(moduleInstance);
         
-        // Validate module structure
-        this.validateModule(moduleInstance);
-        
-        // Store module
-        this.modules.set(moduleInstance.id, moduleInstance);
-        
-        // Register module's conditional logic
-        if (moduleInstance.conditionalLogic) {
-            this.conditionalLogic.registerRules(moduleInstance.id, moduleInstance.conditionalLogic);
-        }
-        
-        // Initialize module with engine reference
-        moduleInstance.initialize(this);
-        
-        console.log(`✅ Module ${moduleInstance.id} registered successfully`);
+        console.log(`Module ${moduleInstance.id} registered successfully`);
     }
 
-    validateModule(module) {
-        const required = ['id', 'questions', 'render', 'collectData'];
-        const missing = required.filter(prop => !module[prop]);
+    setupEventListeners() {
+        if (this.nextBtn) {
+            this.nextBtn.addEventListener('click', () => this.handleNext());
+        }
         
-        if (missing.length > 0) {
-            throw new Error(`Module missing required properties: ${missing.join(', ')}`);
+        if (this.backBtn) {
+            this.backBtn.addEventListener('click', () => this.handleBack());
         }
     }
 
-    async startQuestionnaire() {
+    start() {
         if (!this.isInitialized) {
-            throw new Error('Engine not initialized. Call initialize() first.');
+            console.error('Engine not initialized');
+            return;
         }
-
-        // Security check - ensure reCAPTCHA is completed
-        if (!this.security.isInitialRecaptchaComplete()) {
-            throw new Error('Please complete the initial reCAPTCHA verification');
-        }
-
-        console.log('🎯 Starting questionnaire...');
         
-        // Get first module to show
-        const firstModule = this.getNextModule();
-        if (firstModule) {
-            await this.showModule(firstModule.id);
-        } else {
-            console.error('No modules available to start questionnaire');
+        console.log('Starting questionnaire...');
+        
+        if (this.modules.length === 0) {
+            console.error('No modules registered');
+            return;
+        }
+        
+        // Show the modal and start with first module
+        this.showModal();
+        this.showCurrentModule();
+    }
+
+    showModal() {
+        if (this.questionModal) {
+            this.questionModal.classList.add('active');
+            this.questionModal.classList.add('question-mode');
+            document.body.style.overflow = 'hidden';
         }
     }
 
-    async showModule(moduleId) {
-        const module = this.modules.get(moduleId);
-        if (!module) {
-            throw new Error(`Module ${moduleId} not found`);
+    hideModal() {
+        if (this.questionModal) {
+            this.questionModal.classList.remove('active');
+            this.questionModal.classList.remove('question-mode');
+            document.body.style.overflow = 'auto';
         }
+    }
 
-        console.log(`📋 Showing module: ${moduleId}`);
+    showCurrentModule() {
+        const currentModule = this.modules[this.currentModuleIndex];
         
-        this.currentModuleId = moduleId;
-        this.currentQuestionIndex = 0;
-        
-        // Check if module should be shown based on conditional logic
-        const shouldShow = this.conditionalLogic.shouldShowModule(moduleId, this.state.getAllResponses());
-        
-        if (!shouldShow) {
-            console.log(`⏭️ Skipping module ${moduleId} due to conditional logic`);
-            await this.nextModule();
+        if (!currentModule) {
+            this.completeQuestionnaire();
             return;
         }
-
+        
+        console.log(`Showing module: ${currentModule.id}`);
+        
+        // Update header
+        if (this.questionTitle) {
+            this.questionTitle.textContent = currentModule.title || 'Question';
+        }
+        
+        if (this.questionDescription) {
+            this.questionDescription.textContent = currentModule.description || '';
+        }
+        
+        // Render module content
+        if (this.questionContent && currentModule.render) {
+            this.questionContent.innerHTML = '';
+            
+            try {
+                const content = currentModule.render();
+                if (content instanceof HTMLElement) {
+                    this.questionContent.appendChild(content);
+                } else if (typeof content === 'string') {
+                    this.questionContent.innerHTML = content;
+                }
+            } catch (error) {
+                console.error(`Error rendering module ${currentModule.id}:`, error);
+                this.questionContent.innerHTML = `<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                    <p>Error loading this section. Please continue to the next step.</p>
+                </div>`;
+            }
+        }
+        
+        // Update navigation
+        this.updateNavigation();
+        
         // Update progress
-        this.ui.updateProgress(this.calculateProgress());
-        
-        // Show first question in module
-        await this.showQuestion(moduleId, 0);
-    }
-
-    async showQuestion(moduleId, questionIndex) {
-        const module = this.modules.get(moduleId);
-        if (!module) return;
-
-        const questions = module.getQuestions();
-        if (questionIndex >= questions.length) {
-            // Module complete, move to next
-            await this.nextModule();
-            return;
-        }
-
-        const question = questions[questionIndex];
-        
-        // Check if question should be shown
-        const shouldShow = this.conditionalLogic.shouldShowQuestion(
-            moduleId, 
-            questionIndex, 
-            this.state.getAllResponses()
-        );
-
-        if (!shouldShow) {
-            console.log(`⏭️ Skipping question ${questionIndex} in ${moduleId}`);
-            this.currentQuestionIndex++;
-            await this.showQuestion(moduleId, this.currentQuestionIndex);
-            return;
-        }
-
-        console.log(`❓ Showing question ${questionIndex} in module ${moduleId}`);
-        
-        // Render question
-        await module.renderQuestion(questionIndex, {
-            onNext: (data) => this.handleQuestionResponse(moduleId, questionIndex, data),
-            onBack: () => this.previousQuestion(),
-            onValidate: (data) => this.validateQuestion(moduleId, questionIndex, data)
-        });
+        this.updateProgress();
         
         // Load previous response if exists
-        const previousResponse = this.state.getResponse(moduleId, questionIndex);
-        if (previousResponse) {
-            module.loadPreviousResponse(questionIndex, previousResponse);
+        if (this.responses[currentModule.id] && currentModule.loadResponse) {
+            currentModule.loadResponse(this.responses[currentModule.id]);
         }
     }
 
-    async handleQuestionResponse(moduleId, questionIndex, responseData) {
-        console.log(`💾 Saving response for ${moduleId}[${questionIndex}]:`, responseData);
-        
-        // Save response to state
-        this.state.saveResponse(moduleId, questionIndex, responseData);
-        
-        // Auto-save if enabled
-        if (this.config.autoSave) {
-            await this.state.saveToStorage();
+    updateNavigation() {
+        if (this.backBtn) {
+            this.backBtn.style.display = this.currentModuleIndex > 0 ? 'block' : 'none';
         }
-
-        // Update conditional logic based on new response
-        this.conditionalLogic.processResponse(moduleId, questionIndex, responseData, this.state.getAllResponses());
         
-        // Move to next question
-        this.currentQuestionIndex++;
-        await this.showQuestion(moduleId, this.currentQuestionIndex);
-    }
-
-    async nextModule() {
-        const nextModule = this.getNextModule();
-        
-        if (nextModule) {
-            await this.showModule(nextModule.id);
-        } else {
-            // All modules complete
-            await this.completeQuestionnaire();
+        if (this.nextBtn) {
+            const isLastModule = this.currentModuleIndex >= this.modules.length - 1;
+            this.nextBtn.textContent = isLastModule ? 'Complete' : 'Next →';
+            this.nextBtn.disabled = false;
         }
     }
 
-    async previousQuestion() {
-        if (this.currentQuestionIndex > 0) {
-            this.currentQuestionIndex--;
-            await this.showQuestion(this.currentModuleId, this.currentQuestionIndex);
-        } else {
-            // Go to previous module
-            const prevModule = this.getPreviousModule();
-            if (prevModule) {
-                this.currentModuleId = prevModule.id;
-                const questions = prevModule.getQuestions();
-                this.currentQuestionIndex = Math.max(0, questions.length - 1);
-                await this.showQuestion(this.currentModuleId, this.currentQuestionIndex);
-            }
+    updateProgress() {
+        const progress = Math.round(((this.currentModuleIndex + 1) / this.modules.length) * 100);
+        
+        if (this.progressFill) {
+            this.progressFill.style.width = progress + '%';
+        }
+        
+        if (this.progressText) {
+            this.progressText.textContent = progress + '% Complete';
         }
     }
 
-    validateQuestion(moduleId, questionIndex, data) {
-        const module = this.modules.get(moduleId);
-        if (!module) return false;
-
-        return module.validateQuestion(questionIndex, data);
-    }
-
-    getNextModule() {
-        const moduleOrder = this.getModuleOrder();
-        const currentIndex = moduleOrder.findIndex(id => id === this.currentModuleId);
+    handleNext() {
+        const currentModule = this.modules[this.currentModuleIndex];
         
-        for (let i = currentIndex + 1; i < moduleOrder.length; i++) {
-            const moduleId = moduleOrder[i];
-            const shouldShow = this.conditionalLogic.shouldShowModule(moduleId, this.state.getAllResponses());
-            if (shouldShow) {
-                return this.modules.get(moduleId);
+        if (!currentModule) return;
+        
+        // Collect response from current module
+        if (currentModule.getResponse) {
+            try {
+                const response = currentModule.getResponse();
+                this.responses[currentModule.id] = response;
+                console.log(`Saved response for ${currentModule.id}:`, response);
+            } catch (error) {
+                console.error(`Error getting response from ${currentModule.id}:`, error);
             }
         }
         
-        return null;
-    }
-
-    getPreviousModule() {
-        const moduleOrder = this.getModuleOrder();
-        const currentIndex = moduleOrder.findIndex(id => id === this.currentModuleId);
-        
-        for (let i = currentIndex - 1; i >= 0; i--) {
-            const moduleId = moduleOrder[i];
-            return this.modules.get(moduleId);
+        // Validate if module has validation
+        if (currentModule.validate) {
+            const validation = currentModule.validate();
+            if (!validation.isValid) {
+                console.log('Validation failed:', validation.errors);
+                // Could show validation errors here
+                return;
+            }
         }
         
-        return null;
+        // Move to next module or complete
+        if (this.currentModuleIndex < this.modules.length - 1) {
+            this.currentModuleIndex++;
+            this.showCurrentModule();
+        } else {
+            this.completeQuestionnaire();
+        }
     }
 
-    getModuleOrder() {
-        // Return array of module IDs in order they should appear
-        return [
-            'customization-preference',
-            'user-info', 
-            'combined-parameters',
-            'modeling-approach',
-            'revenue-structure',
-            'cogs-codb',
-            'expenses',
-            'assets',
-            'debt',
-            'equity-financing'
-        ];
+    handleBack() {
+        if (this.currentModuleIndex > 0) {
+            this.currentModuleIndex--;
+            this.showCurrentModule();
+        }
     }
 
-    calculateProgress() {
-        const allModules = this.getModuleOrder();
-        const completedModules = allModules.filter(id => {
-            const moduleResponses = this.state.getModuleResponses(id);
-            return Object.keys(moduleResponses).length > 0;
-        });
+    completeQuestionnaire() {
+        console.log('Questionnaire completed! Responses:', this.responses);
         
-        return (completedModules.length / allModules.length) * 100;
+        // Show completion message
+        if (this.questionContent) {
+            this.questionContent.innerHTML = `
+                <div style="text-align: center; padding: 60px 40px;">
+                    <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
+                    <h3 style="color: #8b5cf6; margin-bottom: 20px; font-size: 1.8rem;">Questionnaire Complete!</h3>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 1.1rem; line-height: 1.6;">
+                        Thank you for completing our questionnaire. We've captured all your responses and our team will now create your custom financial model.
+                    </p>
+                    <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 25px; margin: 30px 0;">
+                        <h4 style="color: #8b5cf6; margin-bottom: 15px; font-size: 1.1rem;">What happens next?</h4>
+                        <p style="color: rgba(255,255,255,0.9); margin: 0; line-height: 1.5;">
+                            Our financial modeling specialists will review your responses and create a tailored model for your business. 
+                            You'll receive an email within 24-48 hours with your model and instructions for next steps.
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Hide back button, change next to close
+        if (this.backBtn) this.backBtn.style.display = 'none';
+        if (this.nextBtn) {
+            this.nextBtn.textContent = 'Close';
+            this.nextBtn.onclick = () => this.hideModal();
+        }
+        
+        // In a real implementation, you would submit the responses to your backend here
+        this.submitResponses();
     }
 
-    async completeQuestionnaire() {
-        console.log('🎉 Questionnaire complete! Preparing submission...');
-        
+    async submitResponses() {
         try {
-            // Show submission reCAPTCHA
-            await this.security.showSubmissionRecaptcha();
+            console.log('Submitting responses...');
             
-            // Collect all data from modules
-            const submissionData = await this.collectSubmissionData();
+            // Prepare submission data
+            const submissionData = {
+                responses: this.responses,
+                completedAt: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                moduleCount: this.modules.length
+            };
             
-            // Add security tokens
-            submissionData.recaptchaToken = this.security.getSubmissionRecaptchaToken();
-            submissionData.honeypot_website = this.security.getHoneypotValue('website');
-            submissionData.honeypot_phone = this.security.getHoneypotValue('phone');
+            // Add individual module database fields
+            for (const module of this.modules) {
+                if (module.getDatabaseFields && this.responses[module.id]) {
+                    const dbFields = module.getDatabaseFields();
+                    Object.assign(submissionData, dbFields);
+                }
+            }
             
-            // Submit to database
-            await this.submitToDatabase(submissionData);
+            console.log('Submission data prepared:', submissionData);
+            
+            // In a real implementation, submit to your backend:
+            // const response = await fetch(this.config.apiEndpoint, {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify(submissionData)
+            // });
+            
+            console.log('Submission completed successfully');
             
         } catch (error) {
-            console.error('❌ Submission failed:', error);
-            this.ui.showError('Submission failed. Please try again.');
+            console.error('Submission failed:', error);
         }
-    }
-
-    async collectSubmissionData() {
-        const submissionData = {
-            // Initialize with base structure
-            submission_count: 1,
-            ip_address: null,
-            user_agent: navigator.userAgent || null
-        };
-
-        // Collect data from each module
-        for (const [moduleId, module] of this.modules) {
-            const moduleData = module.collectSubmissionData(this.state.getModuleResponses(moduleId));
-            Object.assign(submissionData, moduleData);
-        }
-
-        return submissionData;
-    }
-
-    async submitToDatabase(formData) {
-        console.log('📤 Submitting to database...');
-        
-        const response = await fetch('/api/submit-questionnaire', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || `HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        
-        if (result.submission_id) {
-            // Clear saved state
-            await this.state.clearStorage();
-            
-            // Redirect to loading page
-            window.location.href = `loading.html?submission_id=${result.submission_id}`;
-        } else {
-            throw new Error('No submission_id received from server');
-        }
-    }
-
-    setupConditionalLogic() {
-        // Register global conditional logic rules
-        this.conditionalLogic.registerRule('combined-parameters', (responses) => {
-            const userInfo = responses['user-info']?.[0];
-            return userInfo?.parameterToggle === true;
-        });
-        
-        // More global rules can be added here
-    }
-
-    initializeEventHandlers() {
-        // Handle browser navigation
-        window.addEventListener('beforeunload', () => {
-            if (this.config.autoSave) {
-                this.state.saveToStorage();
-            }
-        });
-
-        // Handle escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.ui.handleEscapeKey();
-            }
-        });
     }
 
     // Public API methods
     getCurrentState() {
         return {
-            currentModule: this.currentModuleId,
-            currentQuestion: this.currentQuestionIndex,
-            responses: this.state.getAllResponses(),
-            progress: this.calculateProgress()
+            currentModule: this.currentModuleIndex,
+            totalModules: this.modules.length,
+            responses: { ...this.responses },
+            progress: Math.round(((this.currentModuleIndex + 1) / this.modules.length) * 100)
         };
     }
 
-    async reset() {
-        await this.state.clearStorage();
-        this.currentModuleId = null;
-        this.currentQuestionIndex = 0;
-        console.log('🔄 Questionnaire reset');
+    getModuleById(id) {
+        return this.modules.find(module => module.id === id);
+    }
+
+    goToModule(moduleId) {
+        const moduleIndex = this.modules.findIndex(module => module.id === moduleId);
+        if (moduleIndex !== -1) {
+            this.currentModuleIndex = moduleIndex;
+            this.showCurrentModule();
+        }
+    }
+
+    reset() {
+        this.currentModuleIndex = 0;
+        this.responses = {};
+        console.log('Questionnaire reset');
     }
 }
 
-// Export for use
-window.QuestionnaireEngine = QuestionnaireEngine;
+// Also export as default for flexibility
+export default QuestionnaireEngine;
