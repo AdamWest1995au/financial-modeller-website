@@ -4027,6 +4027,27 @@
                 height: 98vh;
             }
         }
+    /* Force pane content to be hidden by default */
+        .pane-content {
+            opacity: 0 !important;
+            transition: opacity 0.5s ease !important;
+        }
+
+        .bullet-point {
+            opacity: 0 !important;
+            transform: translateY(10px) !important;
+            transition: all 0.4s ease !important;
+        }
+
+        /* When JavaScript sets opacity: 1, this will override */
+        .pane-content[style*="opacity: 1"] {
+            opacity: 1 !important;
+        }
+
+        .bullet-point[style*="opacity: 1"] {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
     </style>
 </head>
 <body>

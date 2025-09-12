@@ -1,4 +1,4 @@
-// Complete Logo Script - Save as: pages/assets/js/logo.js
+// Complete Logo Script with 3D Pane Animation - Save as: pages/assets/js/logo.js
 
 console.log('Logo script starting to load...');
 
@@ -43,7 +43,7 @@ function initializeLogo() {
     console.log('Logo: Created 96 dots successfully');
 }
 
-// Animated panes functionality
+// Animated panes functionality with 3D movement
 function initializeAnimatedPanes() {
     console.log('Initializing animated panes...');
     
@@ -64,42 +64,66 @@ function initializeAnimatedPanes() {
     let intervalId = null;
     let isHovered = false;
     
+    // Define 3D positions for each layer
+    const positions = [
+        { x: 0, y: 0, z: 40, opacity: 1, zIndex: 4 },      // Front position
+        { x: -35, y: -22, z: 20, opacity: 0.9, zIndex: 3 }, // Second position  
+        { x: -70, y: -44, z: 0, opacity: 0.7, zIndex: 2 },  // Third position
+        { x: -105, y: -66, z: -20, opacity: 0.5, zIndex: 1 } // Back position
+    ];
+    
     function showPaneContent(index) {
-        console.log(`Showing pane ${index + 1} of ${panes.length}`);
+        console.log(`Showing pane ${index + 1} of ${panes.length} as front pane`);
         
         panes.forEach((pane, i) => {
             const bullets = pane.querySelectorAll('.bullet-point');
             const content = pane.querySelector('.pane-content');
             
-            if (i === index) {
-                // Activate current pane
-                console.log(`Activating pane ${i}: ${bullets.length} bullets, content: ${!!content}`);
+            // Calculate which visual position this pane should be in
+            // The active pane (index) goes to position 0 (front)
+            // Other panes are positioned relative to the active one
+            let visualPosition = (i - index + panes.length) % panes.length;
+            const pos = positions[visualPosition];
+            
+            console.log(`Pane ${i} moving to visual position ${visualPosition}:`, pos);
+            
+            // Apply 3D transform to move the pane
+            pane.style.transform = `translate3d(${pos.x}px, ${pos.y}px, ${pos.z}px) rotateY(5deg) rotateX(2deg)`;
+            pane.style.opacity = pos.opacity;
+            pane.style.zIndex = pos.zIndex;
+            pane.style.transition = 'all 0.8s cubic-bezier(0.4, 0.0, 0.2, 1)';
+            
+            // Show content only for the front pane (position 0)
+            if (visualPosition === 0) {
+                console.log(`Activating front pane ${i}: ${bullets.length} bullets, content: ${!!content}`);
                 
-                if (content) {
-                    content.style.opacity = '1';
-                    content.style.transition = 'opacity 0.5s ease';
-                }
-                
-                // Animate bullets with stagger
-                bullets.forEach((bullet, bulletIndex) => {
-                    setTimeout(() => {
-                        bullet.style.opacity = '1';
-                        bullet.style.transform = 'translateY(0)';
-                        bullet.style.transition = 'all 0.4s ease';
-                    }, bulletIndex * 150);
-                });
+                // Delay content animation to let pane move first
+                setTimeout(() => {
+                    if (content) {
+                        content.style.opacity = '1';
+                        content.style.transition = 'opacity 0.5s ease';
+                    }
+                    
+                    bullets.forEach((bullet, bulletIndex) => {
+                        setTimeout(() => {
+                            bullet.style.opacity = '1';
+                            bullet.style.transform = 'translateY(0)';
+                            bullet.style.transition = 'all 0.4s ease';
+                        }, bulletIndex * 150);
+                    });
+                }, 200);
                 
             } else {
-                // Hide other panes
+                // Hide content for non-front panes immediately
                 if (content) {
                     content.style.opacity = '0';
-                    content.style.transition = 'opacity 0.3s ease';
+                    content.style.transition = 'opacity 0.2s ease';
                 }
                 
                 bullets.forEach(bullet => {
                     bullet.style.opacity = '0';
                     bullet.style.transform = 'translateY(10px)';
-                    bullet.style.transition = 'all 0.3s ease';
+                    bullet.style.transition = 'all 0.2s ease';
                 });
             }
         });
@@ -112,14 +136,14 @@ function initializeAnimatedPanes() {
         }
         
         currentIndex = (currentIndex + 1) % panes.length;
-        console.log(`Moving to pane ${currentIndex + 1}`);
+        console.log(`Moving to pane ${currentIndex + 1} as front pane`);
         showPaneContent(currentIndex);
     }
     
     function startAnimation() {
         if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(nextPane, 4000);
-        console.log('Pane animation started (4s intervals)');
+        intervalId = setInterval(nextPane, 5000); // Increased to 5s to see movement better
+        console.log('Pane animation started (5s intervals)');
     }
     
     function stopAnimation() {
@@ -149,7 +173,7 @@ function initializeAnimatedPanes() {
         });
     }
     
-    console.log('Animated panes initialized successfully');
+    console.log('Animated panes initialized successfully with 3D movement');
 }
 
 // Floating stats background
