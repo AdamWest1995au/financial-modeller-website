@@ -1,0 +1,2215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Model Preview - The Financial Modeller</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #ffffff;
+            background: #000000;
+            /* UPDATED: Changed from stars to dots pattern like homepage */
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+            background-size: 3.8px 3.8px;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* UPDATED: Mouse illumination effect from homepage */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background: radial-gradient(circle 180px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                        rgba(139, 92, 246, 0.4) 0%, 
+                        rgba(139, 92, 246, 0.25) 3%, 
+                        rgba(139, 92, 246, 0.12) 8%, 
+                        rgba(139, 92, 246, 0.06) 15%, 
+                        rgba(139, 92, 246, 0.02) 25%, 
+                        rgba(139, 92, 246, 0.005) 40%, 
+                        transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            filter: blur(6px);
+        }
+
+        body.mouse-active::after {
+            opacity: 1;
+        }
+
+        /* UPDATED: Enhanced dot illumination overlay from homepage */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+            background-image: radial-gradient(circle, rgba(139, 92, 246, 0.6) 1px, transparent 1px);
+            background-size: 3.8px 3.8px;
+            mask: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  black 0%, 
+                  black 2%, 
+                  rgba(0,0,0,0.6) 6%, 
+                  rgba(0,0,0,0.3) 12%, 
+                  rgba(0,0,0,0.1) 20%, 
+                  rgba(0,0,0,0.02) 35%, 
+                  transparent 60%);
+            -webkit-mask: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                         black 0%, 
+                         black 2%, 
+                         rgba(0,0,0,0.6) 6%, 
+                         rgba(0,0,0,0.3) 12%, 
+                         rgba(0,0,0,0.1) 20%, 
+                         rgba(0,0,0,0.02) 35%, 
+                         transparent 60%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        /* UPDATED: Mouse trail elements from homepage */
+        .mouse-trail {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 1;
+            transition: opacity 0.8s ease-out;
+        }
+
+        .mouse-trail::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle 180px at var(--trail-x) var(--trail-y), 
+                        rgba(139, 92, 246, 0.25) 0%, 
+                        rgba(139, 92, 246, 0.15) 3%, 
+                        rgba(139, 92, 246, 0.08) 8%, 
+                        rgba(139, 92, 246, 0.04) 15%, 
+                        rgba(139, 92, 246, 0.015) 25%, 
+                        rgba(139, 92, 246, 0.003) 40%, 
+                        transparent 100%);
+            filter: blur(6px);
+        }
+
+        .mouse-trail::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background-image: radial-gradient(circle, rgba(139, 92, 246, 0.4) 1px, transparent 1px);
+            background-size: 3.8px 3.8px;
+            mask: radial-gradient(circle 120px at var(--trail-x) var(--trail-y), 
+                  black 0%, 
+                  black 2%, 
+                  rgba(0,0,0,0.4) 6%, 
+                  rgba(0,0,0,0.2) 12%, 
+                  rgba(0,0,0,0.08) 20%, 
+                  rgba(0,0,0,0.015) 35%, 
+                  transparent 60%);
+            -webkit-mask: radial-gradient(circle 120px at var(--trail-x) var(--trail-y), 
+                         black 0%, 
+                         black 2%, 
+                         rgba(0,0,0,0.4) 6%, 
+                         rgba(0,0,0,0.2) 12%, 
+                         rgba(0,0,0,0.08) 20%, 
+                         rgba(0,0,0,0.015) 35%, 
+                         transparent 60%);
+        }
+
+        .mouse-trail.fade-out {
+            opacity: 0;
+        }
+
+        /* UPDATED: Header styles from homepage */
+        .header {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        /* UPDATED: Wave logo styles from homepage */
+        .logo {
+            font-size: 1.5rem !important;
+            font-weight: 400 !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 16px !important;
+            letter-spacing: -0.03em !important;
+            cursor: pointer !important;
+        }
+
+        .logo:hover, 
+        .logo:focus, 
+        .logo:active,
+        .logo:visited {
+            text-decoration: none !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .dot-grid {
+            width: 48px;
+            height: 36px;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 0.5px;
+            position: relative;
+            transform: perspective(200px) rotateY(-15deg);
+        }
+
+        .dot {
+            width: 2px;
+            height: 2px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+            opacity: 0.3;
+            transform: scale(0.6);
+        }
+
+        /* Wave pattern - each column has different heights */
+        .dot-grid .dot:nth-child(12n+1) { opacity: 0.2; transform: scale(0.5); }
+        .dot-grid .dot:nth-child(12n+2) { opacity: 0.3; transform: scale(0.6); }
+        .dot-grid .dot:nth-child(12n+3) { opacity: 0.4; transform: scale(0.7); }
+        .dot-grid .dot:nth-child(12n+4) { opacity: 0.5; transform: scale(0.8); }
+        .dot-grid .dot:nth-child(12n+5) { opacity: 0.6; transform: scale(0.9); }
+        .dot-grid .dot:nth-child(12n+6) { opacity: 0.8; transform: scale(1.1); }
+        .dot-grid .dot:nth-child(12n+7) { opacity: 0.9; transform: scale(1.2); }
+        .dot-grid .dot:nth-child(12n+8) { opacity: 1; transform: scale(1.3); }
+        .dot-grid .dot:nth-child(12n+9) { opacity: 0.9; transform: scale(1.2); }
+        .dot-grid .dot:nth-child(12n+10) { opacity: 0.7; transform: scale(1); }
+        .dot-grid .dot:nth-child(12n+11) { opacity: 0.5; transform: scale(0.8); }
+        .dot-grid .dot:nth-child(12n+12) { opacity: 0.3; transform: scale(0.6); }
+
+        /* Gradient effect from left to right */
+        .dot {
+            background: linear-gradient(90deg, #6d28d9 0%, #8b5cf6 50%, #a78bfa 100%);
+        }
+
+        .logo span {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: -0.03em;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        /* Hover state for the entire logo */
+        .logo:hover .dot-grid {
+            transform: perspective(200px) rotateY(-10deg) scale(1.05);
+        }
+
+        .logo:hover .dot {
+            animation: wave 2s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% {
+                transform: scale(var(--scale, 1)) translateY(0);
+                opacity: var(--opacity, 0.6);
+            }
+            50% {
+                transform: scale(calc(var(--scale, 1) * 1.3)) translateY(-2px);
+                opacity: calc(var(--opacity, 0.6) * 1.2);
+            }
+        }
+
+        /* Stagger the animation for wave effect */
+        .logo:hover .dot { animation-delay: calc(var(--delay, 0) * 1s); }
+
+        /* Add subtle glow effect on hover */
+        .logo:hover .dot-grid {
+            filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.3));
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        .book-call-btn {
+            background: #8b5cf6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            border: 1px solid #8b5cf6;
+        }
+
+        .book-call-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            gap: 30px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* UPDATED LAYOUT: Preview section takes up more space (was flex: 3, now 3.5) */
+        .preview-section {
+            flex: 3.5;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 200px);
+            max-height: 900px;
+            min-height: 700px;
+        }
+
+        .preview-header {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .preview-header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .preview-header h1 .company-name {
+            color: #7c3aed;
+        }
+
+        .preview-header h1 .model-text {
+            color: #ffffff;
+        }
+
+        .preview-header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .company-info {
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .sheet-tabs {
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(139, 92, 246, 0.5) rgba(255, 255, 255, 0.1);
+        }
+
+        .sheet-tabs::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .sheet-tabs::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .sheet-tabs::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.5);
+            border-radius: 4px;
+        }
+
+        .sheet-tabs::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.7);
+        }
+
+        .sheet-tab {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .sheet-tab.active {
+            background: rgba(139, 92, 246, 0.3);
+            color: white;
+            border-color: rgba(139, 92, 246, 0.4);
+        }
+
+        .sheet-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* UPDATED: Simplified spreadsheet container with proper horizontal scroll positioning */
+        .spreadsheet-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* UPDATED: Formula bar styling - sticky positioned */
+        .formula-display {
+            background: #ffffff;
+            border: 1px solid #c0c0c0;
+            padding: 10px 15px;
+            margin: 0;
+            font-family: 'Consolas', 'Monaco', 'Arial Narrow', Arial, monospace;
+            font-size: 12px;
+            color: #374151;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            border-bottom: 1px solid #d0d7de;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        /* UPDATED: Horizontal scroll wrapper - positioned right below formula bar */
+        .horizontal-scroll-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* UPDATED: Horizontal scroll container - fixed at top */
+        .horizontal-scroll-container {
+            overflow-x: auto;
+            overflow-y: hidden;
+            height: 14px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        /* Invisible content to create horizontal scroll - UPDATED */
+        .horizontal-scroll-content {
+            height: 1px;
+            width: 2000px; /* Default wide width to ensure scroll appears */
+            background: transparent;
+        }
+        
+        /* UPDATED: Spreadsheet scroll content - ONLY vertical scroll, NO horizontal */
+        .spreadsheet-scroll-content {
+            flex: 1;
+            overflow-x: hidden !important; /* CRITICAL: Never show horizontal scroll */
+            overflow-y: auto;
+            padding: 0;
+            position: relative;
+        }
+
+        /* UPDATED: Excel container - NO horizontal scroll allowed */
+        #excelContainer {
+            overflow-x: hidden !important; /* CRITICAL: Never allow horizontal scroll */
+            overflow-y: auto;
+            position: relative;
+            width: 100%;
+        }
+
+        /* UPDATED: Table wrapper to handle horizontal positioning */
+        .table-horizontal-wrapper {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* UPDATED: Ensure Excel table can be positioned horizontally via transform */
+        .spreadsheet-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-family: 'Calibri', 'Arial Narrow', Arial, sans-serif;
+            font-size: 11px;
+            border: 1px solid #c0c0c0;
+            background: #ffffff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 100px;
+            /* UPDATED: Allow table to expand beyond container width */
+            min-width: fit-content;
+            table-layout: auto;
+            /* UPDATED: Will be positioned via transform instead of scroll */
+            transition: transform 0.05s ease-out;
+        }
+
+        /* CRITICAL: Ensure Excel container and content never show horizontal scrollbar */
+        #excelContainer,
+        .spreadsheet-scroll-content,
+        .horizontal-scroll-wrapper {
+            overflow-x: hidden !important;
+        }
+
+        /* Force hide any accidental horizontal scrollbars in Excel content */
+        #excelContainer * {
+            overflow-x: visible !important;
+        }
+
+        #excelContainer table {
+            overflow-x: visible !important;
+        }
+
+        /* UPDATED: Custom scrollbar styling for horizontal scroll container */
+        .horizontal-scroll-container::-webkit-scrollbar {
+            height: 12px;
+        }
+
+        .horizontal-scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+        }
+
+        .horizontal-scroll-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .horizontal-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+        }
+
+        /* UPDATED: Custom scrollbar styling for vertical scroll only */
+        .spreadsheet-scroll-content::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .spreadsheet-scroll-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+        }
+
+        .spreadsheet-scroll-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #8b5cf6 0%, #7c3aed 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .spreadsheet-scroll-content::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+        }
+
+        .spreadsheet-scroll-content::-webkit-scrollbar-corner {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Firefox scrollbar styling */
+        .horizontal-scroll-container {
+            scrollbar-width: auto;
+            scrollbar-color: #8b5cf6 rgba(255, 255, 255, 0.1);
+        }
+
+        .spreadsheet-scroll-content {
+            scrollbar-width: auto;
+            scrollbar-color: #8b5cf6 rgba(255, 255, 255, 0.1);
+        }
+
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .loading-spinner .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #8b5cf6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #spreadsheetContent {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .spreadsheet-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-family: 'Calibri', 'Arial Narrow', Arial, sans-serif;
+            font-size: 11px;
+            border: 1px solid #c0c0c0;
+            background: #ffffff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 100px; /* Add some bottom margin to ensure scrolling */
+            /* UPDATED: Ensure table can expand horizontally */
+            min-width: fit-content;
+        }
+
+        .spreadsheet-table th {
+            background: linear-gradient(to bottom, #f0f0f0 0%, #e0e0e0 100%);
+            color: #1f2937;
+            padding: 4px 6px;
+            border: 1px solid #a0a0a0;
+            text-align: center;
+            font-weight: normal;
+            position: sticky;
+            top: 0;
+            z-index: 9;
+            font-size: 11px;
+        }
+
+        /* First header row should stick at the top */
+        .spreadsheet-table thead tr:first-child th {
+            top: 0;
+            z-index: 11;
+        }
+
+        /* Row headers should stick to the left */
+        .spreadsheet-table th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background: linear-gradient(to bottom, #f0f0f0 0%, #e0e0e0 100%);
+        }
+
+        .spreadsheet-table td {
+            padding: 2px 6px;
+            border: 1px solid #d0d7de;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            min-width: 80px;
+            position: relative;
+            background: #ffffff;
+            font-size: 11px;
+            vertical-align: bottom;
+            line-height: 1.2;
+            min-height: 20px;
+            box-sizing: border-box;
+            text-overflow: ellipsis;
+        }
+
+        /* Only show borders where Excel has them */
+        .spreadsheet-table td.has-border-top { border-top: 1px solid #d0d7de !important; }
+        .spreadsheet-table td.has-border-bottom { border-bottom: 1px solid #d0d7de !important; }
+        .spreadsheet-table td.has-border-left { border-left: 1px solid #d0d7de !important; }
+        .spreadsheet-table td.has-border-right { border-right: 1px solid #d0d7de !important; }
+
+        .spreadsheet-table td:hover:not(.selected) {
+            background: #f9fafb !important;
+            border-color: #8b5cf6 !important;
+        }
+
+        .spreadsheet-table td.selected {
+            background: #ede9fe !important;
+            border: 2px solid #8b5cf6 !important;
+            z-index: 5;
+        }
+
+        .spreadsheet-table td.positive-number {
+            color: #059669 !important;
+        }
+
+        .spreadsheet-table td.negative-number {
+            color: #dc2626 !important;
+        }
+
+        .spreadsheet-table td.merged-cell {
+            border: 1px solid #a0a0a0;
+            background: #f9f9f9;
+            text-align: center;
+            vertical-align: middle;
+            font-weight: 500;
+        }
+
+        /* UPDATED LAYOUT: Reduced sidebar by 25% (was flex: 2, now 1.5) */
+        .sidebar {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .purchase-button, .secondary-button {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 400;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: none;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            white-space: normal;
+            line-height: 1.3;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .purchase-button::before, .secondary-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: -1;
+        }
+
+        .purchase-button:hover:not(:disabled), .secondary-button:hover {
+            color: white;
+            border-color: #8b5cf6;
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
+        }
+
+        .purchase-button:hover:not(:disabled)::before, .secondary-button:hover::before {
+            left: 0;
+        }
+
+        .purchase-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .purchase-button:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .description-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            backdrop-filter: blur(20px);
+            flex: 3;
+        }
+
+        .description-box h2 {
+            color: #8b5cf6;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .description-box p {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .description-box ul {
+            color: rgba(255, 255, 255, 0.7);
+            padding-left: 20px;
+        }
+
+        .description-box li {
+            margin-bottom: 8px;
+        }
+
+        .description-box strong {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .file-info {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .file-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .file-info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .file-info-label {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .file-info-value {
+            color: #8b5cf6;
+            font-weight: 500;
+        }
+
+        .error-container {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .error-container h3 {
+            color: #f87171;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .error-container p {
+            margin-bottom: 20px;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .error-button {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+            border: 1px solid #f87171;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .error-button:hover {
+            background: #f87171;
+            color: white;
+        }
+
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: monospace;
+            text-align: left;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .success-indicator {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #059669;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* UPDATED: Footer styles from homepage */
+        .footer {
+            background: rgba(0, 0, 0, 0.5);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 60px 20px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 20px;
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .footer-section p {
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            color: #8b5cf6;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+            padding-top: 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.85rem;
+        }
+
+        /* Modal popup styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            /* Force flexbox centering */
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-direction: column !important;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-box {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            margin: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.3s ease;
+            /* Backup centering method */
+            position: relative;
+            z-index: 10001;
+        }
+
+        .modal-overlay.show .modal-box {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .modal-message {
+            color: #e0e0e0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .modal-button {
+            background: #6b7df7;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            float: right;
+            min-width: 60px;
+        }
+
+        .modal-button:hover {
+            background: #5a6cf0;
+            transform: translateY(-1px);
+        }
+
+        .modal-button:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .container {
+                flex-direction: column;
+                padding: 20px;
+                gap: 20px;
+            }
+            
+            .preview-section {
+                flex: none;
+                height: 60vh;
+            }
+            
+            .sidebar {
+                flex: none;
+            }
+
+            .sheet-tabs {
+                flex-wrap: wrap;
+            }
+            
+            /* Wave logo mobile styles */
+            .dot-grid {
+                width: 40px;
+                height: 30px;
+            }
+            
+            .logo {
+                gap: 12px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- UPDATED: Header from homepage -->
+    <header class="header">
+        <nav class="nav-container">
+            <a href="#" class="logo" id="logo">
+                <div class="dot-grid" id="dotGrid">
+                    <!-- Dots will be generated by JavaScript -->
+                </div>
+                <span>The Financial Modeller</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="https://www.thefinancialmodeller.com/pages/questionnaire">Build a Model</a></li>
+                <li><a href="#" data-modal="templates" onclick="showModal('templates'); return false;">Model Templates</a></li>
+                <li><a href="#" data-modal="how-it-works" onclick="showModal('how-it-works'); return false;">How it works</a></li>
+                <li><a href="#" data-modal="pricing" onclick="showModal('pricing'); return false;">Pricing</a></li>
+                <li><a href="#" data-modal="about" onclick="showModal('about'); return false;">About</a></li>
+                <li><a href="https://www.thefinancialmodeller.com/pages/contact" class="book-call-btn">Contact us</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="preview-section">
+            <div class="preview-header">
+                <h1>
+                    <span class="company-name" id="headerCompanyName">Your Company</span>
+                    <span class="model-text">Financial Model</span>
+                </h1>
+                <p>Financial Model Preview</p>
+            </div>
+
+            <div class="sheet-tabs" id="sheetTabs" style="display: none;">
+                <!-- Sheet tabs will be populated dynamically -->
+            </div>
+
+            <div class="spreadsheet-container" id="spreadsheetContainer">
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner"></div>
+                    <p>Loading your financial model...</p>
+                </div>
+                
+                <div id="spreadsheetContent" style="display: none;">
+                    <div class="formula-display" id="formulaBar">
+                        <strong>Formula:</strong> <span id="formulaContent">Select a cell to view formula</span>
+                    </div>
+                    <div class="horizontal-scroll-wrapper">
+                        <div class="horizontal-scroll-container" id="horizontalScrollContainer">
+                            <div class="horizontal-scroll-content" id="horizontalScrollContent"></div>
+                        </div>
+                        <div class="spreadsheet-scroll-content" id="excelContainer">
+                            <table class="spreadsheet-table" id="spreadsheetTable">
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="error-container" id="errorContainer" style="display: none;">
+                    <h3>⚠️ Unable to Load Model</h3>
+                    <p id="errorMessage">The financial model could not be loaded.</p>
+                    <div class="error-actions">
+                        <button class="error-button" onclick="retryLoad()">Retry</button>
+                        <a href="/pages/questionnaire.html" class="error-button">Start Over</a>
+                        <button class="error-button" onclick="toggleDebugInfo()">Show Debug Info</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <button class="purchase-button" id="purchaseButton" onclick="handlePurchase()" disabled>
+                Preview Only - Full Access Coming Soon
+            </button>
+
+            <button class="secondary-button" onclick="alert('Coming soon')">
+                I need more customization to this model →
+            </button>
+
+            <button class="secondary-button" onclick="alert('Coming soon')">
+                Help me build out my assumptions →
+            </button>
+
+            <div class="description-box">
+                <h2>Financial Model Details</h2>
+                
+                <div class="file-info" id="fileInfo">
+                    <div class="file-info-item">
+                        <span class="file-info-label">Company:</span>
+                        <span class="file-info-value" id="fileCompanyName">Loading...</span>
+                    </div>
+                    <div class="file-info-item">
+                        <span class="file-info-label">Created:</span>
+                        <span class="file-info-value" id="fileCreated">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="file-info" id="businessInfo">
+                    <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; margin-bottom: 12px; font-weight: 500;">Your Business</h3>
+                    <div class="file-info-item">
+                        <span class="file-info-label">Modeling Type:</span>
+                        <span class="file-info-value" id="modelingType">Loading...</span>
+                    </div>
+                    <div class="file-info-item">
+                        <span class="file-info-label">Revenue Streams:</span>
+                        <span class="file-info-value" id="revenueStreams">Loading...</span>
+                    </div>
+                    <div class="file-info-item">
+                        <span class="file-info-label">Staff Generate Revenue:</span>
+                        <span class="file-info-value" id="staffRevenue">Loading...</span>
+                    </div>
+                </div>
+                
+                <p>This comprehensive financial model has been customized based on your questionnaire responses.</p>
+                
+                <p><strong>Key Features:</strong></p>
+                <ul>
+                    <li>Interactive spreadsheet with formula visibility</li>
+                    <li>Multiple worksheet tabs for different scenarios</li>
+                    <li>Dynamic calculations and projections</li>
+                    <li>Professional formatting and layout</li>
+                    <li>Easy-to-understand structure</li>
+                </ul>
+
+                <p><strong>What's Included:</strong></p>
+                <ul>
+                    <li>Complete Excel workbook (.xlsm format)</li>
+                    <li>Documentation and user guide</li>
+                    <li>Formula explanations</li>
+                    <li>Customizable inputs and assumptions</li>
+                </ul>
+
+                <p>Perfect for financial planning, business analysis, and investment decisions. The model is designed to be user-friendly while maintaining professional accuracy.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPDATED: Footer from homepage -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About The Financial Modeller</h3>
+                <p>We're a team of financial analysts and Excel experts dedicated to providing high-quality financial models that save you time and improve your analysis.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#" data-modal="templates" onclick="showModal('templates'); return false;">Model Templates</a></li>
+                    <li><a href="#" data-modal="how-it-works" onclick="showModal('how-it-works'); return false;">How it works</a></li>
+                    <li><a href="#" data-modal="about" onclick="showModal('about'); return false;">About</a></li>
+                    <li><a href="#" data-modal="pricing" onclick="showModal('pricing'); return false;">Pricing</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📧 <a href="mailto:info@thefinancialmodeller.com" style="color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.5)'">info@thefinancialmodeller.com</a></p>
+                <p>📞 <a href="tel:TBC" style="color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.5)'">TBC</a></p>
+                <p>🏢 Sydney, Australia</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 The Financial Modeller. All rights reserved. | <a href="#privacy-policy" style="color: rgba(255, 255, 255, 0.4); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.4)'">Privacy Policy</a> | <a href="#terms-of-service" style="color: rgba(255, 255, 255, 0.4); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.4)'">Terms of Service</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // GLOBAL MODAL FUNCTIONS - Using browser alerts like the purchase button
+        function showModal(type) {
+            const messages = {
+                'templates': 'Our model templates library is coming soon',
+                'how-it-works': 'Stay tuned for our in-depth tutorial',
+                'pricing': 'As we are not yet live, this is coming soon.',
+                'about': 'TBC'
+            };
+            
+            alert(messages[type] || 'Coming soon!');
+        }
+
+        function closeModal() {
+            // Not needed for browser alerts, but keeping for compatibility
+        }
+
+        // UPDATED: Logo initialization function from homepage
+        function initializeLogo() {
+            const dotGrid = document.getElementById('dotGrid');
+            const logo = document.getElementById('logo');
+            
+            if (!dotGrid || !logo) return;
+
+            // Clear existing dots
+            dotGrid.innerHTML = '';
+            
+            const rows = 8;
+            const cols = 12;
+            
+            // Generate dots with wave pattern
+            for (let i = 0; i < rows * cols; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                
+                // Calculate position for wave effect
+                const row = Math.floor(i / cols);
+                const col = i % cols;
+                
+                // Create wave pattern - dots in middle columns are larger/more opaque
+                const wavePosition = col / cols;
+                const rowOffset = row / rows;
+                
+                // Calculate wave height based on column position
+                const waveHeight = Math.sin(wavePosition * Math.PI) * Math.sin(rowOffset * Math.PI);
+                const scale = 0.5 + (waveHeight * 0.8);
+                const opacity = 0.2 + (waveHeight * 0.8);
+                
+                // Apply gradient effect based on position
+                if (col < cols / 3) {
+                    dot.style.background = '#6d28d9';
+                } else if (col < (cols * 2) / 3) {
+                    dot.style.background = '#8b5cf6';
+                } else {
+                    dot.style.background = '#a78bfa';
+                }
+                
+                dot.style.setProperty('--scale', scale);
+                dot.style.setProperty('--opacity', opacity);
+                dot.style.setProperty('--delay', (col * 0.05 + row * 0.02));
+                
+                // Hide dots that are too far from the wave center
+                if (waveHeight < 0.2) {
+                    dot.style.opacity = '0.1';
+                    dot.style.transform = 'scale(0.3)';
+                }
+                
+                dotGrid.appendChild(dot);
+            }
+
+            // Interactive wave effect on mouse move
+            let mouseX = 0;
+            let mouseY = 0;
+
+            logo.addEventListener('mousemove', (e) => {
+                const rect = dotGrid.getBoundingClientRect();
+                mouseX = e.clientX - rect.left;
+                mouseY = e.clientY - rect.top;
+                
+                const dots = dotGrid.querySelectorAll('.dot');
+                dots.forEach((dot, index) => {
+                    const row = Math.floor(index / cols);
+                    const col = index % cols;
+                    
+                    const dotX = (col + 0.5) * (rect.width / cols);
+                    const dotY = (row + 0.5) * (rect.height / rows);
+                    
+                    const distance = Math.sqrt(
+                        Math.pow(mouseX - dotX, 2) + 
+                        Math.pow(mouseY - dotY, 2)
+                    );
+                    
+                    const maxDistance = Math.sqrt(
+                        Math.pow(rect.width, 2) + 
+                        Math.pow(rect.height, 2)
+                    );
+                    
+                    const influence = 1 - (distance / maxDistance);
+                    const wavePosition = col / cols;
+                    const rowOffset = row / rows;
+                    const waveHeight = Math.sin(wavePosition * Math.PI) * Math.sin(rowOffset * Math.PI);
+                    
+                    const scale = (0.5 + (waveHeight * 0.8)) + (influence * 0.5);
+                    const opacity = (0.2 + (waveHeight * 0.8)) + (influence * 0.3);
+                    
+                    dot.style.transform = `scale(${scale})`;
+                    dot.style.opacity = Math.min(opacity, 1);
+                });
+            });
+
+            logo.addEventListener('mouseleave', () => {
+                const dots = dotGrid.querySelectorAll('.dot');
+                dots.forEach((dot, index) => {
+                    const row = Math.floor(index / cols);
+                    const col = index % cols;
+                    const wavePosition = col / cols;
+                    const rowOffset = row / rows;
+                    const waveHeight = Math.sin(wavePosition * Math.PI) * Math.sin(rowOffset * Math.PI);
+                    
+                    if (waveHeight < 0.2) {
+                        dot.style.opacity = '0.1';
+                        dot.style.transform = 'scale(0.3)';
+                    } else {
+                        const scale = 0.5 + (waveHeight * 0.8);
+                        const opacity = 0.2 + (waveHeight * 0.8);
+                        dot.style.transform = `scale(${scale})`;
+                        dot.style.opacity = opacity;
+                    }
+                });
+            });
+
+            console.log('✅ Interactive logo initialized successfully!');
+        }
+
+        // Enhanced Financial Model Preview Application
+        class ModelPreviewApp {
+            constructor() {
+                this.submissionId = null;
+                this.workbook = null;
+                this.currentWorksheet = null;
+                this.selectedCell = null;
+                this.fileMetadata = null;
+                this.debugInfo = {};
+                
+                // Enhanced formatting support
+                this.themeColors = {};
+                this.customFormats = {};
+                this.mergedCells = {};
+                this.columnWidths = {};
+                this.rowHeights = {};
+            }
+
+            // Initialize the application
+            async init() {
+                try {
+                    this.submissionId = this.getSubmissionIdFromURL();
+                    
+                    if (!this.submissionId) {
+                        throw new Error('No submission ID found in URL. Please check the link and try again.');
+                    }
+
+                    console.log('🚀 Initializing Enhanced Model Preview for submission:', this.submissionId);
+                    this.debugInfo.submissionId = this.submissionId;
+                    
+                    await this.loadModel();
+                } catch (error) {
+                    console.error('❌ Initialization failed:', error);
+                    this.showError(error.message);
+                }
+            }
+
+            // Extract submission ID from URL parameters
+            getSubmissionIdFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('submission_id');
+            }
+
+            // FIXED: Load the financial model for preview via API with proper error handling
+            async loadModel() {
+                try {
+                    console.log('📊 Loading Excel with complete formatting...');
+                    
+                    // Show loading state
+                    document.getElementById('loadingSpinner').style.display = 'flex';
+                    document.getElementById('spreadsheetContent').style.display = 'none';
+                    document.getElementById('errorContainer').style.display = 'none';
+                    
+                    // Call enhanced API endpoint
+                    const response = await fetch('/api/excel-render-enhanced', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            submission_id: this.submissionId,
+                            worksheet_name: null
+                        })
+                    });
+                    
+                    // FIXED: Check if the response is OK before trying to read it
+                    if (!response.ok) {
+                        let errorMessage = `API error: ${response.status} ${response.statusText}`;
+                        try {
+                            const errorData = await response.json();
+                            errorMessage = errorData.error || errorMessage;
+                        } catch (e) {
+                            // If we can't read the error, use the default message
+                            console.error('Could not parse error response:', e);
+                        }
+                        throw new Error(errorMessage);
+                    }
+                    
+                    // FIXED: Now we know the response is OK, so we can read it
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (e) {
+                        console.error('Failed to parse JSON response:', e);
+                        throw new Error('Invalid response format from server');
+                    }
+                    
+                    // FIXED: Make sure data exists and is valid
+                    if (!data || typeof data !== 'object') {
+                        throw new Error('Invalid response from server - data is null or not an object');
+                    }
+                    
+                    // FIXED: Check that we have both success AND html
+                    if (!data.success) {
+                        throw new Error(data.error || 'Server returned unsuccessful response');
+                    }
+                    
+                    if (!data.html) {
+                        throw new Error('No HTML content received from server');
+                    }
+                    
+                    // Hide loading spinner
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                    
+                    // Update the spreadsheet content
+                    const spreadsheetContent = document.getElementById('spreadsheetContent');
+                    spreadsheetContent.style.display = 'flex';
+                    spreadsheetContent.innerHTML = `
+                        <div class="formula-display" id="formulaBar">
+                            <strong>Formula:</strong> <span id="formulaContent">Select a cell to view formula</span>
+                        </div>
+                        <div class="horizontal-scroll-wrapper">
+                            <div class="horizontal-scroll-container" id="horizontalScrollContainer">
+                                <div class="horizontal-scroll-content" id="horizontalScrollContent"></div>
+                            </div>
+                            <div class="spreadsheet-scroll-content" id="excelContainer">
+                                ${data.html}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Apply enhanced styles if they exist
+                    if (data.styles && !document.getElementById('excel-enhanced-styles')) {
+                        const styleElement = document.createElement('style');
+                        styleElement.id = 'excel-enhanced-styles';
+                        styleElement.textContent = data.styles;
+                        document.head.appendChild(styleElement);
+                    }
+                    
+                    // Apply anti-copy protection if it exists
+                    if (data.antiCopyScript) {
+                        const scriptElement = document.createElement('script');
+                        scriptElement.textContent = data.antiCopyScript;
+                        document.body.appendChild(scriptElement);
+                    }
+                    
+                    // UPDATED: Setup horizontal scroll synchronization
+                    this.setupHorizontalScrollSync();
+                    
+                    // Update metadata if it exists
+                    if (data.metadata && typeof data.metadata === 'object') {
+                        this.fileMetadata = data.metadata;
+                        this.updateFileInfo();
+                    }
+                    
+                    // Setup worksheet tabs if they exist
+                    if (data.worksheets && Array.isArray(data.worksheets) && data.worksheets.length > 0) {
+                        this.setupEnhancedWorksheetTabs(data.worksheets, data.currentWorksheet);
+                        // Show tabs
+                        document.getElementById('sheetTabs').style.display = 'flex';
+                    }
+                    
+                    // Enable purchase button
+                    document.getElementById('purchaseButton').disabled = false;
+                    document.getElementById('purchaseButton').textContent = 'Download Full Excel Model';
+                    
+                    console.log('✅ Excel loaded with complete formatting!');
+                    
+                } catch (error) {
+                    console.error('❌ Failed to load Excel:', error);
+                    this.showError(error.message);
+                    
+                    // Log additional debug info
+                    this.debugInfo.loadError = {
+                        message: error.message,
+                        stack: error.stack,
+                        timestamp: new Date().toISOString()
+                    };
+                }
+            }
+
+            // Add new method for enhanced worksheet tabs
+            setupEnhancedWorksheetTabs(worksheets, currentWorksheet) {
+                const sheetTabs = document.getElementById('sheetTabs');
+                sheetTabs.innerHTML = '';
+                
+                worksheets.forEach((sheet) => {
+                    const tab = document.createElement('div');
+                    tab.className = 'sheet-tab';
+                    tab.textContent = sheet.name;
+                    tab.dataset.sheetName = sheet.name;
+                    
+                    if (sheet.name === currentWorksheet) {
+                        tab.classList.add('active');
+                    }
+                    
+                    tab.onclick = async () => {
+                        await this.loadWorksheet(sheet.name);
+                        
+                        // Update active tab
+                        document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                    };
+                    
+                    sheetTabs.appendChild(tab);
+                });
+            }
+
+            // UPDATED: Setup horizontal scroll synchronization using CSS transform
+            setupHorizontalScrollSync() {
+                const horizontalScrollContainer = document.getElementById('horizontalScrollContainer');
+                const horizontalScrollContent = document.getElementById('horizontalScrollContent');
+                const excelContainer = document.getElementById('excelContainer');
+                
+                if (!horizontalScrollContainer || !horizontalScrollContent || !excelContainer) {
+                    console.warn('❌ Scroll sync elements not found');
+                    return;
+                }
+                
+                console.log('🔧 Setting up horizontal scroll sync with transform...');
+                
+                // Function to update horizontal scroll content width and setup transform
+                const updateHorizontalScrollWidth = () => {
+                    setTimeout(() => {
+                        const table = excelContainer.querySelector('table');
+                        if (table) {
+                            const tableWidth = table.scrollWidth;
+                            const containerWidth = excelContainer.clientWidth;
+                            
+                            console.log('📏 Table scroll width:', tableWidth);
+                            console.log('📏 Container width:', containerWidth);
+                            
+                            // Calculate if we need horizontal scrolling
+                            const needsHorizontalScroll = tableWidth > containerWidth;
+                            console.log('🔄 Needs horizontal scroll:', needsHorizontalScroll);
+                            
+                            if (needsHorizontalScroll) {
+                                // Set scroll content width to table width for proper scroll range
+                                horizontalScrollContent.style.width = `${tableWidth}px`;
+                                horizontalScrollContainer.style.display = 'block';
+                                
+                                // Wrap table in horizontal wrapper if not already wrapped
+                                if (!table.closest('.table-horizontal-wrapper')) {
+                                    const wrapper = document.createElement('div');
+                                    wrapper.className = 'table-horizontal-wrapper';
+                                    table.parentNode.insertBefore(wrapper, table);
+                                    wrapper.appendChild(table);
+                                }
+                                
+                                console.log('✅ Horizontal scroll enabled with width:', tableWidth);
+                            } else {
+                                horizontalScrollContainer.style.display = 'none';
+                                console.log('❌ No horizontal scroll needed');
+                            }
+                        } else {
+                            console.warn('⚠️ No table found in Excel container');
+                            // Fallback: set a large width
+                            horizontalScrollContent.style.width = '3000px';
+                            horizontalScrollContainer.style.display = 'block';
+                        }
+                    }, 200);
+                };
+                
+                // Remove existing event listeners to prevent duplicates
+                if (this.horizontalScrollHandler) {
+                    horizontalScrollContainer.removeEventListener('scroll', this.horizontalScrollHandler);
+                }
+                
+                // Create horizontal scroll handler using CSS transform
+                this.horizontalScrollHandler = (e) => {
+                    const scrollLeft = e.target.scrollLeft;
+                    const table = excelContainer.querySelector('table');
+                    
+                    if (table) {
+                        // Use CSS transform to move table horizontally
+                        table.style.transform = `translateX(-${scrollLeft}px)`;
+                        console.log('🔄 Table transform:', `-${scrollLeft}px`);
+                    }
+                };
+                
+                // Add scroll handler to top horizontal scroll bar only
+                horizontalScrollContainer.addEventListener('scroll', this.horizontalScrollHandler);
+                
+                // CRITICAL: Ensure Excel container never scrolls horizontally
+                excelContainer.style.overflowX = 'hidden';
+                excelContainer.addEventListener('scroll', (e) => {
+                    // Reset any accidental horizontal scroll
+                    if (e.target.scrollLeft !== 0) {
+                        e.target.scrollLeft = 0;
+                    }
+                });
+                
+                // Update width initially
+                updateHorizontalScrollWidth();
+                
+                // Update on window resize
+                const resizeHandler = () => {
+                    console.log('🔄 Window resized, updating scroll width');
+                    updateHorizontalScrollWidth();
+                };
+                window.addEventListener('resize', resizeHandler);
+                
+                // Observer for content changes
+                if (this.scrollObserver) {
+                    this.scrollObserver.disconnect();
+                }
+                
+                this.scrollObserver = new MutationObserver(() => {
+                    console.log('🔄 Excel content changed, updating scroll width');
+                    updateHorizontalScrollWidth();
+                });
+                
+                this.scrollObserver.observe(excelContainer, { 
+                    childList: true, 
+                    subtree: true, 
+                    attributes: true,
+                    attributeFilter: ['style', 'class'] 
+                });
+                
+                // Force final calculation
+                setTimeout(() => {
+                    console.log('🔄 Final scroll width calculation...');
+                    updateHorizontalScrollWidth();
+                }, 1000);
+                
+                console.log('✅ Horizontal scroll setup complete (transform-based)');
+            }
+
+            // FIXED: Add method to load specific worksheet with proper validation
+            async loadWorksheet(worksheetName) {
+                try {
+                    // Show loading overlay
+                    const container = document.getElementById('excelContainer');
+                    if (!container) {
+                        console.error('Excel container not found');
+                        return;
+                    }
+                    
+                    container.style.opacity = '0.5';
+                    container.style.pointerEvents = 'none';
+                    
+                    const response = await fetch('/api/excel-render-enhanced', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            submission_id: this.submissionId,
+                            worksheet_name: worksheetName
+                        })
+                    });
+                    
+                    // FIXED: Check response before using it
+                    if (!response.ok) {
+                        throw new Error(`Failed to load worksheet: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (e) {
+                        throw new Error('Failed to parse worksheet response');
+                    }
+                    
+                    // FIXED: Validate data
+                    if (!data || !data.success || !data.html) {
+                        throw new Error('Invalid worksheet data received');
+                    }
+                    
+                    container.innerHTML = data.html;
+                    container.style.opacity = '1';
+                    container.style.pointerEvents = 'auto';
+                    
+                    // Re-apply anti-copy script for new content
+                    if (data.antiCopyScript) {
+                        const scriptElement = document.createElement('script');
+                        scriptElement.textContent = data.antiCopyScript;
+                        document.body.appendChild(scriptElement);
+                    }
+                    
+                } catch (error) {
+                    console.error('Failed to load worksheet:', error);
+                    const container = document.getElementById('excelContainer');
+                    if (container) {
+                        container.style.opacity = '1';
+                        container.style.pointerEvents = 'auto';
+                    }
+                    alert(`Failed to load worksheet: ${error.message}`);
+                }
+            }
+
+            // Load metadata (try cache first, then API)
+            async loadMetadata() {
+                const cachedMetadata = sessionStorage.getItem(`file_metadata_${this.submissionId}`);
+                
+                if (cachedMetadata) {
+                    try {
+                        const parsed = JSON.parse(cachedMetadata);
+                        const cacheTime = parsed._cacheTime || 0;
+                        const now = Date.now();
+                        const cacheAge = now - cacheTime;
+                        
+                        if (cacheAge < 5 * 60 * 1000 && parsed.company_name && parsed.company_name !== 'Your Company') {
+                            this.fileMetadata = parsed;
+                            console.log('💾 Using valid cached metadata:', this.fileMetadata);
+                            this.debugInfo.cachedMetadata = true;
+                            return;
+                        } else {
+                            console.log('🔄 Cache expired or invalid, fetching fresh data');
+                            sessionStorage.removeItem(`file_metadata_${this.submissionId}`);
+                        }
+                    } catch (e) {
+                        console.log('⚠️ Invalid cache data, removing');
+                        sessionStorage.removeItem(`file_metadata_${this.submissionId}`);
+                    }
+                }
+
+                console.log('🔄 Fetching fresh metadata for submission:', this.submissionId);
+                
+                try {
+                    const debugUrl = `/api/get-model?submission_id=${this.submissionId}&debug=true`;
+                    console.log('📋 Fetching metadata from API:', debugUrl);
+                    
+                    const response = await fetch(debugUrl, {
+                        method: 'GET',
+                        cache: 'no-cache',
+                        headers: {
+                            'Cache-Control': 'no-cache',
+                            'Pragma': 'no-cache'
+                        }
+                    });
+
+                    console.log('📊 Debug response status:', response.status);
+
+                    if (response.ok) {
+                        const debugData = await response.json();
+                        console.log('📊 Full debug data received:', debugData);
+                        
+                        if (debugData && debugData.database_record) {
+                            const record = debugData.database_record;
+                            
+                            if (record.company_name && record.company_name !== 'Your Company') {
+                                this.fileMetadata = {
+                                    company_name: record.company_name,
+                                    file_size: record.file_size || null,
+                                    processed_at: record.created_at || new Date().toISOString(),
+                                    modeling_approach: record.modeling_approach || 'Not specified',
+                                    revenue_generation_selected: record.revenue_generation_selected || 'Not specified',
+                                    revenue_staff: record.revenue_staff || 'Not specified',
+                                    _cacheTime: Date.now()
+                                };
+                                
+                                sessionStorage.setItem(`file_metadata_${this.submissionId}`, JSON.stringify(this.fileMetadata));
+                                console.log('✅ Company data found and cached:', this.fileMetadata.company_name);
+                                this.debugInfo.cachedMetadata = false;
+                                this.debugInfo.companyNameSource = 'API';
+                                return;
+                            } else {
+                                console.log('⚠️ Invalid company name in database:', record.company_name);
+                            }
+                        } else {
+                            console.log('⚠️ No database record in debug data:', debugData);
+                        }
+                    } else {
+                        console.log('⚠️ Debug request failed with status:', response.status);
+                        const errorText = await response.text();
+                        console.log('⚠️ Error response:', errorText);
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to fetch metadata:', error);
+                    this.debugInfo.metadataError = error.message;
+                }
+
+                console.log('⚠️ Failed to load company data, using defaults');
+                this.fileMetadata = {
+                    company_name: 'Your Company',
+                    file_size: null,
+                    processed_at: new Date().toISOString(),
+                    modeling_approach: 'Not specified',
+                    revenue_generation_selected: 'Not specified',
+                    revenue_staff: 'Not specified'
+                };
+                
+                this.debugInfo.cachedMetadata = false;
+                this.debugInfo.companyNameSource = 'default';
+            }
+
+            // FIXED: Update file information in UI with proper null checks
+            updateFileInfo() {
+                // FIXED: Better check if metadata exists
+                if (!this.fileMetadata) {
+                    console.warn('No file metadata available');
+                    // Set default values if no metadata
+                    this.fileMetadata = {
+                        company_name: 'Your Company',
+                        processed_at: new Date().toISOString(),
+                        modeling_approach: 'Not specified',
+                        revenue_generation_selected: 'Not specified',
+                        revenue_staff: 'Not specified'
+                    };
+                }
+                
+                const headerCompanyElement = document.getElementById('headerCompanyName');
+                if (headerCompanyElement) {
+                    headerCompanyElement.textContent = this.fileMetadata.company_name || 'Your Company';
+                }
+
+                const elements = {
+                    fileCompanyName: this.fileMetadata.company_name || 'Your Company',
+                    fileCreated: this.fileMetadata.processed_at ? 
+                        new Date(this.fileMetadata.processed_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) : 'Recently',
+                    modelingType: this.formatModelingApproach(this.fileMetadata.modeling_approach),
+                    revenueStreams: this.formatRevenueStreams(this.fileMetadata.revenue_generation_selected),
+                    staffRevenue: this.formatStaffRevenue(this.fileMetadata.revenue_staff)
+                };
+
+                Object.entries(elements).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value || 'Not specified';
+                    }
+                });
+            }
+
+            formatModelingApproach(approach) {
+                if (!approach || approach === 'Not specified') return 'Not specified';
+                return approach.charAt(0).toUpperCase() + approach.slice(1).replace(/_/g, ' ');
+            }
+
+            formatRevenueStreams(streams) {
+                if (!streams || streams === 'Not specified') return 'Not specified';
+                try {
+                    if (typeof streams === 'string' && streams.startsWith('[')) {
+                        const parsed = JSON.parse(streams);
+                        return parsed.join(', ');
+                    }
+                    return streams;
+                } catch (e) {
+                    return streams;
+                }
+            }
+
+            formatStaffRevenue(staff) {
+                if (!staff || staff === 'Not specified') return 'Not specified';
+                return staff === 'true' || staff === true ? 'Yes' : 'No';
+            }
+
+            // Show error state
+            showError(message) {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('spreadsheetContent').style.display = 'none';
+                document.getElementById('errorContainer').style.display = 'block';
+                document.getElementById('errorMessage').textContent = message;
+                
+                this.debugInfo.errorMessage = message;
+                this.debugInfo.timestamp = new Date().toISOString();
+            }
+
+            // Handle purchase/download (disabled for now)
+            async handlePurchase() {
+                alert('🔒 Full download access will be available after payment integration is complete. This is currently a preview-only version.');
+            }
+
+            // Show debug information
+            showDebugInfo() {
+                const debugDiv = document.createElement('div');
+                debugDiv.className = 'debug-info';
+                debugDiv.innerHTML = `
+                    <strong>🔍 Enhanced Debug Information:</strong><br>
+                    <strong>Submission ID:</strong> ${this.debugInfo.submissionId || 'Not found'}<br>
+                    <strong>API URL:</strong> ${this.debugInfo.apiUrl || 'Not set'}<br>
+                    <strong>HEAD Request Status:</strong> ${this.debugInfo.headRequestStatus || 'Not attempted'}<br>
+                    <strong>Fetch Status:</strong> ${this.debugInfo.fetchStatus || 'Not attempted'}<br>
+                    <strong>File Size:</strong> ${this.debugInfo.fileSize ? (this.debugInfo.fileSize / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown'}<br>
+                    <strong>Sheets Found:</strong> ${this.debugInfo.sheets ? this.debugInfo.sheets.join(', ') : 'None'}<br>
+                    <strong>Cached Metadata:</strong> ${this.debugInfo.cachedMetadata ? 'Yes' : 'No'}<br>
+                    <strong>Enhanced Features:</strong> Formatting, Colors, Borders, Merged Cells<br>
+                    <strong>API Error Details:</strong><br>
+                    <div style="word-break: break-all; font-size: 10px; margin: 5px 0; padding: 5px; background: rgba(255,255,255,0.1);">
+                        ${this.debugInfo.apiErrorDetails ? JSON.stringify(this.debugInfo.apiErrorDetails, null, 2) : 'None'}
+                    </div>
+                    <strong>Error:</strong> ${this.debugInfo.errorMessage || 'None'}<br>
+                    <strong>Timestamp:</strong> ${this.debugInfo.timestamp || new Date().toISOString()}
+                    <br><br>
+                    <button onclick="clearCache()" style="background: #8b5cf6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                        Clear Cache & Retry
+                    </button>
+                `;
+
+                const errorContainer = document.getElementById('errorContainer');
+                const existingDebug = errorContainer.querySelector('.debug-info');
+                if (existingDebug) {
+                    existingDebug.remove();
+                }
+                errorContainer.appendChild(debugDiv);
+            }
+        }
+
+        // Initialize the enhanced application
+        const app = new ModelPreviewApp();
+
+        // Global functions for buttons
+        function handlePurchase() {
+            app.handlePurchase();
+        }
+
+        function handleCustomization() {
+            sessionStorage.setItem('previous_submission_id', app.submissionId);
+            window.location.href = '/pages/tailored-models.html';
+        }
+
+        function handleAssumptions() {
+            sessionStorage.setItem('previous_submission_id', app.submissionId);
+            window.location.href = '/pages/questionnaire.html';
+        }
+
+        function retryLoad() {
+            document.getElementById('errorContainer').style.display = 'none';
+            document.getElementById('loadingSpinner').style.display = 'flex';
+            app.loadModel();
+        }
+
+        function toggleDebugInfo() {
+            app.showDebugInfo();
+        }
+
+        function clearCache() {
+            // Clear all cached data for this submission
+            sessionStorage.removeItem(`file_metadata_${app.submissionId}`);
+            
+            console.log('🗑️ Cache cleared, reloading...');
+            
+            // Reload the page to start fresh
+            window.location.reload();
+        }
+
+        // UPDATED: Mouse illumination effect with trails from homepage
+        let mouseTimeout;
+        const trailElements = [];
+        const mouseHistory = [];
+        const maxTrails = 8; // Reduced significantly
+        const maxHistory = 12;
+        let lastTrailTime = 0;
+        const trailInterval = 60; // Much slower to prevent glitching
+        
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            
+            // Update current cursor position
+            document.documentElement.style.setProperty('--mouse-x', x + '%');
+            document.documentElement.style.setProperty('--mouse-y', y + '%');
+            
+            // Add to mouse history
+            mouseHistory.push({ x, y, time: Date.now() });
+            
+            // Keep history limited
+            if (mouseHistory.length > maxHistory) {
+                mouseHistory.shift();
+            }
+            
+            document.body.classList.add('mouse-active');
+            
+            // Create trail elements from history - much less frequently
+            const currentTime = Date.now();
+            if (currentTime - lastTrailTime > trailInterval && mouseHistory.length > 3) {
+                // Create trail at a position behind current
+                const trailIndex = Math.max(0, mouseHistory.length - 4);
+                const trailPos = mouseHistory[trailIndex];
+                if (trailPos) {
+                    createTrailElement(trailPos.x, trailPos.y);
+                }
+                lastTrailTime = currentTime;
+            }
+            
+            // Clear existing timeout
+            clearTimeout(mouseTimeout);
+            
+            // Hide effect after mouse stops moving
+            mouseTimeout = setTimeout(() => {
+                document.body.classList.remove('mouse-active');
+            }, 500);
+        });
+
+        function createTrailElement(x, y) {
+            // Remove oldest trail if we have too many
+            if (trailElements.length >= maxTrails) {
+                const oldestTrail = trailElements.shift();
+                if (oldestTrail && oldestTrail.parentNode) {
+                    oldestTrail.remove();
+                }
+            }
+            
+            // Create new trail element
+            const trail = document.createElement('div');
+            trail.className = 'mouse-trail';
+            trail.style.setProperty('--trail-x', x + '%');
+            trail.style.setProperty('--trail-y', y + '%');
+            
+            document.body.appendChild(trail);
+            trailElements.push(trail);
+            
+            // Start fading out
+            setTimeout(() => {
+                trail.classList.add('fade-out');
+                
+                // Remove from DOM after fade completes
+                setTimeout(() => {
+                    if (trail.parentNode) {
+                        trail.remove();
+                    }
+                    // Remove from array
+                    const index = trailElements.indexOf(trail);
+                    if (index > -1) {
+                        trailElements.splice(index, 1);
+                    }
+                }, 800); // Shorter fade duration
+            }, 100);
+        }
+
+        // Hide effect when mouse leaves window
+        document.addEventListener('mouseleave', () => {
+            clearTimeout(mouseTimeout);
+            document.body.classList.remove('mouse-active');
+            
+            // Clear mouse history
+            mouseHistory.length = 0;
+            
+            // Clean up all trail elements
+            trailElements.forEach(trail => {
+                if (trail.parentNode) {
+                    trail.classList.add('fade-out');
+                    setTimeout(() => trail.remove(), 800);
+                }
+            });
+            trailElements.length = 0;
+        });
+
+        // Start the enhanced application when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize logo first
+            initializeLogo();
+            
+            // Then initialize the enhanced app
+            app.init();
+        });
+
+        // Enhanced anti-piracy measures
+        document.addEventListener('selectstart', function(e) {
+            if (e.target && e.target.closest && (e.target.closest('.spreadsheet-table') || e.target.closest('.formula-display'))) {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target && e.target.closest && e.target.closest('.spreadsheet-table')) {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'a' || e.key === 'x' || e.key === 'v')) {
+                if (e.target && e.target.closest && (e.target.closest('.spreadsheet-table') || e.target.closest('.formula-display'))) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // Additional protection against print screen
+        document.addEventListener('keyup', function(e) {
+            if (e.keyCode === 44) {
+                console.log('Print screen detected - consider watermarking for additional protection');
+            }
+        });
+
+        // Add custom styles for your specific Excel formatting
+        const customExcelStyles = `
+            /* Override spreadsheet container styles */
+            .spreadsheet-container {
+                background: transparent;
+                border: none;
+            }
+            
+            .spreadsheet-scroll-content {
+                padding: 0;
+                background: #f5f5f5;
+            }
+            
+            /* Your Excel's specific header color */
+            .excel-cell[style*="background-color: #15406b"],
+            .excel-cell[style*="background-color: rgb(21, 64, 107)"] {
+                color: white !important;
+                font-weight: bold;
+            }
+            
+            /* Loading overlay */
+            #excelContainer {
+                transition: opacity 0.3s ease;
+            }
+            
+            /* Formula bar styling */
+            .formula-display {
+                background: #ffffff;
+                border-bottom: 1px solid #d0d7de;
+                padding: 8px 12px;
+                font-family: 'Consolas', 'Monaco', monospace;
+                font-size: 12px;
+                color: #1a1a1a;
+                min-height: 32px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .formula-display strong {
+                color: #666;
+                font-weight: normal;
+            }
+            
+            #formulaContent {
+                flex: 1;
+                font-family: 'Consolas', 'Monaco', monospace;
+            }
+        `;
+
+        // Add the custom styles
+        if (!document.getElementById('custom-excel-styles')) {
+            const styleEl = document.createElement('style');
+            styleEl.id = 'custom-excel-styles';
+            styleEl.textContent = customExcelStyles;
+            document.head.appendChild(styleEl);
+        }
+    </script>
+</body>
+</html>

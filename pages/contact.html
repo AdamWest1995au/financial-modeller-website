@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - The Financial Modeller</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #ffffff;
+            background: #000000;
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+            background-size: 3.8px 3.8px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Mouse illumination effect */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background: radial-gradient(circle 180px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                        rgba(139, 92, 246, 0.4) 0%, 
+                        rgba(139, 92, 246, 0.25) 3%, 
+                        rgba(139, 92, 246, 0.12) 8%, 
+                        rgba(139, 92, 246, 0.06) 15%, 
+                        rgba(139, 92, 246, 0.02) 25%, 
+                        rgba(139, 92, 246, 0.005) 40%, 
+                        transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            filter: blur(6px);
+        }
+
+        body.mouse-active::after {
+            opacity: 1;
+        }
+
+        /* WAVE LOGO STYLES */
+        .logo::before {
+            display: none !important;
+            content: none !important;
+        }
+
+        .logo {
+            font-size: 1.5rem !important;
+            font-weight: 400 !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 16px !important;
+            letter-spacing: -0.03em !important;
+            cursor: pointer !important;
+        }
+
+        .logo:hover, 
+        .logo:focus, 
+        .logo:active,
+        .logo:visited {
+            text-decoration: none !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .dot-grid {
+            width: 48px;
+            height: 36px;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 0.5px;
+            position: relative;
+            transform: perspective(200px) rotateY(-15deg);
+        }
+
+        .dot {
+            width: 2px;
+            height: 2px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+        }
+
+        /* Create wave pattern with gradient effect */
+        .dot {
+            opacity: 0.3;
+            transform: scale(0.6);
+        }
+
+        /* Wave pattern - each column has different heights */
+        .dot-grid .dot:nth-child(12n+1) { opacity: 0.2; transform: scale(0.5); }
+        .dot-grid .dot:nth-child(12n+2) { opacity: 0.3; transform: scale(0.6); }
+        .dot-grid .dot:nth-child(12n+3) { opacity: 0.4; transform: scale(0.7); }
+        .dot-grid .dot:nth-child(12n+4) { opacity: 0.5; transform: scale(0.8); }
+        .dot-grid .dot:nth-child(12n+5) { opacity: 0.6; transform: scale(0.9); }
+        .dot-grid .dot:nth-child(12n+6) { opacity: 0.8; transform: scale(1.1); }
+        .dot-grid .dot:nth-child(12n+7) { opacity: 0.9; transform: scale(1.2); }
+        .dot-grid .dot:nth-child(12n+8) { opacity: 1; transform: scale(1.3); }
+        .dot-grid .dot:nth-child(12n+9) { opacity: 0.9; transform: scale(1.2); }
+        .dot-grid .dot:nth-child(12n+10) { opacity: 0.7; transform: scale(1); }
+        .dot-grid .dot:nth-child(12n+11) { opacity: 0.5; transform: scale(0.8); }
+        .dot-grid .dot:nth-child(12n+12) { opacity: 0.3; transform: scale(0.6); }
+
+        /* Gradient effect from left to right */
+        .dot {
+            background: linear-gradient(90deg, #6d28d9 0%, #8b5cf6 50%, #a78bfa 100%);
+        }
+
+        .logo span {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: -0.03em;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        /* Hover state for the entire logo */
+        .logo:hover .dot-grid {
+            transform: perspective(200px) rotateY(-10deg) scale(1.05);
+        }
+
+        .logo:hover .dot {
+            animation: wave 2s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% {
+                transform: scale(var(--scale, 1)) translateY(0);
+                opacity: var(--opacity, 0.6);
+            }
+            50% {
+                transform: scale(calc(var(--scale, 1) * 1.3)) translateY(-2px);
+                opacity: calc(var(--opacity, 0.6) * 1.2);
+            }
+        }
+
+        /* Stagger the animation for wave effect */
+        .logo:hover .dot { animation-delay: calc(var(--delay, 0) * 1s); }
+
+        /* Add subtle glow effect on hover */
+        .logo:hover .dot-grid {
+            filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.3));
+        }
+
+        /* Header */
+        .header {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        /* Contact Section */
+        .contact-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 100px;
+            align-items: start;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Left Column */
+        .contact-info {
+            padding-top: 20px;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.95rem;
+            margin-bottom: 40px;
+            letter-spacing: 0.5px;
+        }
+
+        .flashing-dot {
+            width: 10px;
+            height: 10px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            position: relative;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .flashing-dot::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: pulseRing 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulseRing {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0.5;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .contact-title {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .contact-description {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            margin-bottom: 60px;
+        }
+
+        /* Contact Methods - Version 2 equal sizing */
+        .contact-methods {
+            display: flex;
+            gap: 40px;
+        }
+
+        .contact-method {
+            padding: 32px;
+            background: rgba(139, 92, 246, 0.05);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            flex: 1; /* Equal width distribution */
+            display: flex;
+            flex-direction: column;
+            min-height: 220px; /* Minimum height for consistency */
+        }
+
+        .contact-method:hover {
+            background: rgba(139, 92, 246, 0.08);
+            border-color: rgba(139, 92, 246, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .method-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: white; /* Make icons white */
+        }
+
+        .method-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+
+        .method-description {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 20px;
+            line-height: 1.5;
+            flex-grow: 1; /* Added to push the link to the bottom */
+        }
+
+        .method-link {
+            color: #8b5cf6;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: color 0.3s ease;
+            display: inline-block;
+            border-bottom: 1px solid transparent;
+            margin-top: auto; /* Added to align at the bottom */
+        }
+
+        .method-link:hover {
+            color: #ec4899;
+            border-bottom-color: #ec4899;
+        }
+
+        /* Form Column */
+        .contact-form-container {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 48px;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-form-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .form-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-group {
+            margin-bottom: 28px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.05);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 120px;
+            line-height: 1.5;
+        }
+
+        /* Updated Submit Button - Styled like home page button */
+        .submit-btn {
+            width: 100%;
+            padding: 14px 32px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.35) 0%, rgba(139, 92, 246, 0.35) 100%);
+            transition: width 0.4s ease;
+            z-index: -1;
+            box-shadow: 
+                0 0 10px rgba(236, 72, 153, 0.1),
+                0 0 20px rgba(139, 92, 246, 0.05);
+        }
+
+        .submit-btn:hover::before {
+            width: 100%;
+            box-shadow: 
+                0 0 15px rgba(236, 72, 153, 0.2),
+                0 0 30px rgba(139, 92, 246, 0.1);
+        }
+
+        .submit-btn::after {
+            content: '→';
+            font-size: 1.1em;
+            transition: transform 0.3s ease;
+        }
+
+        .submit-btn:hover::after {
+            transform: translateX(3px);
+        }
+
+        .submit-btn:hover {
+            color: white;
+            border-color: #8b5cf6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .submit-btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .submit-btn:disabled::before {
+            width: 0 !important;
+        }
+
+        .submit-btn:disabled::after {
+            transform: none !important;
+        }
+
+        /* Success/Error Messages - Hidden by default */
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            display: none; /* Hidden by default */
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.success {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            color: #4ade80;
+        }
+
+        .message.error {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #f87171;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .field-error {
+            color: #f87171;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            animation: slideIn 0.3s ease;
+        }
+
+        /* Footer */
+        .footer {
+            background: rgba(0, 0, 0, 0.5);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px 20px 20px;
+            text-align: center;
+            margin-top: 100px;
+        }
+
+        .footer-text {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .contact-section {
+                grid-template-columns: 1fr;
+                gap: 60px;
+            }
+
+            .contact-title {
+                font-size: 2.5rem;
+            }
+
+            .contact-methods {
+                flex-direction: column;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            /* Wave logo mobile styles */
+            .dot-grid {
+                width: 40px;
+                height: 30px;
+            }
+            
+            .logo {
+                gap: 12px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .contact-form-container {
+                padding: 32px 24px;
+            }
+
+            .contact-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav-container">
+            <a href="/" class="logo" id="logo">
+                <div class="dot-grid" id="dotGrid">
+                    <!-- Dots will be generated by JavaScript -->
+                </div>
+                <span>The Financial Modeller</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="../../index.html">Home</a></li>
+                <li><a href="https://www.thefinancialmodeller.com/pages/questionnaire">Build a Model</a></li>
+                <li><a href="#" data-modal="templates" onclick="showModal('templates'); return false;">Model Templates</a></li>
+                <li><a href="#" data-modal="how-it-works" onclick="showModal('how-it-works'); return false;">How it works</a></li>
+                <li><a href="#" data-modal="pricing" onclick="showModal('pricing'); return false;">Pricing</a></li>
+                <li><a href="#" data-modal="about" onclick="showModal('about'); return false;">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Contact Section -->
+    <main class="contact-section">
+        <!-- Left Column - Info -->
+        <div class="contact-info">
+            <div class="section-label">
+                <span class="flashing-dot"></span>
+                <span>Get in touch with us</span>
+            </div>
+            
+            <h1 class="contact-title">Get in Touch, Questions, or Account Assistance</h1>
+            
+            <p class="contact-description">
+                Have questions or want to learn more about The Financial Modeller? 
+                Reach out to our team—we're here to help you take the next step.
+            </p>
+
+            <div class="contact-methods">
+                <div class="contact-method">
+                    <div class="method-icon">✉</div>
+                    <h3 class="method-title">Reach Out to Us</h3>
+                    <p class="method-description">Need assistance? Drop us a message anytime.</p>
+                    <a href="mailto:info@thefinancialmodeller.com" class="method-link">info@thefinancialmodeller.com</a>
+                </div>
+
+                <div class="contact-method">
+                    <div class="method-icon">☎</div>
+                    <h3 class="method-title">Call Us</h3>
+                    <p class="method-description">Need help? Give us a call—we're here for you.</p>
+                    <a href="tel:TBC" class="method-link">TBC</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Form -->
+        <div class="contact-form-container">
+            <div class="form-content">
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label for="name" class="form-label">Name</label>
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name" 
+                            class="form-input" 
+                            placeholder="Jane Smith" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="form-input" 
+                            placeholder="jane@company.com" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone" class="form-label">Phone</label>
+                        <input 
+                            type="tel" 
+                            id="phone" 
+                            name="phone" 
+                            class="form-input" 
+                            placeholder="+61 (4) 123-4567"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea 
+                            id="message" 
+                            name="message" 
+                            class="form-input" 
+                            placeholder="Tell us more about your financial modelling needs..."
+                            required
+                        ></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Submit</button>
+
+                    <div id="successMessage" class="message success">
+                        Thank you for reaching out! We'll get back to you within 24 hours.
+                    </div>
+
+                    <div id="errorMessage" class="message error">
+                        Something went wrong. Please try again or email us directly.
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p class="footer-text">
+            &copy; 2025 The Financial Modeller. All rights reserved. | Sydney, Australia
+        </p>
+    </footer>
+
+    <script>
+        // WAVE LOGO JAVASCRIPT
+        function initializeLogo() {
+            const dotGrid = document.getElementById('dotGrid');
+            const logo = document.getElementById('logo');
+            
+            if (!dotGrid || !logo) return;
+
+            // Clear existing dots
+            dotGrid.innerHTML = '';
+            
+            const rows = 8;
+            const cols = 12;
+            
+            // Generate dots with wave pattern
+            for (let i = 0; i < rows * cols; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                
+                // Calculate position for wave effect
+                const row = Math.floor(i / cols);
+                const col = i % cols;
+                
+                // Create wave pattern - dots in middle columns are larger/more opaque
+                const wavePosition = col / cols;
+                const rowOffset = row / rows;
+                
+                // Calculate wave height based on column position
+                const waveHeight = Math.sin(wavePosition * Math.PI) * Math.sin(rowOffset * Math.PI);
+                const scale = 0.5 + (waveHeight * 0.8);
+                const opacity = 0.2 + (waveHeight * 0.8);
+                
+                // Apply gradient effect based on position
+                if (col < cols / 3) {
+                    dot.style.background = '#6d28d9';
+                } else if (col < (cols * 2) / 3) {
+                    dot.style.background = '#8b5cf6';
+                } else {
+                    dot.style.background = '#a78bfa';
+                }
+                
+                dot.style.setProperty('--scale', scale);
+                dot.style.setProperty('--opacity', opacity);
+                dot.style.setProperty('--delay', (col * 0.05 + row * 0.02));
+                
+                // Hide dots that are too far from the wave center
+                if (waveHeight < 0.2) {
+                    dot.style.opacity = '0.1';
+                    dot.style.transform = 'scale(0.3)';
+                }
+                
+                dotGrid.appendChild(dot);
+            }
+
+            // Interactive wave effect on mouse move
+            let mouseX = 0;
+            let mouseY = 0;
+
+            logo.addEventListener('mousemove', (e) => {
+                const rect = dotGrid.getBoundingClientRect();
+                mouseX = e.clientX - rect.left;
+                mouseY = e.clientY - rect.top;
+                
+                const dots = dotGrid.querySelectorAll('.dot');
+                dots.forEach((dot, index) => {
+                    const row = Math.floor(index / cols);
+                    const col = index % cols;
+                    
+                    const dotX = (col + 0.5) * (rect.width / cols);
+                    const dotY = (row + 0.5) * (rect.height / rows);
+                    
+                    const distance = Math.sqrt(
+                        Math.pow(mouseX - dotX, 2) + 
+                        Math.pow(mouseY - dotY, 2)
+                    );
+                    
+                    const maxDistance = Math.sqrt(
+                        Math.pow(rect.width, 2) + 
+                        Math.pow(rect.height, 2)
+                    );
+                    
+                    const influence = 1 - (distance / maxDistance);
+                    const wavePosition = col / cols;
+                    const rowOffset = row / rows;
+                    const waveHeight = Math.sin(wavePosition * Math.PI) * Math.sin(rowOffset * Math.PI);
+                    
+                    const scale = (0.5 + (waveHeight * 0.8)) + (influence * 0.5);
+                    const opacity = (0.2 + (waveHeight * 0.8)) + (influence * 0.3);
+                    
+                    dot.style.transform = `scale(${scale})`;
+                    dot.style.opacity = Math.min(opacity, 1);
+                });
+            });
+
+            logo.addEventListener('mouseleave', () => {
+                const dots = dotGrid.querySelectorAll('.dot');
+                dots.forEach((dot, index) => {
+                    const row = Math.floor(index / cols);
+                    const col = index % cols;
+                    const wavePosition = col / cols;
+                    const rowOffset = row / rows;
+                    const waveHeight = Math.sin(wavePosition * Math.PI) * Math.sin(rowOffset * Math.PI);
+                    
+                    if (waveHeight < 0.2) {
+                        dot.style.opacity = '0.1';
+                        dot.style.transform = 'scale(0.3)';
+                    } else {
+                        const scale = 0.5 + (waveHeight * 0.8);
+                        const opacity = 0.2 + (waveHeight * 0.8);
+                        dot.style.transform = `scale(${scale})`;
+                        dot.style.opacity = opacity;
+                    }
+                });
+            });
+        }
+
+        // Initialize logo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeLogo);
+        } else {
+            initializeLogo();
+        }
+
+        // Mouse illumination effect
+        let mouseTimeout;
+
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            
+            document.documentElement.style.setProperty('--mouse-x', x + '%');
+            document.documentElement.style.setProperty('--mouse-y', y + '%');
+            
+            document.body.classList.add('mouse-active');
+            
+            clearTimeout(mouseTimeout);
+            
+            mouseTimeout = setTimeout(() => {
+                document.body.classList.remove('mouse-active');
+            }, 500);
+        });
+
+        document.addEventListener('mouseleave', () => {
+            clearTimeout(mouseTimeout);
+            document.body.classList.remove('mouse-active');
+        });
+
+        // Modal function placeholder
+        function showModal(type) {
+            const messages = {
+                'templates': 'Our model templates library is coming soon',
+                'how-it-works': 'Stay tuned for our in-depth tutorial',
+                'pricing': 'As we are not yet live, this is coming soon.',
+                'about': 'TBC'
+            };
+            
+            alert(messages[type] || 'Coming soon!');
+        }
+
+        // =================================================================
+        // Contact Form JavaScript - Production Ready
+        // =================================================================
+
+        // Configuration
+        const API_ENDPOINT = '/api/submit-contact';
+        const SUBMISSION_COOLDOWN = 3000; // 3 seconds
+
+        // State management
+        let isSubmitting = false;
+        let lastSubmissionTime = 0;
+
+        // DOM elements
+        const contactForm = document.getElementById('contactForm');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const submitBtn = contactForm.querySelector('.submit-btn');
+
+        // Form validation rules
+        const validationRules = {
+            name: {
+                required: true,
+                minLength: 2,
+                maxLength: 100,
+                pattern: /^[a-zA-Z\s\-'\.]+$/,
+                message: 'Name should only contain letters, spaces, hyphens, and apostrophes'
+            },
+            email: {
+                required: true,
+                maxLength: 255,
+                pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: 'Please enter a valid email address'
+            },
+            phone: {
+                required: false,
+                maxLength: 20,
+                pattern: /^[\+]?[1-9][\d\s\-\(\)]{7,19}$/,
+                message: 'Please enter a valid phone number'
+            },
+            message: {
+                required: true,
+                minLength: 10,
+                maxLength: 2000,
+                message: 'Message must be between 10 and 2000 characters'
+            }
+        };
+
+        // Utility functions
+        function showMessage(element, message, isError = false) {
+            // Hide all messages first
+            hideAllMessages();
+            
+            element.textContent = message;
+            element.className = `message ${isError ? 'error' : 'success'} show`;
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                element.classList.remove('show');
+            }, 10000);
+        }
+
+        function hideAllMessages() {
+            successMessage.classList.remove('show');
+            errorMessage.classList.remove('show');
+        }
+
+        function setSubmitButtonState(loading = false) {
+            if (loading) {
+                submitBtn.disabled = true;
+                // Keep the arrow in the button text but update the text
+                submitBtn.innerHTML = 'Sending... <span style="margin-left: auto;">→</span>';
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Submit';
+                // The ::after pseudo-element will handle the arrow
+            }
+        }
+
+        // Validation functions
+        function validateField(field, value, rules) {
+            if (!value.trim() && rules.required) {
+                return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
+            }
+            
+            if (!value.trim()) return null; // Skip validation for optional empty fields
+            
+            if (rules.minLength && value.length < rules.minLength) {
+                return `${field.charAt(0).toUpperCase() + field.slice(1)} must be at least ${rules.minLength} characters`;
+            }
+            
+            if (rules.maxLength && value.length > rules.maxLength) {
+                return `${field.charAt(0).toUpperCase() + field.slice(1)} must be no more than ${rules.maxLength} characters`;
+            }
+            
+            if (rules.pattern && !rules.pattern.test(value)) {
+                return rules.message || `${field.charAt(0).toUpperCase() + field.slice(1)} format is invalid`;
+            }
+            
+            return null;
+        }
+
+        function validateForm(formData) {
+            const errors = [];
+            
+            for (const [field, value] of Object.entries(formData)) {
+                if (validationRules[field]) {
+                    const error = validateField(field, value, validationRules[field]);
+                    if (error) {
+                        errors.push(error);
+                    }
+                }
+            }
+            
+            return errors;
+        }
+
+        // Visual feedback for form fields
+        function setFieldState(input, isValid, message = '') {
+            const fieldGroup = input.closest('.form-group');
+            let errorElement = fieldGroup.querySelector('.field-error');
+            
+            // Remove existing error element
+            if (errorElement) {
+                errorElement.remove();
+            }
+            
+            if (isValid === null) {
+                // Reset state
+                input.style.borderColor = '';
+            } else if (isValid) {
+                // Valid state
+                input.style.borderColor = 'rgba(74, 222, 128, 0.3)';
+            } else {
+                // Invalid state
+                input.style.borderColor = 'rgba(248, 113, 113, 0.5)';
+                
+                // Add error message
+                if (message) {
+                    errorElement = document.createElement('div');
+                    errorElement.className = 'field-error';
+                    errorElement.textContent = message;
+                    fieldGroup.appendChild(errorElement);
+                }
+            }
+        }
+
+        // Real-time validation
+        function setupFieldValidation() {
+            const inputs = document.querySelectorAll('.form-input');
+            
+            inputs.forEach(input => {
+                input.addEventListener('blur', () => {
+                    const field = input.name;
+                    const value = input.value;
+                    const rules = validationRules[field];
+                    
+                    if (rules) {
+                        const error = validateField(field, value, rules);
+                        setFieldState(input, !error, error);
+                    }
+                });
+                
+                input.addEventListener('focus', () => {
+                    setFieldState(input, null); // Reset state on focus
+                });
+                
+                // Real-time validation for email
+                if (input.type === 'email') {
+                    input.addEventListener('input', () => {
+                        const value = input.value;
+                        if (value.length > 3) {
+                            const error = validateField('email', value, validationRules.email);
+                            setFieldState(input, !error, error);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Form submission handler
+        async function handleFormSubmission(e) {
+            e.preventDefault();
+            
+            // Prevent double submissions
+            if (isSubmitting) {
+                return;
+            }
+            
+            // Check cooldown
+            const now = Date.now();
+            if (now - lastSubmissionTime < SUBMISSION_COOLDOWN) {
+                const remainingTime = Math.ceil((SUBMISSION_COOLDOWN - (now - lastSubmissionTime)) / 1000);
+                showMessage(errorMessage, `Please wait ${remainingTime} seconds before submitting again`, true);
+                return;
+            }
+            
+            // Hide previous messages
+            hideAllMessages();
+            
+            // Get form data
+            const formData = {
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                message: document.getElementById('message').value.trim()
+            };
+            
+            // Validate form
+            const errors = validateForm(formData);
+            if (errors.length > 0) {
+                showMessage(errorMessage, errors[0], true);
+                
+                // Highlight first invalid field
+                for (const [field, value] of Object.entries(formData)) {
+                    const input = document.getElementById(field);
+                    const rules = validationRules[field];
+                    if (rules) {
+                        const error = validateField(field, value, rules);
+                        if (error) {
+                            setFieldState(input, false, error);
+                            input.focus();
+                            break;
+                        }
+                    }
+                }
+                return;
+            }
+            
+            // Set loading state
+            isSubmitting = true;
+            setSubmitButtonState(true);
+            
+            try {
+                // Submit to API
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Success
+                    showMessage(successMessage, result.message || 'Thank you for reaching out! We\'ll get back to you within 24 hours.');
+                    
+                    // Reset form
+                    contactForm.reset();
+                    
+                    // Reset field states
+                    const inputs = document.querySelectorAll('.form-input');
+                    inputs.forEach(input => setFieldState(input, null));
+                    
+                    // Update last submission time
+                    lastSubmissionTime = now;
+                    
+                } else {
+                    // Handle specific error types
+                    let errorText = 'Something went wrong. Please try again.';
+                    
+                    if (result.code === 'RATE_LIMIT_EXCEEDED') {
+                        errorText = 'Too many requests. Please wait a moment before trying again.';
+                    } else if (result.code === 'SUBMISSION_COOLDOWN') {
+                        errorText = 'Please wait a moment before submitting again.';
+                    } else if (result.code === 'VALIDATION_ERROR' && result.details) {
+                        errorText = result.details[0];
+                    } else if (result.error) {
+                        errorText = result.error;
+                    }
+                    
+                    showMessage(errorMessage, errorText, true);
+                }
+                
+            } catch (error) {
+                console.error('Form submission error:', error);
+                
+                // Check if it's a network error
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    showMessage(errorMessage, 'Network error. Please check your connection and try again.', true);
+                } else {
+                    showMessage(errorMessage, 'Something went wrong. Please try again or email us directly.', true);
+                }
+            } finally {
+                // Reset loading state
+                isSubmitting = false;
+                setSubmitButtonState(false);
+            }
+        }
+
+        // Initialize form functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            // Setup form submission
+            contactForm.addEventListener('submit', handleFormSubmission);
+            
+            // Setup field validation
+            setupFieldValidation();
+            
+            console.log('Contact form initialized successfully');
+        });
+    </script>
+</body>
+</html>

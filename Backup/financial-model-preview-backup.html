@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Model Preview - The Financial Modeller</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #ffffff;
+            background: #000000;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Background stars effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.9), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1px 1px at 50px 90px, rgba(255,255,255,0.6), transparent),
+                radial-gradient(1px 1px at 130px 40px, rgba(255,255,255,0.8), transparent),
+                radial-gradient(2px 2px at 80px 120px, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 200px 150px, rgba(255,255,255,0.7), transparent),
+                radial-gradient(2px 2px at 300px 100px, rgba(255,255,255,0.3), transparent),
+                radial-gradient(1px 1px at 250px 200px, rgba(255,255,255,0.6), transparent),
+                radial-gradient(3px 3px at 350px 50px, rgba(255,255,255,0.2), transparent),
+                radial-gradient(1px 1px at 180px 280px, rgba(255,255,255,0.8), transparent);
+            background-repeat: repeat;
+            background-size: 650px 450px;
+            z-index: 1;
+            pointer-events: none;
+            animation: twinkle 4s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Purple glow orb */
+        .glow-orb {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            filter: blur(100px);
+            pointer-events: none;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo::before {
+            content: '💹';
+            font-size: 1.8rem;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        .book-call-btn {
+            background: #8b5cf6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            border: 1px solid #8b5cf6;
+        }
+
+        .book-call-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            gap: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .preview-section {
+            flex: 3;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .preview-header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .preview-header h1 .company-name {
+            color: #7c3aed; /* Darker purple */
+        }
+
+        .preview-header h1 .model-text {
+            color: #ffffff; /* White */
+        }
+
+        .preview-header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .company-info {
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .sheet-tabs {
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .sheet-tab {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .sheet-tab.active {
+            background: rgba(139, 92, 246, 0.3);
+            color: white;
+            border-color: rgba(139, 92, 246, 0.4);
+        }
+
+        .sheet-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .spreadsheet-container {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+            background: transparent; /* Changed back to transparent */
+        }
+
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            color: rgba(255, 255, 255, 0.6); /* Changed back to white for dark background */
+        }
+
+        .loading-spinner .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #8b5cf6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spreadsheet-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Arial Narrow', Arial, sans-serif; /* Match Excel font */
+            font-size: 11px; /* Standard Excel font size */
+            border: none;
+            background: #ffffff; /* White background for the table itself */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Add subtle shadow */
+        }
+
+        .spreadsheet-table th {
+            background: #f3f4f6; /* Light gray header like Excel */
+            color: #1f2937;
+            padding: 6px;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 11px;
+        }
+
+        .spreadsheet-table td {
+            padding: 4px 8px;
+            border: 1px solid #e5e7eb;
+            color: #374151; /* Dark gray text */
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            min-width: 80px;
+            position: relative;
+            background: #ffffff; /* White background for cells */
+            font-size: 11px;
+        }
+
+        .spreadsheet-table td:hover:not(.selected) {
+            background: #f9fafb !important; /* Light gray hover */
+            border-color: #8b5cf6 !important;
+        }
+
+        .spreadsheet-table td.selected {
+            background: #ede9fe !important; /* Light purple selection */
+            border: 2px solid #8b5cf6 !important;
+            z-index: 5;
+        }
+
+        /* Excel-style number formatting colors */
+        .spreadsheet-table td.positive-number {
+            color: #059669 !important; /* Green for positive */
+        }
+
+        .spreadsheet-table td.negative-number {
+            color: #dc2626 !important; /* Red for negative */
+        }
+
+        .formula-display {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            font-family: 'Arial Narrow', Arial, sans-serif;
+            font-size: 13px;
+            color: #374151;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .sidebar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .purchase-button, .secondary-button {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 400;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: none;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            white-space: normal;
+            line-height: 1.3;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .purchase-button::before, .secondary-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: -1;
+        }
+
+        .purchase-button:hover:not(:disabled), .secondary-button:hover {
+            color: white;
+            border-color: #8b5cf6;
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
+        }
+
+        .purchase-button:hover:not(:disabled)::before, .secondary-button:hover::before {
+            left: 0;
+        }
+
+        .purchase-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .purchase-button:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .description-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            backdrop-filter: blur(20px);
+            flex: 3;
+        }
+
+        .description-box h2 {
+            color: #8b5cf6;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .description-box p {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .description-box ul {
+            color: rgba(255, 255, 255, 0.7);
+            padding-left: 20px;
+        }
+
+        .description-box li {
+            margin-bottom: 8px;
+        }
+
+        .description-box strong {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .file-info {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .file-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .file-info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .file-info-label {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .file-info-value {
+            color: #8b5cf6;
+            font-weight: 500;
+        }
+
+        .error-container {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.6); /* Changed back for dark background */
+        }
+
+        .error-container h3 {
+            color: #f87171;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .error-container p {
+            margin-bottom: 20px;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .error-button {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+            border: 1px solid #f87171;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .error-button:hover {
+            background: #f87171;
+            color: white;
+        }
+
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: monospace;
+            text-align: left;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .success-indicator {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #059669;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .container {
+                flex-direction: column;
+                padding: 20px;
+                gap: 20px;
+            }
+            
+            .preview-section {
+                flex: none;
+                height: 60vh;
+            }
+            
+            .sidebar {
+                flex: none;
+            }
+
+            .sheet-tabs {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="glow-orb"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav-container">
+            <a href="/" class="logo">FINANCIAL MODELLER</a>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/pages/browse-models.html">Browse Models</a></li>
+                <li><a href="/pages/tailored-models.html">Tailored Models</a></li>
+                <li><a href="/pages/questionnaire.html">Questionnaire</a></li>
+                <li><a href="/pages/purchase.html">Purchase</a></li>
+                <li><a href="#" class="book-call-btn">Book a call</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="preview-section">
+            <div class="preview-header">
+                <h1>
+                    <span class="company-name" id="headerCompanyName">Your Company</span>
+                    <span class="model-text">Financial Model</span>
+                </h1>
+                <p>Financial Model Preview</p>
+            </div>
+
+            <div class="sheet-tabs" id="sheetTabs" style="display: none;">
+                <!-- Sheet tabs will be populated dynamically -->
+            </div>
+
+            <div class="spreadsheet-container" id="spreadsheetContainer">
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner"></div>
+                    <p>Loading your financial model...</p>
+                </div>
+                
+                <div id="spreadsheetContent" style="display: none;">
+                    <div class="formula-display" id="formulaBar">
+                        <strong>Formula:</strong> <span id="formulaContent">Select a cell to view formula</span>
+                    </div>
+                    <table class="spreadsheet-table" id="spreadsheetTable">
+                        <tbody></tbody>
+                    </table>
+                </div>
+                
+                <div class="error-container" id="errorContainer" style="display: none;">
+                    <h3>⚠️ Unable to Load Model</h3>
+                    <p id="errorMessage">The financial model could not be loaded.</p>
+                    <div class="error-actions">
+                        <button class="error-button" onclick="retryLoad()">Retry</button>
+                        <a href="/pages/questionnaire.html" class="error-button">Start Over</a>
+                        <button class="error-button" onclick="toggleDebugInfo()">Show Debug Info</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <button class="purchase-button" id="purchaseButton" onclick="handlePurchase()" disabled>
+                Preview Only - Full Access Coming Soon
+            </button>
+
+            <button class="secondary-button" onclick="handleCustomization()">
+                I need more customization to this model →
+            </button>
+
+            <button class="secondary-button" onclick="handleAssumptions()">
+                Help me build out my assumptions →
+            </button>
+
+            <div class="description-box">
+                <h2>Financial Model Details</h2>
+                
+                <div class="file-info" id="fileInfo">
+                    <div class="file-info-item">
+                        <span class="file-info-label">Company:</span>
+                        <span class="file-info-value" id="fileCompanyName">Loading...</span>
+                    </div>
+                    <div class="file-info-item">
+                        <span class="file-info-label">Created:</span>
+                        <span class="file-info-value" id="fileCreated">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="file-info" id="businessInfo">
+                    <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; margin-bottom: 12px; font-weight: 500;">Your Business</h3>
+                    <div class="file-info-item">
+                        <span class="file-info-label">Modeling Type:</span>
+                        <span class="file-info-value" id="modelingType">Loading...</span>
+                    </div>
+                    <div class="file-info-item">
+                        <span class="file-info-label">Revenue Streams:</span>
+                        <span class="file-info-value" id="revenueStreams">Loading...</span>
+                    </div>
+                    <div class="file-info-item">
+                        <span class="file-info-label">Staff Generate Revenue:</span>
+                        <span class="file-info-value" id="staffRevenue">Loading...</span>
+                    </div>
+                </div>
+                
+                <p>This comprehensive financial model has been customized based on your questionnaire responses.</p>
+                
+                <p><strong>Key Features:</strong></p>
+                <ul>
+                    <li>Interactive spreadsheet with formula visibility</li>
+                    <li>Multiple worksheet tabs for different scenarios</li>
+                    <li>Dynamic calculations and projections</li>
+                    <li>Professional formatting and layout</li>
+                    <li>Easy-to-understand structure</li>
+                </ul>
+
+                <p><strong>What's Included:</strong></p>
+                <ul>
+                    <li>Complete Excel workbook (.xlsm format)</li>
+                    <li>Documentation and user guide</li>
+                    <li>Formula explanations</li>
+                    <li>Customizable inputs and assumptions</li>
+                </ul>
+
+                <p>Perfect for financial planning, business analysis, and investment decisions. The model is designed to be user-friendly while maintaining professional accuracy.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        class ModelPreviewApp {
+            constructor() {
+                this.submissionId = null;
+                this.workbook = null;
+                this.currentWorksheet = null;
+                this.selectedCell = null;
+                this.fileMetadata = null;
+                this.debugInfo = {};
+            }
+
+            // Initialize the application
+            async init() {
+                try {
+                    this.submissionId = this.getSubmissionIdFromURL();
+                    
+                    if (!this.submissionId) {
+                        throw new Error('No submission ID found in URL. Please check the link and try again.');
+                    }
+
+                    console.log('🚀 Initializing Model Preview for submission:', this.submissionId);
+                    this.debugInfo.submissionId = this.submissionId;
+                    
+                    await this.loadModel();
+                } catch (error) {
+                    console.error('❌ Initialization failed:', error);
+                    this.showError(error.message);
+                }
+            }
+
+            // Extract submission ID from URL parameters
+            getSubmissionIdFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('submission_id');
+            }
+
+            // Load the financial model for preview via API
+            async loadModel() {
+                try {
+                    console.log('📊 Loading model via secure API...');
+                    
+                    // Load and display the Excel file for preview
+                    console.log('📊 Loading Excel file for preview...');
+                    await this.loadExcelFile();
+
+                    // Get file metadata from cached data or API response
+                    await this.loadMetadata();
+                    
+                    // Update UI with metadata
+                    this.updateFileInfo();
+
+                    // Show success state with spreadsheet preview
+                    this.showSuccess();
+
+                } catch (error) {
+                    console.error('❌ Failed to load model:', error);
+                    this.debugInfo.error = error.message;
+                    this.showError(error.message);
+                }
+            }
+
+            // Load metadata (try cache first, then API)
+            async loadMetadata() {
+                // Try cached metadata first, but validate it's for the correct submission
+                const cachedMetadata = sessionStorage.getItem(`file_metadata_${this.submissionId}`);
+                
+                if (cachedMetadata) {
+                    try {
+                        const parsed = JSON.parse(cachedMetadata);
+                        // Validate cache is less than 5 minutes old and has required fields
+                        const cacheTime = parsed._cacheTime || 0;
+                        const now = Date.now();
+                        const cacheAge = now - cacheTime;
+                        
+                        if (cacheAge < 5 * 60 * 1000 && parsed.company_name && parsed.company_name !== 'Your Company') {
+                            this.fileMetadata = parsed;
+                            console.log('💾 Using valid cached metadata:', this.fileMetadata);
+                            this.debugInfo.cachedMetadata = true;
+                            return;
+                        } else {
+                            console.log('🔄 Cache expired or invalid, fetching fresh data');
+                            sessionStorage.removeItem(`file_metadata_${this.submissionId}`);
+                        }
+                    } catch (e) {
+                        console.log('⚠️ Invalid cache data, removing');
+                        sessionStorage.removeItem(`file_metadata_${this.submissionId}`);
+                    }
+                }
+
+                // Always fetch fresh data if no valid cache
+                console.log('🔄 Fetching fresh metadata for submission:', this.submissionId);
+                
+                try {
+                    const debugUrl = `/api/get-model?submission_id=${this.submissionId}&debug=true`;
+                    console.log('📋 Fetching metadata from API:', debugUrl);
+                    
+                    const response = await fetch(debugUrl, {
+                        method: 'GET',
+                        cache: 'no-cache',
+                        headers: {
+                            'Cache-Control': 'no-cache',
+                            'Pragma': 'no-cache'
+                        }
+                    });
+
+                    console.log('📊 Debug response status:', response.status);
+
+                    if (response.ok) {
+                        const debugData = await response.json();
+                        console.log('📊 Full debug data received:', debugData);
+                        
+                        if (debugData && debugData.database_record) {
+                            const record = debugData.database_record;
+                            
+                            // Ensure we have valid data before caching
+                            if (record.company_name && record.company_name !== 'Your Company') {
+                                this.fileMetadata = {
+                                    company_name: record.company_name,
+                                    file_size: record.file_size || null,
+                                    processed_at: record.created_at || new Date().toISOString(),
+                                    modeling_approach: record.modeling_approach || 'Not specified',
+                                    revenue_generation_selected: record.revenue_generation_selected || 'Not specified',
+                                    revenue_staff: record.revenue_staff || 'Not specified',
+                                    _cacheTime: Date.now() // Add timestamp for cache validation
+                                };
+                                
+                                // Only cache if we have valid company data
+                                sessionStorage.setItem(`file_metadata_${this.submissionId}`, JSON.stringify(this.fileMetadata));
+                                console.log('✅ Company data found and cached:', this.fileMetadata.company_name);
+                                this.debugInfo.cachedMetadata = false;
+                                this.debugInfo.companyNameSource = 'API';
+                                return;
+                            } else {
+                                console.log('⚠️ Invalid company name in database:', record.company_name);
+                            }
+                        } else {
+                            console.log('⚠️ No database record in debug data:', debugData);
+                        }
+                    } else {
+                        console.log('⚠️ Debug request failed with status:', response.status);
+                        const errorText = await response.text();
+                        console.log('⚠️ Error response:', errorText);
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to fetch metadata:', error);
+                    this.debugInfo.metadataError = error.message;
+                }
+
+                // If all else fails, use defaults but don't cache them
+                console.log('⚠️ Failed to load company data, using defaults');
+                this.fileMetadata = {
+                    company_name: 'Your Company',
+                    file_size: null,
+                    processed_at: new Date().toISOString(),
+                    modeling_approach: 'Not specified',
+                    revenue_generation_selected: 'Not specified',
+                    revenue_staff: 'Not specified'
+                };
+                
+                this.debugInfo.cachedMetadata = false;
+                this.debugInfo.companyNameSource = 'default';
+                
+                // Show a more helpful error to the user
+                console.error(`
+                    ⚠️ Could not load company information for submission: ${this.submissionId}
+                    Please check:
+                    1. The submission ID is correct in the URL
+                    2. The submission exists in the database
+                    3. The API endpoint is accessible
+                `);
+            }
+
+            // Load Excel file via API for preview
+            async loadExcelFile() {
+                const apiUrl = `/api/get-model?submission_id=${this.submissionId}`;
+                
+                console.log('📥 Fetching file via API:', apiUrl);
+                this.debugInfo.apiUrl = apiUrl;
+
+                try {
+                    // Test API availability with HEAD request
+                    const headResponse = await fetch(apiUrl, { 
+                        method: 'HEAD',
+                        cache: 'no-cache'
+                    });
+                    
+                    console.log('🔍 HEAD request result:', {
+                        status: headResponse.status,
+                        ok: headResponse.ok,
+                        headers: Object.fromEntries(headResponse.headers.entries())
+                    });
+
+                    this.debugInfo.headRequestStatus = headResponse.status;
+
+                    if (!headResponse.ok) {
+                        // Try to get error details from HEAD response
+                        let errorMessage = `API Error: ${headResponse.status} ${headResponse.statusText}`;
+                        
+                        if (headResponse.status === 404) {
+                            errorMessage = 'File Not Found: The submission or file doesn\'t exist in our system.';
+                        } else if (headResponse.status === 202) {
+                            errorMessage = 'File Still Processing: Your model is being generated. Please try again in a few minutes.';
+                        } else if (headResponse.status === 500) {
+                            errorMessage = 'Server Error: There was a problem processing your request. Please try again.';
+                        }
+                        
+                        throw new Error(errorMessage);
+                    }
+                } catch (headError) {
+                    console.log('⚠️ HEAD request failed:', headError.message);
+                    // Continue with GET request even if HEAD fails
+                }
+
+                // Fetch the actual file
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    cache: 'no-cache'
+                });
+
+                this.debugInfo.fetchStatus = response.status;
+                console.log('📊 API response status:', response.status);
+
+                if (!response.ok) {
+                    // Handle API-specific errors with better messaging
+                    let errorMessage;
+                    
+                    try {
+                        // Try to get error details from API response
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorData.error || `API Error: ${response.status}`;
+                        this.debugInfo.apiErrorDetails = errorData;
+                    } catch (jsonError) {
+                        // If response isn't JSON, use status-based messages
+                        switch (response.status) {
+                            case 400:
+                                errorMessage = 'Bad Request: Invalid submission ID or malformed request.';
+                                break;
+                            case 404:
+                                errorMessage = 'File Not Found: The submission or file doesn\'t exist in our system.';
+                                break;
+                            case 202:
+                                errorMessage = 'File Still Processing: Your model is being generated. Please try again in a few minutes.';
+                                break;
+                            case 500:
+                                errorMessage = 'Server Error: There was a problem processing your request. Please try again.';
+                                break;
+                            default:
+                                errorMessage = `API Error ${response.status}: ${response.statusText}`;
+                        }
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+
+                // Parse Excel file (.xlsm format)
+                const arrayBuffer = await response.arrayBuffer();
+                console.log('📊 File downloaded via API, size:', arrayBuffer.byteLength, 'bytes');
+                this.debugInfo.fileSize = arrayBuffer.byteLength;
+
+                // Store file size for display
+                if (!this.fileMetadata) {
+                    this.fileMetadata = {};
+                }
+                this.fileMetadata.file_size = arrayBuffer.byteLength;
+
+                this.workbook = XLSX.read(arrayBuffer, {
+                    type: 'array',
+                    cellFormula: true,
+                    cellStyles: true,
+                    cellNF: true,
+                    cellDates: true,
+                    cellHTML: true,
+                    cellText: true,
+                    sheetStubs: true,
+                    raw: false
+                });
+
+                console.log('✅ Excel file (.xlsm) parsed successfully. Sheets:', this.workbook.SheetNames);
+                this.debugInfo.sheets = this.workbook.SheetNames;
+            }
+
+            // Update file information in UI
+            updateFileInfo() {
+                if (this.fileMetadata) {
+                    // Update company name in header
+                    const headerCompanyElement = document.getElementById('headerCompanyName');
+                    if (headerCompanyElement) {
+                        headerCompanyElement.textContent = this.fileMetadata.company_name || 'Your Company';
+                    }
+
+                    // Update individual fields with actual data
+                    const elements = {
+                        fileCompanyName: this.fileMetadata.company_name || 'Your Company',
+                        fileCreated: this.fileMetadata.processed_at ? 
+                            new Date(this.fileMetadata.processed_at).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) : new Date().toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }),
+                        modelingType: this.formatModelingApproach(this.fileMetadata.modeling_approach),
+                        revenueStreams: this.formatRevenueStreams(this.fileMetadata.revenue_generation_selected),
+                        staffRevenue: this.formatStaffRevenue(this.fileMetadata.revenue_staff)
+                    };
+
+                    Object.entries(elements).forEach(([id, value]) => {
+                        const element = document.getElementById(id);
+                        if (element) element.textContent = value;
+                    });
+                }
+            }
+
+            // Format modeling approach for display
+            formatModelingApproach(approach) {
+                if (!approach || approach === 'Not specified') return 'Not specified';
+                // Capitalize first letter and replace underscores
+                return approach.charAt(0).toUpperCase() + approach.slice(1).replace(/_/g, ' ');
+            }
+
+            // Format revenue streams for display
+            formatRevenueStreams(streams) {
+                if (!streams || streams === 'Not specified') return 'Not specified';
+                // If it's an array or JSON string, parse and format
+                try {
+                    if (typeof streams === 'string' && streams.startsWith('[')) {
+                        const parsed = JSON.parse(streams);
+                        return parsed.join(', ');
+                    }
+                    return streams;
+                } catch (e) {
+                    return streams;
+                }
+            }
+
+            // Format staff revenue for display
+            formatStaffRevenue(staff) {
+                if (!staff || staff === 'Not specified') return 'Not specified';
+                return staff === 'true' || staff === true ? 'Yes' : 'No';
+            }
+
+            // Display the workbook
+            displayWorkbook() {
+                if (!this.workbook) return;
+
+                const sheetTabs = document.getElementById('sheetTabs');
+                sheetTabs.innerHTML = '';
+
+                // Create tabs for each sheet
+                this.workbook.SheetNames.forEach((sheetName, index) => {
+                    const tab = document.createElement('div');
+                    tab.className = 'sheet-tab';
+                    tab.textContent = sheetName;
+                    tab.onclick = () => this.selectSheet(sheetName);
+                    if (index === 0) tab.classList.add('active');
+                    sheetTabs.appendChild(tab);
+                });
+
+                // Display first sheet
+                this.selectSheet(this.workbook.SheetNames[0]);
+            }
+
+            // Select and display a sheet
+            selectSheet(sheetName) {
+                // Update active tab
+                document.querySelectorAll('.sheet-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                    if (tab.textContent === sheetName) {
+                        tab.classList.add('active');
+                    }
+                });
+
+                this.currentWorksheet = this.workbook.Sheets[sheetName];
+                this.displaySheet();
+            }
+
+            // Display the current sheet
+            displaySheet() {
+                if (!this.currentWorksheet) return;
+
+                const table = document.getElementById('spreadsheetTable');
+                table.innerHTML = '';
+
+                // Get the range of the worksheet
+                const range = XLSX.utils.decode_range(this.currentWorksheet['!ref'] || 'A1:A1');
+                
+                // Limit display size for performance (show more cells for better preview)
+                const maxRows = Math.min(range.e.r, range.s.r + 100);
+                const maxCols = Math.min(range.e.c, range.s.c + 30);
+
+                // Create header row with column letters
+                const headerRow = document.createElement('tr');
+                headerRow.appendChild(document.createElement('th')); // Empty corner cell
+                
+                for (let col = range.s.c; col <= maxCols; col++) {
+                    const th = document.createElement('th');
+                    th.textContent = XLSX.utils.encode_col(col);
+                    headerRow.appendChild(th);
+                }
+                table.appendChild(headerRow);
+
+                // Create data rows
+                for (let row = range.s.r; row <= maxRows; row++) {
+                    const tr = document.createElement('tr');
+                    
+                    // Row number
+                    const rowHeader = document.createElement('th');
+                    rowHeader.textContent = row + 1;
+                    tr.appendChild(rowHeader);
+
+                    // Data cells
+                    for (let col = range.s.c; col <= maxCols; col++) {
+                        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+                        const cell = this.currentWorksheet[cellAddress];
+                        
+                        const td = document.createElement('td');
+                        td.dataset.address = cellAddress;
+                        td.onclick = () => this.selectCell(cellAddress, td);
+                        
+                        if (cell) {
+                            // Get cell value
+                            let value = cell.v !== undefined ? cell.v : '';
+                            
+                            // Format the value
+                            if (cell.t === 'n' && cell.z) {
+                                value = this.formatCellValue(value, cell.z);
+                            } else if (cell.t === 'd') {
+                                value = new Date(value).toLocaleDateString();
+                            }
+                            
+                            td.textContent = value;
+                            this.applyCellStyling(td, cell, value);
+                        }
+                        
+                        tr.appendChild(td);
+                    }
+                    table.appendChild(tr);
+                }
+            }
+
+            // Format cell value based on number format
+            formatCellValue(value, format) {
+                if (!format || typeof value !== 'number') return value;
+                
+                try {
+                    if (format.includes('$') || format.includes('Currency')) {
+                        return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    }
+                    
+                    if (format.includes('%')) {
+                        return (value * 100).toFixed(2) + '%';
+                    }
+                    
+                    if (format.includes('#,##0')) {
+                        return value.toLocaleString('en-US');
+                    }
+                    
+                    if (format.includes('.00')) {
+                        return value.toFixed(2);
+                    }
+                } catch (e) {
+                    console.warn('Error formatting cell value:', e);
+                }
+                
+                return value;
+            }
+
+            // Apply cell styling
+            applyCellStyling(td, cell, value) {
+                // First apply Excel's own styling if available
+                if (cell.s) {
+                    try {
+                        // Apply font styling
+                        if (cell.s.font) {
+                            if (cell.s.font.bold) td.style.fontWeight = 'bold';
+                            if (cell.s.font.italic) td.style.fontStyle = 'italic';
+                            if (cell.s.font.underline) td.style.textDecoration = 'underline';
+                            if (cell.s.font.sz) td.style.fontSize = Math.round(cell.s.font.sz * 0.75) + 'px'; // Excel points to CSS px
+                            if (cell.s.font.name) td.style.fontFamily = cell.s.font.name + ', sans-serif';
+                            
+                            // Apply font color
+                            if (cell.s.font.color) {
+                                if (cell.s.font.color.rgb) {
+                                    td.style.color = '#' + cell.s.font.color.rgb.substring(2); // Remove alpha channel
+                                } else if (cell.s.font.color.theme !== undefined) {
+                                    const themeColor = this.getThemeColor(cell.s.font.color.theme, cell.s.font.color.tint);
+                                    if (themeColor) td.style.color = themeColor;
+                                }
+                            }
+                        }
+                        
+                        // Apply background color
+                        if (cell.s.fill && cell.s.fill.fgColor) {
+                            if (cell.s.fill.fgColor.rgb) {
+                                td.style.backgroundColor = '#' + cell.s.fill.fgColor.rgb.substring(2);
+                            } else if (cell.s.fill.fgColor.theme !== undefined) {
+                                const themeColor = this.getThemeColor(cell.s.fill.fgColor.theme, cell.s.fill.fgColor.tint);
+                                if (themeColor) td.style.backgroundColor = themeColor;
+                            }
+                        } else if (cell.s.fill && cell.s.fill.patternType === 'solid' && cell.s.fill.bgColor) {
+                            if (cell.s.fill.bgColor.rgb) {
+                                td.style.backgroundColor = '#' + cell.s.fill.bgColor.rgb.substring(2);
+                            }
+                        }
+                        
+                        // Apply alignment
+                        if (cell.s.alignment) {
+                            if (cell.s.alignment.horizontal) {
+                                td.style.textAlign = cell.s.alignment.horizontal === 'center' ? 'center' : 
+                                                    cell.s.alignment.horizontal === 'right' ? 'right' : 'left';
+                            }
+                            if (cell.s.alignment.vertical) {
+                                td.style.verticalAlign = cell.s.alignment.vertical === 'top' ? 'top' :
+                                                        cell.s.alignment.vertical === 'bottom' ? 'bottom' : 'middle';
+                            }
+                            if (cell.s.alignment.wrapText) {
+                                td.style.whiteSpace = 'normal';
+                                td.style.wordWrap = 'break-word';
+                            }
+                            if (cell.s.alignment.indent) {
+                                td.style.paddingLeft = (8 + cell.s.alignment.indent * 10) + 'px';
+                            }
+                        }
+                        
+                        // Apply borders with more detail
+                        if (cell.s.border) {
+                            if (cell.s.border.top) {
+                                const style = this.getBorderStyle(cell.s.border.top);
+                                if (style) td.style.borderTop = style;
+                            }
+                            if (cell.s.border.bottom) {
+                                const style = this.getBorderStyle(cell.s.border.bottom);
+                                if (style) td.style.borderBottom = style;
+                            }
+                            if (cell.s.border.left) {
+                                const style = this.getBorderStyle(cell.s.border.left);
+                                if (style) td.style.borderLeft = style;
+                            }
+                            if (cell.s.border.right) {
+                                const style = this.getBorderStyle(cell.s.border.right);
+                                if (style) td.style.borderRight = style;
+                            }
+                        }
+                        
+                        // Apply number format specific styling
+                        if (cell.z) {
+                            // Currency formats often use specific colors
+                            if (cell.z.includes('[Red]') && value < 0) {
+                                td.style.color = '#FF0000';
+                            } else if (cell.z.includes('[Green]') && value > 0) {
+                                td.style.color = '#008000';
+                            }
+                        }
+                        
+                    } catch (e) {
+                        console.warn('Error applying cell styling:', e);
+                    }
+                }
+                
+                // Apply default number coloring only if no custom color is already applied
+                if (!cell.s?.font?.color && !cell.z?.includes('[') && cell.t === 'n' && typeof value === 'number') {
+                    if (value > 0) {
+                        td.classList.add('positive-number');
+                    } else if (value < 0) {
+                        td.classList.add('negative-number');
+                    }
+                }
+                
+                // Handle merged cells if present
+                if (this.currentWorksheet['!merges']) {
+                    const merges = this.currentWorksheet['!merges'];
+                    const cellRef = XLSX.utils.decode_cell(td.dataset.address);
+                    
+                    for (const merge of merges) {
+                        if (cellRef.r >= merge.s.r && cellRef.r <= merge.e.r &&
+                            cellRef.c >= merge.s.c && cellRef.c <= merge.e.c) {
+                            
+                            if (cellRef.r === merge.s.r && cellRef.c === merge.s.c) {
+                                // This is the top-left cell of the merge
+                                td.colSpan = merge.e.c - merge.s.c + 1;
+                                td.rowSpan = merge.e.r - merge.s.r + 1;
+                            } else {
+                                // This cell is part of a merge but not the top-left
+                                td.style.display = 'none';
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Get border style string
+            getBorderStyle(border) {
+                if (!border) return null;
+                
+                let width = '1px';
+                let style = 'solid';
+                let color = '#e5e7eb';
+                
+                // Border styles
+                if (border.style) {
+                    switch (border.style) {
+                        case 'thin': width = '1px'; break;
+                        case 'medium': width = '2px'; break;
+                        case 'thick': width = '3px'; break;
+                        case 'dashed': style = 'dashed'; break;
+                        case 'dotted': style = 'dotted'; break;
+                        case 'double': style = 'double'; width = '3px'; break;
+                    }
+                }
+                
+                // Border color
+                if (border.color) {
+                    if (border.color.rgb) {
+                        color = '#' + border.color.rgb.substring(2);
+                    } else if (border.color.theme !== undefined) {
+                        const themeColor = this.getThemeColor(border.color.theme, border.color.tint);
+                        if (themeColor) color = themeColor;
+                    }
+                }
+                
+                return `${width} ${style} ${color}`;
+            }
+
+            // Get theme color with tint support
+            getThemeColor(themeIndex, tint) {
+                // Excel theme colors (approximation)
+                const themeColors = [
+                    '#000000', // 0 - Background1
+                    '#FFFFFF', // 1 - Text1
+                    '#E7E6E6', // 2 - Background2
+                    '#44546A', // 3 - Text2
+                    '#5B9BD5', // 4 - Accent1
+                    '#ED7D31', // 5 - Accent2
+                    '#A5A5A5', // 6 - Accent3
+                    '#FFC000', // 7 - Accent4
+                    '#4472C4', // 8 - Accent5
+                    '#70AD47'  // 9 - Accent6
+                ];
+                
+                let color = themeColors[themeIndex] || '#000000';
+                
+                // Apply tint if present (lightens or darkens the color)
+                if (tint !== undefined && tint !== null) {
+                    color = this.applyTint(color, tint);
+                }
+                
+                return color;
+            }
+            
+            // Apply tint to color (Excel tinting algorithm approximation)
+            applyTint(hexColor, tint) {
+                const rgb = this.hexToRgb(hexColor);
+                if (!rgb) return hexColor;
+                
+                let r = rgb.r;
+                let g = rgb.g;
+                let b = rgb.b;
+                
+                if (tint < 0) {
+                    // Darken
+                    r = Math.round(r * (1 + tint));
+                    g = Math.round(g * (1 + tint));
+                    b = Math.round(b * (1 + tint));
+                } else {
+                    // Lighten
+                    r = Math.round(r + (255 - r) * tint);
+                    g = Math.round(g + (255 - g) * tint);
+                    b = Math.round(b + (255 - b) * tint);
+                }
+                
+                return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+            }
+            
+            // Convert hex to RGB
+            hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : null;
+            }
+
+            // Select a cell
+            selectCell(address, element) {
+                // Remove previous selection
+                if (this.selectedCell) {
+                    this.selectedCell.classList.remove('selected');
+                }
+                
+                // Select new cell
+                this.selectedCell = element;
+                element.classList.add('selected');
+                
+                // Display formula
+                const cell = this.currentWorksheet[address];
+                const formulaContent = document.getElementById('formulaContent');
+                
+                if (cell && cell.f) {
+                    formulaContent.textContent = '=' + cell.f;
+                } else if (cell && cell.v !== undefined) {
+                    formulaContent.textContent = cell.v;
+                } else {
+                    formulaContent.textContent = 'Empty cell';
+                }
+            }
+
+            // Show success state with Excel preview
+            showSuccess() {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('spreadsheetContent').style.display = 'block';
+                document.getElementById('sheetTabs').style.display = 'flex';
+                
+                this.displayWorkbook();
+                
+                console.log('✅ Model preview loaded successfully!');
+            }
+
+            // Show error state
+            showError(message) {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('spreadsheetContent').style.display = 'none';
+                document.getElementById('errorContainer').style.display = 'block';
+                document.getElementById('errorMessage').textContent = message;
+                
+                // Store debug info for later
+                this.debugInfo.errorMessage = message;
+                this.debugInfo.timestamp = new Date().toISOString();
+            }
+
+            // Handle purchase/download (disabled for now)
+            async handlePurchase() {
+                alert('🔒 Full download access will be available after payment integration is complete. This is currently a preview-only version.');
+            }
+
+            // Show debug information
+            showDebugInfo() {
+                const debugDiv = document.createElement('div');
+                debugDiv.className = 'debug-info';
+                debugDiv.innerHTML = `
+                    <strong>🔍 Debug Information:</strong><br>
+                    <strong>Submission ID:</strong> ${this.debugInfo.submissionId || 'Not found'}<br>
+                    <strong>API URL:</strong> ${this.debugInfo.apiUrl || 'Not set'}<br>
+                    <strong>HEAD Request Status:</strong> ${this.debugInfo.headRequestStatus || 'Not attempted'}<br>
+                    <strong>Fetch Status:</strong> ${this.debugInfo.fetchStatus || 'Not attempted'}<br>
+                    <strong>File Size:</strong> ${this.debugInfo.fileSize ? (this.debugInfo.fileSize / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown'}<br>
+                    <strong>Sheets Found:</strong> ${this.debugInfo.sheets ? this.debugInfo.sheets.join(', ') : 'None'}<br>
+                    <strong>Cached Metadata:</strong> ${this.debugInfo.cachedMetadata ? 'Yes' : 'No'}<br>
+                    <strong>API Error Details:</strong><br>
+                    <div style="word-break: break-all; font-size: 10px; margin: 5px 0; padding: 5px; background: rgba(255,255,255,0.1);">
+                        ${this.debugInfo.apiErrorDetails ? JSON.stringify(this.debugInfo.apiErrorDetails, null, 2) : 'None'}
+                    </div>
+                    <strong>Error:</strong> ${this.debugInfo.errorMessage || 'None'}<br>
+                    <strong>Timestamp:</strong> ${this.debugInfo.timestamp || new Date().toISOString()}
+                    <br><br>
+                    <button onclick="clearCache()" style="background: #8b5cf6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                        Clear Cache & Retry
+                    </button>
+                `;
+
+                const errorContainer = document.getElementById('errorContainer');
+                const existingDebug = errorContainer.querySelector('.debug-info');
+                if (existingDebug) {
+                    existingDebug.remove();
+                }
+                errorContainer.appendChild(debugDiv);
+            }
+        }
+
+        // Initialize the application
+        const app = new ModelPreviewApp();
+
+        // Global functions for buttons
+        function handlePurchase() {
+            app.handlePurchase();
+        }
+
+        function handleCustomization() {
+            sessionStorage.setItem('previous_submission_id', app.submissionId);
+            window.location.href = '/pages/tailored-models.html';
+        }
+
+        function handleAssumptions() {
+            sessionStorage.setItem('previous_submission_id', app.submissionId);
+            window.location.href = '/pages/questionnaire.html';
+        }
+
+        function retryLoad() {
+            document.getElementById('errorContainer').style.display = 'none';
+            document.getElementById('loadingSpinner').style.display = 'flex';
+            app.loadModel();
+        }
+
+        function toggleDebugInfo() {
+            app.showDebugInfo();
+        }
+
+        function clearCache() {
+            // Clear all cached data for this submission
+            sessionStorage.removeItem(`file_metadata_${app.submissionId}`);
+            
+            console.log('🗑️ Cache cleared, reloading...');
+            
+            // Reload the page to start fresh
+            window.location.reload();
+        }
+
+        // Start the application when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+
+        // Prevent copying/selecting spreadsheet content (anti-piracy)
+        document.addEventListener('selectstart', function(e) {
+            if (e.target.closest('.spreadsheet-table') || e.target.closest('.formula-display')) {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.closest('.spreadsheet-table')) {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'a' || e.key === 'x' || e.key === 'v')) {
+                if (e.target.closest('.spreadsheet-table') || e.target.closest('.formula-display')) {
+                    e.preventDefault();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

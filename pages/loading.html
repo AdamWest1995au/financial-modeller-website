@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generating Your Custom Model - The Financial Modeller</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #ffffff;
+            background: #000000;
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+            background-size: 3.8px 3.8px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Mouse illumination effect */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background: radial-gradient(circle 180px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                        rgba(139, 92, 246, 0.4) 0%, 
+                        rgba(139, 92, 246, 0.25) 3%, 
+                        rgba(139, 92, 246, 0.12) 8%, 
+                        rgba(139, 92, 246, 0.06) 15%, 
+                        rgba(139, 92, 246, 0.02) 25%, 
+                        rgba(139, 92, 246, 0.005) 40%, 
+                        transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            filter: blur(6px);
+        }
+
+        body.mouse-active::after {
+            opacity: 1;
+        }
+
+        /* Enhanced dot illumination overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+            background-image: radial-gradient(circle, rgba(139, 92, 246, 0.6) 1px, transparent 1px);
+            background-size: 3.8px 3.8px;
+            mask: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  black 0%, 
+                  black 2%, 
+                  rgba(0,0,0,0.6) 6%, 
+                  rgba(0,0,0,0.3) 12%, 
+                  rgba(0,0,0,0.1) 20%, 
+                  rgba(0,0,0,0.02) 35%, 
+                  transparent 60%);
+            -webkit-mask: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                         black 0%, 
+                         black 2%, 
+                         rgba(0,0,0,0.6) 6%, 
+                         rgba(0,0,0,0.3) 12%, 
+                         rgba(0,0,0,0.1) 20%, 
+                         rgba(0,0,0,0.02) 35%, 
+                         transparent 60%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Mouse trail elements */
+        .mouse-trail {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 1;
+            transition: opacity 0.8s ease-out;
+        }
+
+        .mouse-trail::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle 180px at var(--trail-x) var(--trail-y), 
+                        rgba(139, 92, 246, 0.25) 0%, 
+                        rgba(139, 92, 246, 0.15) 3%, 
+                        rgba(139, 92, 246, 0.08) 8%, 
+                        rgba(139, 92, 246, 0.04) 15%, 
+                        rgba(139, 92, 246, 0.015) 25%, 
+                        rgba(139, 92, 246, 0.003) 40%, 
+                        transparent 100%);
+            filter: blur(6px);
+        }
+
+        .mouse-trail::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background-image: radial-gradient(circle, rgba(139, 92, 246, 0.4) 1px, transparent 1px);
+            background-size: 3.8px 3.8px;
+            mask: radial-gradient(circle 120px at var(--trail-x) var(--trail-y), 
+                  black 0%, 
+                  black 2%, 
+                  rgba(0,0,0,0.4) 6%, 
+                  rgba(0,0,0,0.2) 12%, 
+                  rgba(0,0,0,0.08) 20%, 
+                  rgba(0,0,0,0.015) 35%, 
+                  transparent 60%);
+            -webkit-mask: radial-gradient(circle 120px at var(--trail-x) var(--trail-y), 
+                         black 0%, 
+                         black 2%, 
+                         rgba(0,0,0,0.4) 6%, 
+                         rgba(0,0,0,0.2) 12%, 
+                         rgba(0,0,0,0.08) 20%, 
+                         rgba(0,0,0,0.015) 35%, 
+                         transparent 60%);
+        }
+
+        .mouse-trail.fade-out {
+            opacity: 0;
+        }
+
+        /* Floating stats background - Updated to match home page */
+        .floating-stats {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .floating-stat {
+            position: absolute;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            color: rgba(139, 92, 246, 0.15);
+            white-space: nowrap;
+            animation: floatStat 20s linear infinite;
+            will-change: transform;
+            transition: all 0.8s ease;
+        }
+
+        .floating-stat.large {
+            font-size: 18px;
+            color: rgba(139, 92, 246, 0.12);
+            transition: all 0.8s ease;
+        }
+
+        .floating-stat.small {
+            font-size: 12px;
+            color: rgba(139, 92, 246, 0.18);
+            transition: all 0.8s ease;
+        }
+
+        .floating-stat.illuminate {
+            color: rgba(139, 92, 246, 0.9) !important;
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+            transform: scale(1.1);
+        }
+
+        @keyframes floatStat {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(50px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatStatReverse {
+            0% {
+                transform: translateY(-100px) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) translateX(-50px);
+                opacity: 0;
+            }
+        }
+
+        .floating-stat.reverse {
+            animation-name: floatStatReverse;
+        }
+
+        /* Numbers animation - Updated to match illuminated floating stats */
+        .numbers-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 5;
+        }
+
+        .floating-number {
+            position: absolute;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            font-weight: normal;
+            color: rgba(139, 92, 246, 0.9);
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+            opacity: 0;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .floating-number.large {
+            font-size: 18px;
+        }
+
+        .floating-number.small {
+            font-size: 12px;
+        }
+
+        .floating-number:not(.large):not(.small) {
+            font-size: 14px;
+        }
+
+        .typing-number {
+            animation: typeIn 2s ease-in-out forwards;
+        }
+
+        @keyframes typeIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            10% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            90% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            background: rgba(139, 92, 246, 0.9);
+            width: 1px;
+            height: 1em;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+            vertical-align: baseline;
+            box-shadow: 0 0 3px rgba(139, 92, 246, 0.6);
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Main content */
+        .loading-container {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .loading-content {
+            position: relative;
+            z-index: 20;
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.7;
+            margin-bottom: 50px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .company-name {
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .status-display {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-text {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 10px;
+        }
+
+        .submission-id {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            font-size: 0.9rem;
+            color: rgba(139, 92, 246, 0.8);
+            background: rgba(139, 92, 246, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .progress-list {
+            text-align: left;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            border-left: 4px solid transparent;
+            transition: all 0.5s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-item.completed {
+            border-left-color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+            border-color: rgba(74, 222, 128, 0.2);
+        }
+
+        .progress-item.current {
+            border-left-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+            border-color: rgba(139, 92, 246, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        .progress-item.pending {
+            border-left-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .progress-item.error {
+            border-left-color: #f87171;
+            background: rgba(248, 113, 113, 0.1);
+            border-color: rgba(248, 113, 113, 0.2);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                background: rgba(139, 92, 246, 0.1);
+            }
+            50% {
+                background: rgba(139, 92, 246, 0.15);
+            }
+        }
+
+        .progress-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .progress-text {
+            font-size: 1rem;
+            font-weight: 500;
+            flex-grow: 1;
+            color: #ffffff;
+        }
+
+        .progress-item.completed .progress-text {
+            color: #ffffff;
+        }
+
+        .progress-item.current .progress-text {
+            color: #ffffff;
+        }
+
+        .progress-item.pending .progress-text {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .progress-item.error .progress-text {
+            color: #f87171;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid #8b5cf6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .checkmark {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .error-icon {
+            color: #f87171;
+            font-weight: bold;
+        }
+
+        .pending-icon {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .progress-bar-container {
+            margin-top: 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8b5cf6 0%, #c084fc 100%);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .completion-button {
+            display: none;
+            width: 100%;
+            padding: 15px 30px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .completion-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.35) 0%, rgba(139, 92, 246, 0.35) 100%);
+            transition: width 0.4s ease;
+            z-index: -1;
+            box-shadow: 
+                0 0 10px rgba(236, 72, 153, 0.1),
+                0 0 20px rgba(139, 92, 246, 0.05);
+        }
+
+        .completion-button:hover::before {
+            width: 100%;
+            box-shadow: 
+                0 0 15px rgba(236, 72, 153, 0.2),
+                0 0 30px rgba(139, 92, 246, 0.1);
+        }
+
+        .completion-button:hover {
+            color: white;
+            border-color: #8b5cf6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .completion-button::after {
+            content: ' →';
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+
+        .completion-button:hover::after {
+            transform: translateX(3px);
+        }
+
+        .error-container {
+            display: none;
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .error-container.show {
+            display: block;
+        }
+
+        .error-message {
+            color: #f87171;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .error-details {
+            color: rgba(248, 113, 113, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .retry-button {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+            border: 1px solid #f87171;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            margin-right: 10px;
+        }
+
+        .retry-button:hover {
+            background: #f87171;
+            color: white;
+        }
+
+        .home-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+
+        .home-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .debug-info {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .debug-info.show {
+            display: block;
+        }
+
+        .debug-title {
+            color: #8b5cf6;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .debug-content {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.4;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2rem;
+            }
+            
+            .loading-container {
+                padding: 20px;
+                margin: 20px;
+            }
+            
+            .progress-item {
+                padding: 12px 15px;
+            }
+            
+            .progress-text {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Stats Background -->
+    <div class="floating-stats" id="floatingStats"></div>
+    
+    <div class="numbers-animation" id="numbersContainer"></div>
+    
+    <div class="loading-container">
+        <div class="loading-content">
+            <h1 class="main-title">Generating Your Custom Model</h1>
+            <p class="subtitle">Creating financial model for <span class="company-name" id="companyName">your company</span></p>
+            
+            <div class="status-display">
+                <div class="status-text" id="statusText">Initializing your submission...</div>
+                <div class="submission-id" id="submissionIdDisplay">Loading...</div>
+            </div>
+            
+            <div class="progress-list">
+                <div class="progress-item pending" id="step1">
+                    <div class="progress-icon">
+                        <span class="pending-icon">📊</span>
+                    </div>
+                    <div class="progress-text">Analyzing your requirements...</div>
+                </div>
+                
+                <div class="progress-item pending" id="step2">
+                    <div class="progress-icon">
+                        <span class="pending-icon">📋</span>
+                    </div>
+                    <div class="progress-text">Building financial statements (IS, BS, CF)...</div>
+                </div>
+                
+                <div class="progress-item pending" id="step3">
+                    <div class="progress-icon">
+                        <span class="pending-icon">⚙️</span>
+                    </div>
+                    <div class="progress-text">Calibrating key assumptions...</div>
+                </div>
+                
+                <div class="progress-item pending" id="step4">
+                    <div class="progress-icon">
+                        <span class="pending-icon">📈</span>
+                    </div>
+                    <div class="progress-text">Running valuation models (DCF, Comps)...</div>
+                </div>
+                
+                <div class="progress-item pending" id="step5">
+                    <div class="progress-icon">
+                        <span class="pending-icon">✅</span>
+                    </div>
+                    <div class="progress-text">Finalizing your custom model...</div>
+                </div>
+            </div>
+            
+            <div class="progress-bar-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                
+                <button class="completion-button" id="completionButton" onclick="goToPreview()">
+                    Take me to my financial model
+                </button>
+                
+                <div class="error-container" id="errorContainer">
+                    <p class="error-message" id="errorMessage">Something went wrong while processing your model.</p>
+                    <p class="error-details" id="errorDetails"></p>
+                    <button class="retry-button" onclick="retryProcessing()">Retry</button>
+                    <a href="../../index.html" class="home-button">Return Home</a>
+                </div>
+                
+                <div class="debug-info" id="debugInfo">
+                    <div class="debug-title">Debug Information:</div>
+                    <div class="debug-content" id="debugContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - NO HARDCODED KEYS!
+        const POLL_INTERVAL = 3000; // 3 seconds
+        const MIN_LOADING_TIME = 30000; // 30 seconds minimum
+        const MAX_RETRY_ATTEMPTS = 5;
+        
+        // State management
+        let submissionId = null;
+        let startTime = null;
+        let pollInterval = null;
+        let currentStep = 0;
+        let isProcessingComplete = false;
+        let minimumTimeElapsed = false;
+        let retryCount = 0;
+        let lastKnownData = null;
+        
+        // UI Elements
+        let statusText, submissionIdDisplay, errorContainer, errorMessage, errorDetails, debugInfo, debugContent;
+        
+        /**
+         * Initialize the loading page
+         */
+        function initialize() {
+            console.log('🚀 Loading page initialized');
+            
+            // Get DOM elements
+            statusText = document.getElementById('statusText');
+            submissionIdDisplay = document.getElementById('submissionIdDisplay');
+            errorContainer = document.getElementById('errorContainer');
+            errorMessage = document.getElementById('errorMessage');
+            errorDetails = document.getElementById('errorDetails');
+            debugInfo = document.getElementById('debugInfo');
+            debugContent = document.getElementById('debugContent');
+            
+            // Extract submission ID from URL
+            submissionId = getSubmissionIdFromURL();
+            
+            if (!submissionId) {
+                console.error('❌ No submission ID found in URL');
+                showError('Invalid submission ID', 'No submission ID was found in the URL. Please try submitting the questionnaire again.');
+                return;
+            }
+            
+            console.log('✅ Submission ID found:', submissionId);
+            submissionIdDisplay.textContent = submissionId;
+            
+            // Initialize timing
+            startTime = Date.now();
+            
+            // Try to get company name immediately on page load
+            fetchCompanyNameImmediately();
+            
+            // Start background animations
+            startFloatingStats();
+            startNumbersAnimation();
+            
+            // Start the loading process
+            startLoadingProcess();
+        }
+        
+        /**
+         * UPDATED: Fetch company name via combined API
+         */
+        async function fetchCompanyNameImmediately() {
+            try {
+                console.log('🔍 Fetching company name via combined API for submission:', submissionId);
+                
+                const response = await fetch('/api/check-file-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        submission_id: submissionId
+                    })
+                });
+                
+                console.log('📡 API response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('📊 API response data:', data);
+                    
+                    if (data.success) {
+                        const companyName = data.company_name;
+                        const fullName = data.full_name;
+                        
+                        console.log('🏢 Extracted from combined API:', { companyName, fullName });
+                        
+                        if (companyName || fullName) {
+                            updateCompanyNameUI(companyName, fullName);
+                            lastKnownData = data;
+                            
+                            // Store successful data
+                            sessionStorage.setItem(`submission_status_${submissionId}`, JSON.stringify(data));
+                            console.log('✅ Company name found and cached from combined API!');
+                            return;
+                        }
+                    }
+                }
+                
+                console.log('⚠️ Could not get company name from combined API');
+            } catch (error) {
+                console.error('❌ Error fetching company name from combined API:', error);
+                updateDebugInfo({ fetchError: error.message });
+            }
+            
+            // Fallback
+            console.log('⚠️ Using fallback company name');
+            updateCompanyNameUI(null, null);
+        }
+        
+        /**
+         * Extract submission ID from URL parameters
+         */
+        function getSubmissionIdFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('submission_id');
+        }
+        
+        /**
+         * Start the main loading process
+         */
+        function startLoadingProcess() {
+            console.log('🔄 Starting loading process...');
+            
+            // Hide the status display - this all happens in background now
+            document.querySelector('.status-display').style.display = 'none';
+            
+            // Start visual progress simulation immediately
+            simulateProgress();
+            
+            // Start background polling after a short delay
+            setTimeout(() => {
+                pollStatus();
+                pollInterval = setInterval(pollStatus, POLL_INTERVAL);
+            }, 2000);
+            
+            // Set minimum time elapsed flag after 30 seconds
+            setTimeout(() => {
+                minimumTimeElapsed = true;
+                console.log('⏰ Minimum loading time elapsed');
+                checkCompletionConditions();
+            }, MIN_LOADING_TIME);
+        }
+        
+        /**
+         * UPDATED: Poll for submission status via combined API
+         */
+        async function pollStatus() {
+            try {
+                console.log('🔍 Polling submission status via combined API for:', submissionId);
+                
+                const response = await fetch('/api/check-file-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        submission_id: submissionId
+                    })
+                });
+                
+                console.log('📡 Combined API response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Combined API failed:', response.status, errorText);
+                    
+                    retryCount++;
+                    if (retryCount >= MAX_RETRY_ATTEMPTS) {
+                        clearInterval(pollInterval);
+                        console.log('⚠️ Combined API polling failed completely');
+                        // After max retries, assume processing complete after reasonable time
+                        setTimeout(() => {
+                            if (!isProcessingComplete) {
+                                console.log('🎉 Assuming processing complete after extended time');
+                                handleProcessingComplete({
+                                    company_name: lastKnownData?.company_name || 'Your Company',
+                                    full_name: lastKnownData?.full_name || 'Unknown',
+                                    download_url: `/files/${submissionId}`
+                                });
+                            }
+                        }, 30000); // Wait 30 more seconds then assume complete
+                    }
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('📊 Combined API response:', data);
+                
+                if (!data.success) {
+                    console.error('❌ API returned error:', data.error);
+                    retryCount++;
+                    return;
+                }
+                
+                lastKnownData = data;
+                retryCount = 0; // Reset retry count on successful query
+                
+                console.log('✅ Combined status data retrieved:', {
+                    status: data.status,
+                    is_complete: data.is_complete,
+                    file_exists: data.file_exists,
+                    company_name: data.company_name
+                });
+                
+                // Update debug info
+                updateDebugInfo({
+                    overall_status: data.status,
+                    is_complete: data.is_complete,
+                    file_exists: data.file_exists,
+                    database_status: data.database_status,
+                    storage_status: data.storage_status,
+                    has_download_url: !!data.download_url,
+                    company_name: data.company_name,
+                    processing_status: data.processing_status
+                });
+                
+                // Process the combined status data
+                processCombinedStatus(data);
+                
+            } catch (error) {
+                console.error('❌ Error polling status via combined API:', error);
+                
+                retryCount++;
+                if (retryCount >= MAX_RETRY_ATTEMPTS) {
+                    clearInterval(pollInterval);
+                    console.log('⚠️ Combined API polling failed completely with exception');
+                    // Fallback after max retries
+                    setTimeout(() => {
+                        if (!isProcessingComplete) {
+                            console.log('🎉 Fallback: assuming processing complete');
+                            handleProcessingComplete({
+                                company_name: 'Your Company',
+                                full_name: 'Unknown',
+                                download_url: `/files/${submissionId}`
+                            });
+                        }
+                    }, 30000);
+                }
+            }
+        }
+        
+        /**
+         * Process combined status data from unified API
+         */
+        function processCombinedStatus(data) {
+            console.log('🔄 Processing combined status data:', {
+                status: data.status,
+                is_complete: data.is_complete,
+                company_name: data.company_name
+            });
+            
+            // Update company name in UI
+            updateCompanyNameUI(data.company_name, data.full_name);
+            
+            // Handle different overall statuses
+            if (data.is_complete && data.file_exists) {
+                console.log('🎉 Processing completed via combined API!');
+                handleProcessingComplete(data);
+                
+            } else if (data.status === 'failed') {
+                console.log('❌ Processing failed');
+                clearInterval(pollInterval);
+                showError(
+                    'Processing Failed', 
+                    'There was an error processing your financial model. Please try again or contact support.'
+                );
+                
+            } else if (data.status === 'not_found') {
+                console.log('❌ Submission not found');
+                clearInterval(pollInterval);
+                showError(
+                    'Submission Not Found',
+                    'Could not find your submission. Please check the URL and try again.'
+                );
+                
+            } else {
+                console.log('⏳ Still processing, current status:', data.status);
+                // Continue polling - don't need separate file check since combined API handles it
+            }
+        }
+        
+        /**
+         * Handle processing completion
+         */
+        function handleProcessingComplete(data) {
+            console.log('🎉 Processing completed!', {
+                download_url: !!data.download_url,
+                company_name: data.company_name
+            });
+            
+            // Store data for preview page
+            const downloadUrl = data.download_url || `/files/${submissionId}`;
+            
+            sessionStorage.setItem(`download_url_${submissionId}`, downloadUrl);
+            sessionStorage.setItem(`file_path_${submissionId}`, data.file_path || `completedmodels/${submissionId}`);
+            sessionStorage.setItem(`file_metadata_${submissionId}`, JSON.stringify({
+                company_name: data.company_name || 'Your Company',
+                full_name: data.full_name || 'Unknown',
+                file_size: data.file_size || 'Available for download',
+                processed_at: data.created_at || new Date().toISOString()
+            }));
+            
+            isProcessingComplete = true;
+            checkCompletionConditions();
+        }
+        
+        /**
+         * Update company name in UI from any available source
+         */
+        function updateCompanyNameUI(companyName, fullName) {
+            console.log('🏢 updateCompanyNameUI called with:', { companyName, fullName });
+            
+            const companyNameElement = document.getElementById('companyName');
+            if (!companyNameElement) {
+                console.error('❌ Company name element not found in DOM');
+                return;
+            }
+            
+            let displayName = "your company"; // default fallback
+            
+            if (companyName && companyName.trim() !== '') {
+                displayName = companyName.trim();
+                console.log('✅ Using company name:', displayName);
+            } else if (fullName && fullName.trim() !== '') {
+                displayName = fullName.trim() + "'s company";
+                console.log('✅ Using full name + company:', displayName);
+            } else {
+                console.log('⚠️ No company name or full name available, using fallback');
+            }
+            
+            companyNameElement.textContent = displayName;
+            console.log('✅ Company name updated in UI to:', displayName);
+        }
+        
+        /**
+         * Check if we can show the completion button
+         */
+        function checkCompletionConditions() {
+            if (isProcessingComplete && minimumTimeElapsed) {
+                console.log('🏁 All conditions met - showing completion');
+                clearInterval(pollInterval);
+                completeAllSteps();
+            }
+        }
+        
+        /**
+         * Simulate visual progress for better UX
+         */
+        function simulateProgress() {
+            console.log('🎬 Starting visual progress simulation');
+            
+            // Complete first 4 steps over 30 seconds (7.5 seconds each)
+            const firstFourSteps = 4;
+            const stepDuration = MIN_LOADING_TIME / firstFourSteps;
+            
+            // Start first step immediately
+            startStep(1);
+            
+            // Schedule first 4 steps
+            for (let i = 2; i <= firstFourSteps; i++) {
+                setTimeout(() => {
+                    completeStep(i - 1);
+                    startStep(i);
+                }, stepDuration * (i - 1));
+            }
+            
+            // Complete 4th step after 30 seconds, then start file-dependent 5th step
+            setTimeout(() => {
+                completeStep(4);
+                startStep(5);
+                console.log('📊 First 4 steps complete, now checking for file completion...');
+                
+                // Note: We don't need to manually check file status since the combined API
+                // handles both database and storage checks automatically
+                console.log('✅ Combined API already handles file status checking');
+            }, MIN_LOADING_TIME);
+        }
+        
+        /**
+         * Visual step management
+         */
+        function startStep(stepNumber) {
+            const stepElement = document.getElementById(`step${stepNumber}`);
+            if (!stepElement) return;
+            
+            stepElement.className = 'progress-item current';
+            stepElement.querySelector('.progress-icon').innerHTML = '<div class="spinner"></div>';
+            
+            currentStep = stepNumber;
+            updateProgressBar();
+        }
+        
+        function completeStep(stepNumber) {
+            const stepElement = document.getElementById(`step${stepNumber}`);
+            if (!stepElement) return;
+            
+            stepElement.className = 'progress-item completed';
+            stepElement.querySelector('.progress-icon').innerHTML = '<span class="checkmark">✓</span>';
+            
+            updateProgressBar();
+        }
+        
+        function completeAllSteps() {
+            // Complete any remaining steps
+            for (let i = 1; i <= 5; i++) {
+                completeStep(i);
+            }
+            
+            // Show completion button with animation
+            setTimeout(() => {
+                document.querySelector('.progress-bar').style.display = 'none';
+                const completionButton = document.getElementById('completionButton');
+                completionButton.style.display = 'block';
+                completionButton.style.opacity = '0';
+                completionButton.style.transform = 'translateY(10px)';
+                
+                setTimeout(() => {
+                    completionButton.style.transition = 'all 0.5s ease';
+                    completionButton.style.opacity = '1';
+                    completionButton.style.transform = 'translateY(0)';
+                }, 100);
+            }, 500);
+        }
+        
+        function updateProgressBar() {
+            const progressFill = document.getElementById('progressFill');
+            const completedSteps = document.querySelectorAll('.progress-item.completed').length;
+            const currentSteps = document.querySelectorAll('.progress-item.current').length;
+            
+            let progress = (completedSteps / 5) * 100;
+            
+            if (currentSteps > 0 && completedSteps < 5) {
+                progress += (1 / 5) * 50; // 50% progress for current step
+            }
+            
+            progressFill.style.width = `${Math.min(progress, 100)}%`;
+        }
+        
+        /**
+         * Error handling
+         */
+        function showError(title, details) {
+            console.error('💥 Critical error:', title, details);
+            
+            errorMessage.textContent = title;
+            errorDetails.textContent = details;
+            errorContainer.classList.add('show');
+            debugInfo.classList.add('show');
+            
+            // Hide progress bar
+            document.querySelector('.progress-bar').style.display = 'none';
+            
+            // Mark current step as error
+            const currentStepElement = document.getElementById(`step${currentStep}`);
+            if (currentStepElement) {
+                currentStepElement.className = 'progress-item error';
+                currentStepElement.querySelector('.progress-icon').innerHTML = '<span class="error-icon">⚠️</span>';
+            }
+        }
+        
+        /**
+         * Update debug information
+         */
+        function updateDebugInfo(info) {
+            const debugText = Object.entries(info)
+                .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+                .join('\n');
+            
+            debugContent.textContent = debugText;
+        }
+        
+        /**
+         * Retry processing
+         */
+        function retryProcessing() {
+            console.log('🔄 Retrying processing...');
+            
+            // Reset state
+            isProcessingComplete = false;
+            minimumTimeElapsed = false;
+            retryCount = 0;
+            startTime = Date.now();
+            currentStep = 0;
+            
+            // Hide error displays
+            errorContainer.classList.remove('show');
+            debugInfo.classList.remove('show');
+            
+            // Show progress bar
+            document.querySelector('.progress-bar').style.display = 'block';
+            
+            // Reset visual progress
+            for (let i = 1; i <= 5; i++) {
+                const stepElement = document.getElementById(`step${i}`);
+                stepElement.className = 'progress-item pending';
+                stepElement.querySelector('.progress-icon').innerHTML = '<span class="pending-icon">📊</span>';
+            }
+            
+            // Restart the process
+            startLoadingProcess();
+        }
+        
+        /**
+         * Navigation
+         */
+        function goToPreview() {
+            console.log('🚀 Navigating to preview page');
+            window.location.href = `financial-model-preview.html?submission_id=${submissionId}`;
+        }
+        
+        /**
+         * Background animations
+         */
+        function startFloatingStats() {
+            const stats = [
+                'ROI: 247%', 'NPV: $2.4M', 'IRR: 18.5%', 'EBITDA: $8.2M', 
+                'Revenue Growth: 32%', 'Margin: 24.8%', 'FCF: $3.1M', 'P/E: 15.2x',
+                'DCF: $45.6M', 'WACC: 8.9%', 'Beta: 1.24', 'EV/EBITDA: 12x',
+                'Debt/Equity: 0.45', 'Quick Ratio: 1.8', 'ROE: 21%', 'ROIC: 15%',
+                'Working Capital: $1.2M', 'Cash Flow: +$850K', 'Burn Rate: $120K',
+                'ARR: $12.5M', 'LTV/CAC: 3.2', 'Churn: 2.1%', 'MRR: $1.04M'
+            ];
+
+            const createFloatingStat = () => {
+                const container = document.getElementById('floatingStats');
+                const stat = document.createElement('div');
+                stat.className = 'floating-stat';
+                
+                const sizes = ['', 'large', 'small'];
+                const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+                if (randomSize) stat.classList.add(randomSize);
+                
+                if (Math.random() > 0.5) stat.classList.add('reverse');
+                
+                stat.textContent = stats[Math.floor(Math.random() * stats.length)];
+                stat.style.left = Math.random() * 100 + '%';
+                stat.style.animationDuration = (15 + Math.random() * 10) + 's';
+                stat.style.animationDelay = Math.random() * 5 + 's';
+                
+                container.appendChild(stat);
+                
+                setTimeout(() => {
+                    if (stat.parentNode) {
+                        stat.remove();
+                    }
+                }, 25000);
+            };
+
+            // Create initial stats
+            for (let i = 0; i < 8; i++) {
+                setTimeout(() => createFloatingStat(), i * 2000);
+            }
+
+            // Continue creating stats
+            setInterval(createFloatingStat, 3000);
+
+            // Add illumination effect
+            function illuminateRandomStat() {
+                const allStats = document.querySelectorAll('.floating-stat');
+                
+                if (allStats.length > 0) {
+                    // Remove illuminate class from all stats
+                    allStats.forEach(stat => stat.classList.remove('illuminate'));
+                    
+                    // Randomly choose to illuminate 2 or 3 stats
+                    const numToIlluminate = Math.random() > 0.5 ? 2 : 3;
+                    const statsToIlluminate = [];
+                    
+                    // Pick random stats to illuminate (avoid duplicates)
+                    while (statsToIlluminate.length < numToIlluminate && statsToIlluminate.length < allStats.length) {
+                        const randomIndex = Math.floor(Math.random() * allStats.length);
+                        const selectedStat = allStats[randomIndex];
+                        
+                        if (!statsToIlluminate.includes(selectedStat)) {
+                            statsToIlluminate.push(selectedStat);
+                        }
+                    }
+                    
+                    // Illuminate the selected stats
+                    statsToIlluminate.forEach(stat => {
+                        stat.classList.add('illuminate');
+                    });
+                    
+                    // Remove illuminate class after 1.5 seconds
+                    setTimeout(() => {
+                        statsToIlluminate.forEach(stat => {
+                            stat.classList.remove('illuminate');
+                        });
+                    }, 1500);
+                }
+            }
+
+            // Start illumination effect after initial delay
+            setTimeout(() => {
+                function startIlluminationLoop() {
+                    illuminateRandomStat();
+                    setTimeout(startIlluminationLoop, 2000 + Math.random() * 2000);
+                }
+                startIlluminationLoop();
+            }, 3000);
+        }
+        
+        /**
+         * Enhanced numbers animation that avoids the central content area
+         */
+        function startNumbersAnimation() {
+            const container = document.getElementById('numbersContainer');
+            const mathOperations = [
+                '247 × 3.2%', '2.4M ÷ 18.5', '√(8.2² + 4.1²)', '∫ 3x dx', 
+                '32% of 24.8', 'log₂(1024)', '3.1 × e^0.5', '15.2 ± 2.1',
+                '45.6M / 8.9%', 'sin(π/4)', '1.24³', '12 × 4.5%',
+                '0.45 ÷ 1.8', '21% × 15%', 'Σ(1,2,3,4,5)', '120K ÷ 2.1',
+                '12.5 × 3.2²', '1.04 × 12', '2⁵ - 7', 'π × r²'
+            ];
+            
+            /**
+             * Get a safe position that avoids the central loading area
+             */
+            function getSafePosition() {
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                // Define the central exclusion zone (roughly where the loading container is)
+                const centerExclusionZone = {
+                    left: viewportWidth * 0.15,   // Start exclusion at 15% from left
+                    right: viewportWidth * 0.85,  // End exclusion at 85% from left
+                    top: viewportHeight * 0.15,   // Start exclusion at 15% from top
+                    bottom: viewportHeight * 0.85  // End exclusion at 85% from top
+                };
+                
+                let left, top;
+                let attempts = 0;
+                const maxAttempts = 10;
+                
+                do {
+                    left = Math.random() * viewportWidth;
+                    top = Math.random() * viewportHeight;
+                    attempts++;
+                    
+                    // If we can't find a good position after max attempts, force to edges
+                    if (attempts >= maxAttempts) {
+                        // Force to one of the safe edge areas
+                        const edges = ['left', 'right', 'top', 'bottom'];
+                        const randomEdge = edges[Math.floor(Math.random() * edges.length)];
+                        
+                        switch(randomEdge) {
+                            case 'left':
+                                left = Math.random() * centerExclusionZone.left;
+                                top = Math.random() * viewportHeight;
+                                break;
+                            case 'right':
+                                left = centerExclusionZone.right + Math.random() * (viewportWidth - centerExclusionZone.right);
+                                top = Math.random() * viewportHeight;
+                                break;
+                            case 'top':
+                                left = Math.random() * viewportWidth;
+                                top = Math.random() * centerExclusionZone.top;
+                                break;
+                            case 'bottom':
+                                left = Math.random() * viewportWidth;
+                                top = centerExclusionZone.bottom + Math.random() * (viewportHeight - centerExclusionZone.bottom);
+                                break;
+                        }
+                        break;
+                    }
+                } while (
+                    left >= centerExclusionZone.left && 
+                    left <= centerExclusionZone.right && 
+                    top >= centerExclusionZone.top && 
+                    top <= centerExclusionZone.bottom
+                );
+                
+                return {
+                    left: (left / viewportWidth) * 100,
+                    top: (top / viewportHeight) * 100
+                };
+            }
+            
+            setInterval(() => {
+                const numberContainer = document.createElement('div');
+                numberContainer.className = 'floating-number typing-number';
+                
+                // Random size like floating stats
+                const sizes = ['', 'large', 'small'];
+                const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+                if (randomSize) numberContainer.classList.add(randomSize);
+                
+                // Get safe position that avoids the center
+                const position = getSafePosition();
+                numberContainer.style.left = `${position.left}%`;
+                numberContainer.style.top = `${position.top}%`;
+                
+                container.appendChild(numberContainer);
+                
+                const fullText = mathOperations[Math.floor(Math.random() * mathOperations.length)];
+                typeText(numberContainer, fullText, () => {
+                    setTimeout(() => {
+                        if (container.contains(numberContainer)) {
+                            container.removeChild(numberContainer);
+                        }
+                    }, 1500);
+                });
+            }, 1200); // Slower to reduce visual noise
+        }
+        
+        function typeText(element, text, callback) {
+            let index = 0;
+            const textSpan = document.createElement('span');
+            const cursorSpan = document.createElement('span');
+            cursorSpan.className = 'typing-cursor';
+            
+            element.appendChild(textSpan);
+            element.appendChild(cursorSpan);
+            
+            const typeInterval = setInterval(() => {
+                if (index < text.length) {
+                    textSpan.textContent += text[index];
+                    index++;
+                } else {
+                    clearInterval(typeInterval);
+                    setTimeout(() => {
+                        if (element.contains(cursorSpan)) {
+                            element.removeChild(cursorSpan);
+                        }
+                        if (callback) callback();
+                    }, 300);
+                }
+            }, 100 + Math.random() * 100);
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initialize);
+        
+        // Mouse illumination effect with trails - Simplified to prevent glitching
+        let mouseTimeout;
+        const trailElements = [];
+        const mouseHistory = [];
+        const maxTrails = 8; // Reduced significantly
+        const maxHistory = 12;
+        let lastTrailTime = 0;
+        const trailInterval = 60; // Much slower to prevent glitching
+        
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            
+            // Update current cursor position
+            document.documentElement.style.setProperty('--mouse-x', x + '%');
+            document.documentElement.style.setProperty('--mouse-y', y + '%');
+            
+            // Add to mouse history
+            mouseHistory.push({ x, y, time: Date.now() });
+            
+            // Keep history limited
+            if (mouseHistory.length > maxHistory) {
+                mouseHistory.shift();
+            }
+            
+            document.body.classList.add('mouse-active');
+            
+            // Create trail elements from history - much less frequently
+            const currentTime = Date.now();
+            if (currentTime - lastTrailTime > trailInterval && mouseHistory.length > 3) {
+                // Create trail at a position behind current
+                const trailIndex = Math.max(0, mouseHistory.length - 4);
+                const trailPos = mouseHistory[trailIndex];
+                if (trailPos) {
+                    createTrailElement(trailPos.x, trailPos.y);
+                }
+                lastTrailTime = currentTime;
+            }
+            
+            // Clear existing timeout
+            clearTimeout(mouseTimeout);
+            
+            // Hide effect after mouse stops moving
+            mouseTimeout = setTimeout(() => {
+                document.body.classList.remove('mouse-active');
+            }, 500);
+        });
+
+        function createTrailElement(x, y) {
+            // Remove oldest trail if we have too many
+            if (trailElements.length >= maxTrails) {
+                const oldestTrail = trailElements.shift();
+                if (oldestTrail && oldestTrail.parentNode) {
+                    oldestTrail.remove();
+                }
+            }
+            
+            // Create new trail element
+            const trail = document.createElement('div');
+            trail.className = 'mouse-trail';
+            trail.style.setProperty('--trail-x', x + '%');
+            trail.style.setProperty('--trail-y', y + '%');
+            
+            document.body.appendChild(trail);
+            trailElements.push(trail);
+            
+            // Start fading out
+            setTimeout(() => {
+                trail.classList.add('fade-out');
+                
+                // Remove from DOM after fade completes
+                setTimeout(() => {
+                    if (trail.parentNode) {
+                        trail.remove();
+                    }
+                    // Remove from array
+                    const index = trailElements.indexOf(trail);
+                    if (index > -1) {
+                        trailElements.splice(index, 1);
+                    }
+                }, 800); // Shorter fade duration
+            }, 100);
+        }
+
+        // Hide effect when mouse leaves window
+        document.addEventListener('mouseleave', () => {
+            clearTimeout(mouseTimeout);
+            document.body.classList.remove('mouse-active');
+            
+            // Clear mouse history
+            mouseHistory.length = 0;
+            
+            // Clean up all trail elements
+            trailElements.forEach(trail => {
+                if (trail.parentNode) {
+                    trail.classList.add('fade-out');
+                    setTimeout(() => trail.remove(), 800);
+                }
+            });
+            trailElements.length = 0;
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+        });
+        
+        // Recalculate positions on window resize
+        window.addEventListener('resize', () => {
+            // The next numbers created will automatically use the new safe positions
+            console.log('🔄 Window resized, numbers will use new safe positions');
+        });
+        
+        // Make functions globally accessible
+        window.goToPreview = goToPreview;
+        window.retryProcessing = retryProcessing;
+        
+        // DEBUG FUNCTIONS (Combined API-based)
+        window.debugSubmissionStatus = async function() {
+            console.log('🔧 Debug: Fetching complete status via combined API for:', submissionId);
+            
+            try {
+                const response = await fetch('/api/check-file-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        submission_id: submissionId
+                    })
+                });
+                
+                console.log('🔧 Response Status:', response.status);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('🔧 Full Combined API Response:', result);
+                    
+                    if (result.success) {
+                        console.log('🔧 Overall Status:', result.status);
+                        console.log('🔧 Is Complete:', result.is_complete);
+                        console.log('🔧 Company Name:', result.company_name);
+                        console.log('🔧 Full Name:', result.full_name);
+                        console.log('🔧 File Exists:', result.file_exists);
+                        console.log('🔧 Download URL:', result.download_url);
+                        console.log('🔧 Database Status:', result.database_status);
+                        console.log('🔧 Storage Status:', result.storage_status);
+                        console.log('🔧 Processing Status:', result.processing_status);
+                        console.log('🔧 Debug Info:', result.debug);
+                        
+                        return result;
+                    }
+                } else {
+                    console.log('🔧 Combined API failed:', await response.text());
+                }
+            } catch (error) {
+                console.error('🔧 Debug error:', error);
+            }
+        };
+
+        window.testCombinedAPI = async function() {
+            console.log('🧪 Testing combined API...');
+            
+            const result = await window.debugSubmissionStatus();
+            if (result && result.success) {
+                console.log('🧪 API Success! Testing UI update...');
+                updateCompanyNameUI(result.company_name, result.full_name);
+                
+                if (result.is_complete) {
+                    console.log('🎉 Processing is complete according to API!');
+                } else {
+                    console.log('⏳ Still processing according to API');
+                }
+            } else {
+                console.log('❌ API test failed');
+            }
+        };
+        
+        console.log('🔧 Debug: Call window.debugSubmissionStatus() to check complete status via combined API');
+        console.log('🔧 Debug: Call window.testCombinedAPI() to test the combined API and UI update');
+    </script>
+</body>
+</html>
