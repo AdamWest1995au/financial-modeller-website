@@ -1,5 +1,7 @@
 // /pages/questionnaire/components/base-component.js
-class BaseComponent {
+
+// Base Component Class
+export class BaseComponent {
     constructor(config = {}) {
         this.id = config.id || this.generateId();
         this.container = null;
@@ -97,8 +99,8 @@ class BaseComponent {
     }
 }
 
-// /pages/questionnaire/components/text-input.js
-class TextInput extends BaseComponent {
+// Text Input Component
+export class TextInput extends BaseComponent {
     constructor(config = {}) {
         super(config);
         this.config = {
@@ -183,8 +185,8 @@ class TextInput extends BaseComponent {
     }
 }
 
-// /pages/questionnaire/components/dropdown.js
-class Dropdown extends BaseComponent {
+// Dropdown Component
+export class Dropdown extends BaseComponent {
     constructor(config = {}) {
         super(config);
         this.config = {
@@ -331,6 +333,11 @@ class Dropdown extends BaseComponent {
         }
     }
 
+    navigateOptions(direction) {
+        // Basic keyboard navigation - can be enhanced
+        console.log('Navigate options:', direction);
+    }
+
     selectOption(value) {
         if (this.config.multiple) {
             const index = this.selectedValues.indexOf(value);
@@ -415,8 +422,8 @@ class Dropdown extends BaseComponent {
     }
 }
 
-// /pages/questionnaire/components/toggle.js
-class Toggle extends BaseComponent {
+// Toggle Component
+export class Toggle extends BaseComponent {
     constructor(config = {}) {
         super(config);
         this.config = {
@@ -491,8 +498,8 @@ class Toggle extends BaseComponent {
     }
 }
 
-// /pages/questionnaire/components/multi-select.js
-class MultiSelect extends Dropdown {
+// Multi-Select Component (extends Dropdown)
+export class MultiSelect extends Dropdown {
     constructor(config = {}) {
         super({
             ...config,
@@ -549,9 +556,11 @@ class MultiSelect extends Dropdown {
     }
 }
 
-// Export components
-window.BaseComponent = BaseComponent;
-window.TextInput = TextInput;
-window.Dropdown = Dropdown;
-window.Toggle = Toggle;
-window.MultiSelect = MultiSelect;
+// Keep backwards compatibility with global window object
+if (typeof window !== 'undefined') {
+    window.BaseComponent = BaseComponent;
+    window.TextInput = TextInput;
+    window.Dropdown = Dropdown;
+    window.Toggle = Toggle;
+    window.MultiSelect = MultiSelect;
+}
