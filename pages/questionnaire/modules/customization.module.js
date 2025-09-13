@@ -94,7 +94,7 @@ export class CustomizationModule {
         const toggleConfig = {
             id: `${section.key}Toggle`,
             labels: ['Generic', 'Custom'],
-            defaultValue: 'generic', // Default to Generic (left position, no active class)
+            defaultValue: 'generic',
             width: '180px'
         };
         
@@ -108,7 +108,8 @@ export class CustomizationModule {
             this.onPreferenceChange();
         };
         
-        toggleContainer.appendChild(toggle.render());
+        // FIXED: Pass container to render method instead of using appendChild
+        toggle.render(toggleContainer);
         controlsDiv.appendChild(toggleContainer);
         
         // Assemble row
@@ -151,7 +152,7 @@ export class CustomizationModule {
      */
     onPreferenceChange() {
         // Trigger validation update
-        if (window.questionnaireEngine) {
+        if (window.questionnaireEngine && window.questionnaireEngine.validator) {
             window.questionnaireEngine.validator.validateCurrentQuestion();
         }
     }
@@ -297,4 +298,12 @@ export class CustomizationModule {
         this.components = {};
         this.hideSpecialLayout();
     }
+}
+
+// Export for ES6 imports
+export default CustomizationModule;
+
+// Also add to window for backward compatibility if needed
+if (typeof window !== 'undefined') {
+    window.CustomizationModule = CustomizationModule;
 }
