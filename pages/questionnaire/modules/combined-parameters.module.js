@@ -69,6 +69,9 @@ export class CombinedParametersModule {
     }
 
     createPeriodicityDropdown() {
+        const container = document.createElement('div');
+        container.className = 'dropdown-container';
+        
         const options = [
             { value: 'quarter', text: 'Quarter' },
             { value: 'half-year', text: 'Half-year' },
@@ -87,7 +90,11 @@ export class CombinedParametersModule {
         });
 
         this.components.periodicity = periodicityDropdown;
-        return periodicityDropdown.render();
+        
+        // FIXED: Pass container to render method
+        periodicityDropdown.render(container);
+        
+        return container;
     }
 
     createDateDropdowns() {
@@ -101,6 +108,9 @@ export class CombinedParametersModule {
         const monthLabel = document.createElement('label');
         monthLabel.className = 'date-label';
         monthLabel.textContent = 'Month';
+
+        const monthContainer = document.createElement('div');
+        monthContainer.className = 'dropdown-wrapper';
 
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const monthOptions = months.map(month => ({ value: month, text: month }));
@@ -119,7 +129,9 @@ export class CombinedParametersModule {
         this.components.month = monthDropdown;
 
         monthGroup.appendChild(monthLabel);
-        monthGroup.appendChild(monthDropdown.render());
+        // FIXED: Pass container to render method
+        monthDropdown.render(monthContainer);
+        monthGroup.appendChild(monthContainer);
 
         // Year dropdown  
         const yearGroup = document.createElement('div');
@@ -128,6 +140,9 @@ export class CombinedParametersModule {
         const yearLabel = document.createElement('label');
         yearLabel.className = 'date-label';
         yearLabel.textContent = 'Year';
+
+        const yearContainer = document.createElement('div');
+        yearContainer.className = 'dropdown-wrapper';
 
         // Generate years from 2000 to 2025 (showing last 2 digits)
         const yearOptions = [];
@@ -150,7 +165,9 @@ export class CombinedParametersModule {
         this.components.year = yearDropdown;
 
         yearGroup.appendChild(yearLabel);
-        yearGroup.appendChild(yearDropdown.render());
+        // FIXED: Pass container to render method
+        yearDropdown.render(yearContainer);
+        yearGroup.appendChild(yearContainer);
 
         container.appendChild(monthGroup);
         container.appendChild(yearGroup);
@@ -159,6 +176,9 @@ export class CombinedParametersModule {
     }
 
     createForecastInput() {
+        const container = document.createElement('div');
+        container.className = 'input-container';
+        
         const forecastInput = new TextInput({
             id: 'forecastYearsInput',
             placeholder: 'Enter number of years (e.g., 5)',
@@ -177,11 +197,15 @@ export class CombinedParametersModule {
         });
 
         this.components.forecastYears = forecastInput;
-        return forecastInput.render();
+        
+        // FIXED: Pass container to render method
+        forecastInput.render(container);
+        
+        return container;
     }
 
     onResponseChange() {
-        if (window.questionnaireEngine) {
+        if (window.questionnaireEngine && window.questionnaireEngine.validator) {
             window.questionnaireEngine.validator.validateCurrentQuestion();
         }
     }
@@ -261,4 +285,12 @@ export class CombinedParametersModule {
         });
         this.components = {};
     }
+}
+
+// Export for ES6 imports
+export default CombinedParametersModule;
+
+// Also add to window for backward compatibility if needed
+if (typeof window !== 'undefined') {
+    window.CombinedParametersModule = CombinedParametersModule;
 }
