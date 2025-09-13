@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/revenue.module.js
+// /pages/questionnaire/modules/revenue.module.js - COMPLETE REWRITTEN VERSION
 import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
 
@@ -10,7 +10,7 @@ export class RevenueModule {
         this.required = false;
         
         this.components = {};
-        this.userHasInteracted = false; // Track if user has made any selections
+        this.userHasInteracted = false; // Track user interaction for engine
         this.responses = {
             selectedRevenues: [],
             chargingModels: {},
@@ -63,8 +63,7 @@ export class RevenueModule {
         // Revenue Staff Section
         container.appendChild(this.createRevenueStaffSection());
 
-        // Add interaction prompt
-        container.appendChild(this.createInteractionPrompt());
+        // NOTE: Removed the red validation prompt box - users can proceed without selections
 
         return container;
     }
@@ -110,7 +109,6 @@ export class RevenueModule {
                 this.responses.selectedRevenues = selectedValues;
                 this.updateConditionalSections(selectedValues);
                 this.updateChargingModels(selectedValues);
-                this.updateInteractionStatus();
                 this.onResponseChange();
             }
         });
@@ -157,42 +155,45 @@ export class RevenueModule {
 
     createProductsSpecificSection() {
         const section = document.createElement('div');
-        section.className = 'conditional-section';
+        section.className = 'products-specific-section';
         section.id = 'productsSpecificSection';
         section.style.display = 'none';
 
+        // Product Procurement Component
+        const procurementRow = this.createProcurementRow();
+        section.appendChild(procurementRow);
+
+        // Sales Channels Component
+        const channelsRow = this.createSalesChannelsRow();
+        section.appendChild(channelsRow);
+
+        return section;
+    }
+
+    createProcurementRow() {
+        const row = document.createElement('div');
+        row.className = 'parameter-section';
+
+        const headerRow = document.createElement('div');
+        headerRow.className = 'parameter-toggle-row';
+
+        const textDiv = document.createElement('div');
+        textDiv.className = 'parameter-toggle-text';
+
         const title = document.createElement('div');
-        title.className = 'parameter-title';
-        title.style.color = '#ffffff';
-        title.style.marginBottom = '20px';
-        title.textContent = 'Products specific questions';
+        title.className = 'parameter-toggle-title';
+        title.textContent = 'Product procurement';
 
-        section.appendChild(title);
+        const subtitle = document.createElement('div');
+        subtitle.className = 'parameter-toggle-subtitle';
+        subtitle.textContent = 'How do you procure/source your products?';
 
-        // Product Procurement Subsection
-        const procurementDiv = document.createElement('div');
-        procurementDiv.style.marginBottom = '25px';
+        textDiv.appendChild(title);
+        textDiv.appendChild(subtitle);
 
-        const procurementRow = document.createElement('div');
-        procurementRow.className = 'parameter-toggle-row';
-
-        const procurementText = document.createElement('div');
-        procurementText.className = 'parameter-toggle-text';
-
-        const procurementTitle = document.createElement('div');
-        procurementTitle.className = 'parameter-toggle-title';
-        procurementTitle.textContent = 'Product procurement';
-
-        const procurementSubtitle = document.createElement('div');
-        procurementSubtitle.className = 'parameter-toggle-subtitle';
-        procurementSubtitle.textContent = 'How do you source your products?';
-
-        procurementText.appendChild(procurementTitle);
-        procurementText.appendChild(procurementSubtitle);
-
-        const procurementContainer = document.createElement('div');
-        procurementContainer.className = 'procurement-dropdown-container';
-        procurementContainer.style.flex = '0 0 375px';
+        const dropdownContainer = document.createElement('div');
+        dropdownContainer.className = 'procurement-dropdown-container';
+        dropdownContainer.style.flex = '0 0 375px';
 
         const procurementComponent = new MultiSelect({
             id: 'productProcurement',
@@ -204,74 +205,75 @@ export class RevenueModule {
             ],
             allowCustom: true,
             required: false,
-            onChange: (values) => {
+            onChange: (selectedValues) => {
                 this.userHasInteracted = true;
-                this.responses.procurement = values;
-                this.updateInteractionStatus();
+                this.responses.procurement = selectedValues;
                 this.onResponseChange();
             }
         });
 
         this.components.procurement = procurementComponent;
-        procurementComponent.render(procurementContainer);
+        procurementComponent.render(dropdownContainer);
 
-        procurementRow.appendChild(procurementText);
-        procurementRow.appendChild(procurementContainer);
-        procurementDiv.appendChild(procurementRow);
+        headerRow.appendChild(textDiv);
+        headerRow.appendChild(dropdownContainer);
+        row.appendChild(headerRow);
 
-        // Sales Channels Subsection
-        const channelsDiv = document.createElement('div');
+        return row;
+    }
 
-        const channelsRow = document.createElement('div');
-        channelsRow.className = 'parameter-toggle-row';
+    createSalesChannelsRow() {
+        const row = document.createElement('div');
+        row.className = 'parameter-section';
 
-        const channelsText = document.createElement('div');
-        channelsText.className = 'parameter-toggle-text';
+        const headerRow = document.createElement('div');
+        headerRow.className = 'parameter-toggle-row';
 
-        const channelsTitle = document.createElement('div');
-        channelsTitle.className = 'parameter-toggle-title';
-        channelsTitle.textContent = 'Sales Channels';
+        const textDiv = document.createElement('div');
+        textDiv.className = 'parameter-toggle-text';
 
-        const channelsSubtitle = document.createElement('div');
-        channelsSubtitle.className = 'parameter-toggle-subtitle';
-        channelsSubtitle.textContent = 'What channels do you use to sell your products?';
+        const title = document.createElement('div');
+        title.className = 'parameter-toggle-title';
+        title.textContent = 'Sales channels';
 
-        channelsText.appendChild(channelsTitle);
-        channelsText.appendChild(channelsSubtitle);
+        const subtitle = document.createElement('div');
+        subtitle.className = 'parameter-toggle-subtitle';
+        subtitle.textContent = 'What are your main sales channels?';
 
-        const channelsContainer = document.createElement('div');
-        channelsContainer.className = 'channels-dropdown-container';
-        channelsContainer.style.flex = '0 0 375px';
+        textDiv.appendChild(title);
+        textDiv.appendChild(subtitle);
+
+        const dropdownContainer = document.createElement('div');
+        dropdownContainer.className = 'channels-dropdown-container';
+        dropdownContainer.style.flex = '0 0 375px';
 
         const channelsComponent = new MultiSelect({
             id: 'salesChannels',
             placeholder: 'Search or select sales channels...',
             options: [
-                { value: 'physical', text: 'Physical shopfront' },
-                { value: 'website', text: 'Website' },
-                { value: 'b2b', text: 'Sales driven (B2B)' }
+                { value: 'online_direct', text: 'Online (Direct to consumer)' },
+                { value: 'online_marketplace', text: 'Online marketplaces (Amazon, eBay, etc.)' },
+                { value: 'retail_stores', text: 'Physical retail stores' },
+                { value: 'wholesalers', text: 'Wholesalers/Distributors' },
+                { value: 'b2b_direct', text: 'B2B Direct sales' }
             ],
             allowCustom: true,
             required: false,
-            onChange: (values) => {
+            onChange: (selectedValues) => {
                 this.userHasInteracted = true;
-                this.responses.salesChannels = values;
-                this.updateInteractionStatus();
+                this.responses.salesChannels = selectedValues;
                 this.onResponseChange();
             }
         });
 
         this.components.salesChannels = channelsComponent;
-        channelsComponent.render(channelsContainer);
+        channelsComponent.render(dropdownContainer);
 
-        channelsRow.appendChild(channelsText);
-        channelsRow.appendChild(channelsContainer);
-        channelsDiv.appendChild(channelsRow);
+        headerRow.appendChild(textDiv);
+        headerRow.appendChild(dropdownContainer);
+        row.appendChild(headerRow);
 
-        section.appendChild(procurementDiv);
-        section.appendChild(channelsDiv);
-
-        return section;
+        return row;
     }
 
     createRevenueStaffSection() {
@@ -305,7 +307,6 @@ export class RevenueModule {
             onChange: (value) => {
                 this.userHasInteracted = true;
                 this.responses.revenueStaff = value;
-                this.updateInteractionStatus();
                 this.onResponseChange();
             }
         });
@@ -318,54 +319,6 @@ export class RevenueModule {
         section.appendChild(row);
 
         return section;
-    }
-
-    createInteractionPrompt() {
-        const section = document.createElement('div');
-        section.id = 'interactionPrompt';
-        section.style.cssText = `
-            background: rgba(239, 68, 68, 0.1);
-            border: 2px solid #ef4444;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-        `;
-
-        section.innerHTML = `
-            <div style="color: #ef4444; font-weight: bold; margin-bottom: 10px;">
-                Please make at least one selection above to continue
-            </div>
-            <div style="color: #ffffff; font-size: 14px;">
-                You can select revenue types, staffing preferences, or skip this section entirely by clicking Next.
-            </div>
-        `;
-
-        return section;
-    }
-
-    updateInteractionStatus() {
-        const prompt = document.getElementById('interactionPrompt');
-        if (prompt) {
-            if (this.userHasInteracted) {
-                prompt.style.cssText = `
-                    background: rgba(16, 185, 129, 0.1);
-                    border: 2px solid #10b981;
-                    border-radius: 8px;
-                    padding: 20px;
-                    margin: 20px 0;
-                    text-align: center;
-                `;
-                prompt.innerHTML = `
-                    <div style="color: #10b981; font-weight: bold; margin-bottom: 10px;">
-                        Selections recorded! You can continue or make additional changes.
-                    </div>
-                    <div style="color: #ffffff; font-size: 14px;">
-                        Click Next when you're ready to proceed.
-                    </div>
-                `;
-            }
-        }
     }
 
     updateConditionalSections(selectedRevenues) {
@@ -420,16 +373,13 @@ export class RevenueModule {
         // Create wrapper
         const wrapper = document.createElement('div');
         wrapper.className = 'charging-model-item';
-
-        const label = document.createElement('div');
-        label.className = 'charging-model-label';
-        label.textContent = displayName;
-
-        const dropdownContainer = document.createElement('div');
-        dropdownContainer.className = 'charging-model-dropdown-container';
-
-        wrapper.appendChild(label);
-        wrapper.appendChild(dropdownContainer);
+        wrapper.innerHTML = `
+            <div class="charging-model-label">${displayName}</div>
+            <div class="charging-model-dropdown-container">
+                <div id="${componentId}"></div>
+            </div>
+        `;
+        
         container.appendChild(wrapper);
 
         // Create component
@@ -441,15 +391,14 @@ export class RevenueModule {
             options: options,
             allowCustom: true,
             required: false,
-            onChange: (values) => {
+            onChange: (selectedValues) => {
                 this.userHasInteracted = true;
-                this.responses.chargingModels[revenueType] = values;
-                this.updateInteractionStatus();
+                this.responses.chargingModels[revenueType] = selectedValues;
                 this.onResponseChange();
             }
         });
 
-        chargingComponent.render(dropdownContainer);
+        chargingComponent.render(document.getElementById(componentId));
         this.components[componentId] = chargingComponent;
     }
 
@@ -457,9 +406,8 @@ export class RevenueModule {
         const container = document.getElementById('chargingModelsContainer');
         if (container) {
             // Remove components from our tracking
-            Object.keys(this.components).forEach(key => {
+            Array.from(this.components).forEach(([key, component]) => {
                 if (key.startsWith('chargingModel')) {
-                    const component = this.components[key];
                     if (component.destroy) {
                         component.destroy();
                     }
@@ -486,7 +434,6 @@ export class RevenueModule {
             procurement: [...this.responses.procurement],
             salesChannels: [...this.responses.salesChannels],
             revenueStaff: this.responses.revenueStaff,
-            userHasInteracted: this.userHasInteracted,
             timestamp: new Date().toISOString()
         };
     }
@@ -494,6 +441,7 @@ export class RevenueModule {
     loadResponse(response) {
         if (!response) return;
 
+        // Load response data
         this.responses = {
             selectedRevenues: response.selectedRevenues || [],
             chargingModels: response.chargingModels || {},
@@ -502,9 +450,7 @@ export class RevenueModule {
             revenueStaff: response.revenueStaff || 'no'
         };
 
-        this.userHasInteracted = response.userHasInteracted || false;
-
-        // Update components
+        // Update components with loaded data
         setTimeout(() => {
             if (this.components.revenueGeneration) {
                 this.components.revenueGeneration.setValue(this.responses.selectedRevenues);
@@ -531,14 +477,11 @@ export class RevenueModule {
                     this.components[componentKey].setValue(values);
                 }
             });
-
-            this.updateInteractionStatus();
         }, 100);
     }
 
     validate() {
-        // Always return valid - user can skip this section
-        // But track whether user has interacted for UI feedback
+        // Always return valid - users can skip this section entirely
         return {
             isValid: true,
             errors: []
@@ -546,7 +489,7 @@ export class RevenueModule {
     }
 
     shouldShow(responses) {
-        return true;
+        return true; // Always show revenue module
     }
 
     getDatabaseFields() {
