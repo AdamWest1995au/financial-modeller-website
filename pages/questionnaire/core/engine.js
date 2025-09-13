@@ -1,4 +1,4 @@
-// /pages/questionnaire/core/engine.js - FINAL CLEAN VERSION
+// /pages/questionnaire/core/engine.js - COMPLETE REWRITTEN ENGINE WITH CONDITIONAL LOGIC
 
 export class QuestionnaireEngine {
     constructor(config = {}) {
@@ -26,7 +26,7 @@ export class QuestionnaireEngine {
         this.progressFill = null;
         this.progressText = null;
         
-        // Bind methods
+        // Bind methods to prevent context issues
         this.handleNext = this.handleNext.bind(this);
         this.handleBack = this.handleBack.bind(this);
     }
@@ -77,7 +77,7 @@ export class QuestionnaireEngine {
     }
 
     setupEventListeners() {
-        // Remove existing listeners first
+        // Remove existing listeners first to prevent duplicates
         if (this.nextBtn) {
             const newNextBtn = this.nextBtn.cloneNode(true);
             this.nextBtn.parentNode.replaceChild(newNextBtn, this.nextBtn);
@@ -90,9 +90,10 @@ export class QuestionnaireEngine {
             this.backBtn = newBackBtn;
         }
         
-        // Add event listeners
+        // Add clean event listeners
         if (this.nextBtn) {
             this.nextBtn.addEventListener('click', (e) => {
+                console.log('Next button clicked by user');
                 this.userHasInteracted = true;
                 e.preventDefault();
                 e.stopPropagation();
@@ -102,6 +103,7 @@ export class QuestionnaireEngine {
         
         if (this.backBtn) {
             this.backBtn.addEventListener('click', (e) => {
+                console.log('Back button clicked by user');
                 this.userHasInteracted = true;
                 e.preventDefault();
                 e.stopPropagation();
@@ -109,9 +111,10 @@ export class QuestionnaireEngine {
             });
         }
         
-        // Prevent form submissions within modal
+        // Prevent form submissions and unwanted Enter key behavior
         if (this.questionModal) {
             this.questionModal.addEventListener('submit', (e) => {
+                console.log('Form submission prevented');
                 e.preventDefault();
                 return false;
             });
@@ -122,6 +125,7 @@ export class QuestionnaireEngine {
                                         e.target.getAttribute('role') === 'button' ||
                                         e.target.hasAttribute('data-allow-enter');
                     if (!isValidTarget) {
+                        console.log('Enter key prevented on', e.target.tagName);
                         e.preventDefault();
                     }
                 }
@@ -186,6 +190,7 @@ export class QuestionnaireEngine {
             return;
         }
         
+        // Reset state
         this.userHasInteracted = false;
         
         // Show the modal and start with first module
@@ -214,8 +219,27 @@ export class QuestionnaireEngine {
             return;
         }
         
-        const currentModule = this.modules[this.currentModuleIndex];
+        // Make sure we're showing a visible module
+        while (this.currentModuleIndex < this.modules.length) {
+            const currentModule = this.modules[this.currentModuleIndex];
+            
+            if (!currentModule) {
+                this.completeQuestionnaire();
+                return;
+            }
+            
+            // Check if this module should be shown
+            if (this.shouldShowModule(currentModule)) {
+                break; // This module should be shown
+            } else {
+                // Skip this module
+                console.log(`🚫 Skipping module during show: ${currentModule.id}`);
+                this.currentModuleIndex++;
+                continue;
+            }
+        }
         
+        const currentModule = this.modules[this.currentModuleIndex];
         if (!currentModule) {
             this.completeQuestionnaire();
             return;
@@ -274,31 +298,122 @@ export class QuestionnaireEngine {
     }
     
     addInteractionTracking(container) {
+        // Track any user interactions within the module
         const interactionEvents = ['click', 'change', 'input', 'keydown'];
         
         interactionEvents.forEach(eventType => {
             container.addEventListener(eventType, (e) => {
+                // Only count real user interactions, not programmatic events
                 if (e.isTrusted) {
+                    console.log(`User interaction detected: ${eventType}`);
                     this.userHasInteracted = true;
                 }
-            }, true);
+            }, true); // Use capture phase
         });
     }
 
+    // NEW: Conditional logic methods
+    shouldShowModule(module) {
+        // If module has shouldShow method, use it
+        if (typeof module.shouldShow === 'function') {
+            try {
+                const result = module.shouldShow(this.responses);
+                console.log(`🔍 Module ${module.id} shouldShow: ${result}`);
+                
+                // Debug: Show what we're checking for combined-parameters
+                if (module.id === 'combined-parameters') {
+                    console.log('🔍 Checking combined-parameters visibility');
+                    console.log('🔍 Current responses:', this.responses);
+                    const userInfoResponse = this.responses['user-info'];
+                    console.log('🔍 User info response:', userInfoResponse);
+                    if (userInfoResponse && userInfoResponse.data) {
+                        console.log('🔍 Parameter toggle value:', userInfoResponse.data.parameterToggle);
+                    }
+                }
+                
+                return result;
+            } catch (error) {
+                console.error(`Error checking shouldShow for module ${module.id}:`, error);
+                return true; // Default to showing if error
+            }
+        }
+        
+        // Default to showing module if no conditional logic
+        console.log(`📝 Module ${module.id} has no shouldShow method, showing by default`);
+        return true;
+    }
+
+    findNextVisibleModule() {
+        // Find the next module after current that should be shown
+        for (let i = this.currentModuleIndex + 1; i < this.modules.length; i++) {
+            const module = this.modules[i];
+            if (this.shouldShowModule(module)) {
+                console.log(`✅ Next visible module found: ${module.id} at index ${i}`);
+                return i;
+            } else {
+                console.log(`🚫 Skipping module: ${module.id} (conditional logic)`);
+            }
+        }
+        console.log('No more visible modules found');
+        return -1; // No more visible modules
+    }
+
+    findPreviousVisibleModule() {
+        // Find the previous module before current that should be shown
+        for (let i = this.currentModuleIndex - 1; i >= 0; i--) {
+            const module = this.modules[i];
+            if (this.shouldShowModule(module)) {
+                console.log(`✅ Previous visible module found: ${module.id} at index ${i}`);
+                return i;
+            } else {
+                console.log(`🚫 Skipping previous module: ${module.id} (conditional logic)`);
+            }
+        }
+        return -1; // No previous visible modules
+    }
+
     updateNavigation() {
+        // Check if there's a previous visible module
+        const hasPreviousModule = this.findPreviousVisibleModule() !== -1;
+        
         if (this.backBtn) {
-            this.backBtn.style.display = this.currentModuleIndex > 0 ? 'block' : 'none';
+            this.backBtn.style.display = hasPreviousModule ? 'block' : 'none';
         }
         
         if (this.nextBtn) {
-            const isLastModule = this.currentModuleIndex >= this.modules.length - 1;
-            this.nextBtn.textContent = isLastModule ? 'Complete' : 'Next →';
+            // Check if there are more visible modules after current
+            const hasNextModule = this.findNextVisibleModule() !== -1;
+            this.nextBtn.textContent = hasNextModule ? 'Next →' : 'Complete';
             this.nextBtn.disabled = false;
         }
     }
 
     updateProgress() {
-        const progress = Math.round(((this.currentModuleIndex + 1) / this.modules.length) * 100);
+        // Calculate progress based on visible modules only
+        const visibleModules = this.modules.filter((module, index) => {
+            // Temporarily set index to check visibility
+            const originalIndex = this.currentModuleIndex;
+            this.currentModuleIndex = index;
+            const isVisible = this.shouldShowModule(module);
+            this.currentModuleIndex = originalIndex;
+            return isVisible;
+        });
+        
+        // Find current position in visible modules
+        let currentVisibleIndex = 0;
+        for (let i = 0; i <= this.currentModuleIndex && i < this.modules.length; i++) {
+            const originalIndex = this.currentModuleIndex;
+            this.currentModuleIndex = i;
+            const isVisible = this.shouldShowModule(this.modules[i]);
+            this.currentModuleIndex = originalIndex;
+            
+            if (isVisible && i < this.currentModuleIndex) {
+                currentVisibleIndex++;
+            }
+        }
+        
+        const progress = visibleModules.length > 0 ? 
+                        Math.round(((currentVisibleIndex + 1) / visibleModules.length) * 100) : 0;
         
         if (this.progressFill) {
             this.progressFill.style.width = progress + '%';
@@ -311,12 +426,13 @@ export class QuestionnaireEngine {
 
     handleNext() {
         if (this.isProcessingNavigation) {
+            console.log('Already processing navigation, ignoring handleNext');
             return;
         }
         
         // CRITICAL: Only proceed if user has interacted
         if (!this.userHasInteracted) {
-            console.log('No user interaction detected - not advancing automatically');
+            console.log('🚫 No user interaction detected - not advancing automatically');
             return;
         }
         
@@ -329,6 +445,8 @@ export class QuestionnaireEngine {
                 this.isProcessingNavigation = false;
                 return;
             }
+            
+            console.log(`Processing navigation from module: ${currentModule.id}`);
             
             // Collect response from current module
             if (currentModule.getResponse) {
@@ -351,9 +469,11 @@ export class QuestionnaireEngine {
                 }
             }
             
-            // Move to next module or complete
-            if (this.currentModuleIndex < this.modules.length - 1) {
-                this.currentModuleIndex++;
+            // FIXED: Find next visible module instead of just incrementing
+            const nextModuleIndex = this.findNextVisibleModule();
+            
+            if (nextModuleIndex !== -1) {
+                this.currentModuleIndex = nextModuleIndex;
                 setTimeout(() => {
                     this.isProcessingNavigation = false;
                     this.showCurrentModule();
@@ -371,12 +491,14 @@ export class QuestionnaireEngine {
 
     handleBack() {
         if (this.isProcessingNavigation) {
+            console.log('Already processing navigation, ignoring handleBack');
             return;
         }
         
-        if (this.currentModuleIndex > 0) {
+        const previousIndex = this.findPreviousVisibleModule();
+        if (previousIndex !== -1) {
             this.isProcessingNavigation = true;
-            this.currentModuleIndex--;
+            this.currentModuleIndex = previousIndex;
             setTimeout(() => {
                 this.isProcessingNavigation = false;
                 this.showCurrentModule();
@@ -468,4 +590,5 @@ export class QuestionnaireEngine {
     }
 }
 
+// Export as default for flexibility
 export default QuestionnaireEngine;
