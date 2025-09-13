@@ -1,5 +1,5 @@
 // /pages/questionnaire/modules/user-info.module.js
-class UserInfoModule {
+export class UserInfoModule {
     constructor() {
         this.id = 'user-info';
         this.title = "Let's start with your details";
@@ -470,7 +470,7 @@ class UserInfoModule {
 }
 
 // Specialized Country Dropdown Component
-class CountryDropdown extends BaseComponent {
+export class CountryDropdown extends BaseComponent {
     constructor(config = {}) {
         super(config);
         this.config = {
@@ -693,6 +693,11 @@ class CountryDropdown extends BaseComponent {
     }
 }
 
-// Export classes
-window.UserInfoModule = UserInfoModule;
-window.CountryDropdown = CountryDropdown;
+// Export for ES6 imports
+export default UserInfoModule;
+
+// Export classes to window for backward compatibility
+if (typeof window !== 'undefined') {
+    window.UserInfoModule = UserInfoModule;
+    window.CountryDropdown = CountryDropdown;
+}
