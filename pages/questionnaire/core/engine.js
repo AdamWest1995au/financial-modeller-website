@@ -374,9 +374,10 @@ export class QuestionnaireEngine {
             return;
         }
         
-        if (this.currentModuleIndex > 0) {
+        const previousIndex = this.findPreviousModuleIndex();
+        if (previousIndex !== -1) {
             this.isProcessingNavigation = true;
-            this.currentModuleIndex--;
+            this.currentModuleIndex = previousIndex;
             setTimeout(() => {
                 this.isProcessingNavigation = false;
                 this.showCurrentModule();

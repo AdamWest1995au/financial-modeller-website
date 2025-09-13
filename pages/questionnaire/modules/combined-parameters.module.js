@@ -1,4 +1,4 @@
-// modules/combined-parameters.module.js
+// /pages/questionnaire/modules/combined-parameters.module.js - FIXED VERSION
 
 import { Dropdown } from '../components/dropdown.js';
 import { TextInput } from '../components/text-input.js';
@@ -7,8 +7,7 @@ export class CombinedParametersModule {
     constructor() {
         this.id = 'combined-parameters';
         this.title = 'Model Parameters';
-        this.description = 'Please provide the following details to help us structure your financial model.';
-        this.required = false;
+        this.description = 'Let us know the key parameters for your financial model.';
         this.components = {};
         this.responses = {
             periodicity: '',
@@ -24,16 +23,16 @@ export class CombinedParametersModule {
 
         // Periodicity Section
         const periodicitySection = this.createSection(
-            'What is the periodicity of your model?',
-            'Would you initially like to look at the business on a Quarterly, Half-yearly or Annual basis?',
+            'Periodicity', 
+            'What would you like the period of your model to be?',
             this.createPeriodicityDropdown()
         );
         container.appendChild(periodicitySection);
 
-        // Historical Start Date Section  
+        // Historical Date Section
         const dateSection = this.createSection(
-            'Historical start date',
-            'What historical period would you like to include data from?',
+            'Historical start date', 
+            'What would you like the start date of your historical data to be?',
             this.createDateDropdowns()
         );
         container.appendChild(dateSection);
@@ -69,9 +68,6 @@ export class CombinedParametersModule {
     }
 
     createPeriodicityDropdown() {
-        const container = document.createElement('div');
-        container.className = 'dropdown-container';
-        
         const options = [
             { value: 'quarter', text: 'Quarter' },
             { value: 'half-year', text: 'Half-year' },
@@ -90,30 +86,35 @@ export class CombinedParametersModule {
         });
 
         this.components.periodicity = periodicityDropdown;
-        
-        // FIXED: Pass container to render method
-        periodicityDropdown.render(container);
-        
-        return container;
+        return periodicityDropdown.render();
     }
 
     createDateDropdowns() {
         const container = document.createElement('div');
-        container.className = 'date-dropdowns';
+        container.className = 'date-input-container';
 
-        // Month dropdown
+        // Month group
         const monthGroup = document.createElement('div');
-        monthGroup.className = 'date-dropdown-group';
+        monthGroup.className = 'date-input-group';
 
         const monthLabel = document.createElement('label');
         monthLabel.className = 'date-label';
         monthLabel.textContent = 'Month';
 
-        const monthContainer = document.createElement('div');
-        monthContainer.className = 'dropdown-wrapper';
-
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const monthOptions = months.map(month => ({ value: month, text: month }));
+        const monthOptions = [
+            { value: 'Jan', text: 'January' },
+            { value: 'Feb', text: 'February' },
+            { value: 'Mar', text: 'March' },
+            { value: 'Apr', text: 'April' },
+            { value: 'May', text: 'May' },
+            { value: 'Jun', text: 'June' },
+            { value: 'Jul', text: 'July' },
+            { value: 'Aug', text: 'August' },
+            { value: 'Sep', text: 'September' },
+            { value: 'Oct', text: 'October' },
+            { value: 'Nov', text: 'November' },
+            { value: 'Dec', text: 'December' }
+        ];
 
         const monthDropdown = new Dropdown({
             id: 'monthDropdown',
@@ -129,26 +130,21 @@ export class CombinedParametersModule {
         this.components.month = monthDropdown;
 
         monthGroup.appendChild(monthLabel);
-        // FIXED: Pass container to render method
-        monthDropdown.render(monthContainer);
-        monthGroup.appendChild(monthContainer);
+        monthGroup.appendChild(monthDropdown.render());
 
-        // Year dropdown  
+        // Year group
         const yearGroup = document.createElement('div');
-        yearGroup.className = 'date-dropdown-group';
+        yearGroup.className = 'date-input-group';
 
         const yearLabel = document.createElement('label');
         yearLabel.className = 'date-label';
         yearLabel.textContent = 'Year';
 
-        const yearContainer = document.createElement('div');
-        yearContainer.className = 'dropdown-wrapper';
-
-        // Generate years from 2000 to 2025 (showing last 2 digits)
+        const currentYear = new Date().getFullYear();
         const yearOptions = [];
-        for (let year = 2000; year <= 2025; year++) {
-            const shortYear = year.toString().slice(-2);
-            yearOptions.push({ value: shortYear, text: shortYear });
+        for (let year = currentYear; year >= currentYear - 10; year--) {
+            const yearStr = year.toString().slice(-2);
+            yearOptions.push({ value: yearStr, text: year.toString() });
         }
 
         const yearDropdown = new Dropdown({
@@ -165,9 +161,7 @@ export class CombinedParametersModule {
         this.components.year = yearDropdown;
 
         yearGroup.appendChild(yearLabel);
-        // FIXED: Pass container to render method
-        yearDropdown.render(yearContainer);
-        yearGroup.appendChild(yearContainer);
+        yearGroup.appendChild(yearDropdown.render());
 
         container.appendChild(monthGroup);
         container.appendChild(yearGroup);
@@ -176,9 +170,6 @@ export class CombinedParametersModule {
     }
 
     createForecastInput() {
-        const container = document.createElement('div');
-        container.className = 'input-container';
-        
         const forecastInput = new TextInput({
             id: 'forecastYearsInput',
             placeholder: 'Enter number of years (e.g., 5)',
@@ -197,11 +188,7 @@ export class CombinedParametersModule {
         });
 
         this.components.forecastYears = forecastInput;
-        
-        // FIXED: Pass container to render method
-        forecastInput.render(container);
-        
-        return container;
+        return forecastInput.render();
     }
 
     onResponseChange() {
@@ -261,9 +248,29 @@ export class CombinedParametersModule {
     }
 
     shouldShow(responses) {
-        // Only show if parameterToggle is true in user-info
-        const userInfoResponse = responses['user-info'];
-        return userInfoResponse && userInfoResponse.data && userInfoResponse.data.parameterToggle === true;
+        // FIXED: Check customization preferences instead of user-info parameterToggle
+        console.log('🔍 Combined Parameters shouldShow called with responses:', responses);
+        
+        // Get customization preferences
+        const customizationResponse = responses['customization-preference'];
+        console.log('🔍 Customization response:', customizationResponse);
+        
+        if (!customizationResponse || !customizationResponse.customizationPreferences) {
+            console.log('🔍 No customization preferences found, showing by default');
+            return true; // Default to showing if no preferences
+        }
+        
+        const preferences = customizationResponse.customizationPreferences;
+        console.log('🔍 Preferences object:', preferences);
+        
+        // Check if parameters section is set to 'custom' (meaning user wants to enter parameters)
+        const parametersPreference = preferences.parameters;
+        console.log('🔍 Parameters preference:', parametersPreference);
+        
+        const shouldShow = parametersPreference === 'custom';
+        console.log(`🔍 Combined Parameters shouldShow result: ${shouldShow} (preference: ${parametersPreference})`);
+        
+        return shouldShow;
     }
 
     getDatabaseFields() {
@@ -285,12 +292,4 @@ export class CombinedParametersModule {
         });
         this.components = {};
     }
-}
-
-// Export for ES6 imports
-export default CombinedParametersModule;
-
-// Also add to window for backward compatibility if needed
-if (typeof window !== 'undefined') {
-    window.CombinedParametersModule = CombinedParametersModule;
 }
