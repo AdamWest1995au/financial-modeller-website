@@ -4484,10 +4484,10 @@ import { CogsCodbModule } from './modules/cogs-codb.module.js';
 async function initializeQuestionnaire() {
     try {
         const engine = new QuestionnaireEngine({
-            apiEndpoint: '/api/submit-questionnaire',
-            recaptchaSiteKey: '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF',
-            debug: true // Enable debug mode to see interaction tracking
-        });
+    apiEndpoint: '/api/submit-questionnaire',
+    recaptchaSiteKey: '{{RECAPTCHA_SITE_KEY}}', // Will be replaced by server
+    debug: true
+});
 
         // Register only the modules that exist
         engine.registerModule(new CustomizationModule());
