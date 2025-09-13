@@ -470,7 +470,6 @@ export class RevenueModule {
     }
 
     validate() {
-        // Revenue questions are optional, so always return true
         return {
             isValid: true,
             errors: []
@@ -478,7 +477,6 @@ export class RevenueModule {
     }
 
     shouldShow(responses) {
-        // Always show revenue module
         return true;
     }
 
@@ -502,10 +500,8 @@ export class RevenueModule {
     }
 }
 
-// Export for ES6 imports
 export default RevenueModule;
 
-// Also add to window for backward compatibility if needed
 if (typeof window !== 'undefined') {
     window.RevenueModule = RevenueModule;
 }

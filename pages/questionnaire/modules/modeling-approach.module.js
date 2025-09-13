@@ -1,5 +1,4 @@
-// modules/modeling-approach.module.js
-
+// /pages/questionnaire/modules/modeling-approach.module.js
 import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
 
@@ -84,9 +83,8 @@ export class ModelingApproachModule {
 
         this.components.purpose = purposeMultiSelect;
 
-        // Use BaseComponent render method
-        const purposeElement = purposeMultiSelect.render(dropdownContainer);
-        dropdownContainer.appendChild(purposeElement);
+        // FIXED: Use proper render method
+        purposeMultiSelect.render(dropdownContainer);
 
         row.appendChild(textDiv);
         row.appendChild(dropdownContainer);
@@ -126,7 +124,6 @@ export class ModelingApproachModule {
             defaultValue: 'topdown',
             width: '300px',
             onChange: (value) => {
-                // Handle the toggle value properly
                 this.responses.modelingApproach = value === 'bottomup' ? 'bottomup' : 'topdown';
                 this.onResponseChange();
             }
@@ -134,9 +131,8 @@ export class ModelingApproachModule {
 
         this.components.approach = approachToggle;
 
-        // Use BaseComponent render method
-        const toggleElement = approachToggle.render(toggleContainer);
-        toggleContainer.appendChild(toggleElement);
+        // FIXED: Use proper render method
+        approachToggle.render(toggleContainer);
 
         row.appendChild(textDiv);
         row.appendChild(toggleContainer);
@@ -181,7 +177,6 @@ export class ModelingApproachModule {
     }
 
     validate() {
-        // Optional fields, always allow proceeding
         return {
             isValid: true,
             errors: []
@@ -189,7 +184,6 @@ export class ModelingApproachModule {
     }
 
     shouldShow(responses) {
-        // Always show this module
         return true;
     }
 
@@ -197,7 +191,7 @@ export class ModelingApproachModule {
         return {
             model_purpose_selected: this.responses.selectedPurposes.length > 0 ? this.responses.selectedPurposes : null,
             model_purpose_freetext: null,
-            modeling_approach: this.responses.modelingApproach || null
+            modeling_approach: this.responses.modelingApproach
         };
     }
 
@@ -209,4 +203,10 @@ export class ModelingApproachModule {
         });
         this.components = {};
     }
+}
+
+export default ModelingApproachModule;
+
+if (typeof window !== 'undefined') {
+    window.ModelingApproachModule = ModelingApproachModule;
 }
