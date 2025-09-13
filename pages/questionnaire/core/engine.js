@@ -1,5 +1,4 @@
-// TEMPORARY DEBUG VERSION - Replace /pages/questionnaire/core/engine.js with this
-// This version adds extensive logging to identify what's calling handleNext()
+// /pages/questionnaire/core/engine.js - FINAL CLEAN VERSION
 
 export class QuestionnaireEngine {
     constructor(config = {}) {
@@ -16,7 +15,6 @@ export class QuestionnaireEngine {
         this.isInitialized = false;
         this.isProcessingNavigation = false;
         this.userHasInteracted = false;
-        this.debugCallStack = []; // Track what calls handleNext
         
         // UI Elements
         this.questionModal = null;
@@ -31,13 +29,11 @@ export class QuestionnaireEngine {
         // Bind methods
         this.handleNext = this.handleNext.bind(this);
         this.handleBack = this.handleBack.bind(this);
-        
-        console.log('🔧 DEBUG ENGINE LOADED - This will help identify auto-advance source');
     }
 
     async initialize() {
         try {
-            console.log('Initializing DEBUG Questionnaire Engine...');
+            console.log('Initializing Questionnaire Engine...');
             
             // Get UI elements
             this.questionModal = document.getElementById('questionModal');
@@ -56,12 +52,15 @@ export class QuestionnaireEngine {
             // Setup event listeners
             this.setupEventListeners();
             
+            // Hide any existing notification boxes
+            this.hideNotifications();
+            
             this.isInitialized = true;
-            console.log('DEBUG Questionnaire Engine initialized successfully');
+            console.log('Questionnaire Engine initialized successfully');
             
             return true;
         } catch (error) {
-            console.error('Failed to initialize DEBUG Questionnaire Engine:', error);
+            console.error('Failed to initialize Questionnaire Engine:', error);
             throw error;
         }
     }
@@ -71,15 +70,13 @@ export class QuestionnaireEngine {
             throw new Error('Module must have an id property');
         }
         
-        console.log(`🔧 DEBUG: Registering module: ${moduleInstance.id}`);
+        console.log(`Registering module: ${moduleInstance.id}`);
         this.modules.push(moduleInstance);
         
         console.log(`Module ${moduleInstance.id} registered successfully`);
     }
 
     setupEventListeners() {
-        console.log('🔧 DEBUG: Setting up event listeners...');
-        
         // Remove existing listeners first
         if (this.nextBtn) {
             const newNextBtn = this.nextBtn.cloneNode(true);
@@ -93,54 +90,87 @@ export class QuestionnaireEngine {
             this.backBtn = newBackBtn;
         }
         
-        // Add event listeners with debug logging
+        // Add event listeners
         if (this.nextBtn) {
             this.nextBtn.addEventListener('click', (e) => {
-                console.log('🔧 DEBUG: Next button CLICKED by user');
-                console.log('🔧 DEBUG: Event details:', {
-                    isTrusted: e.isTrusted,
-                    type: e.type,
-                    target: e.target,
-                    currentTarget: e.currentTarget
-                });
-                this.debugCallStack.push('NEXT_BUTTON_CLICK');
                 this.userHasInteracted = true;
                 e.preventDefault();
                 e.stopPropagation();
                 this.handleNext();
             });
-            console.log('🔧 DEBUG: Next button listener added');
         }
         
         if (this.backBtn) {
             this.backBtn.addEventListener('click', (e) => {
-                console.log('🔧 DEBUG: Back button CLICKED by user');
-                this.debugCallStack.push('BACK_BUTTON_CLICK');
                 this.userHasInteracted = true;
                 e.preventDefault();
                 e.stopPropagation();
                 this.handleBack();
             });
-            console.log('🔧 DEBUG: Back button listener added');
         }
         
-        // Prevent form submissions
+        // Prevent form submissions within modal
         if (this.questionModal) {
             this.questionModal.addEventListener('submit', (e) => {
-                console.log('🔧 DEBUG: Form submission prevented');
                 e.preventDefault();
                 return false;
             });
             
             this.questionModal.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    console.log('🔧 DEBUG: Enter key pressed, preventing default');
-                    e.preventDefault();
+                    const isValidTarget = e.target.tagName === 'BUTTON' || 
+                                        e.target.getAttribute('role') === 'button' ||
+                                        e.target.hasAttribute('data-allow-enter');
+                    if (!isValidTarget) {
+                        e.preventDefault();
+                    }
                 }
             });
         }
+    }
+
+    hideNotifications() {
+        // Hide any existing notification boxes/toasts
+        const selectors = [
+            '.success-toast',
+            '.notification-box',
+            '.feedback-message',
+            '.alert-success',
+            '.message-success'
+        ];
         
-        console.log('🔧 DEBUG: Event listeners setup complete');
+        selectors.forEach(selector => {
+            document.querySelectorAll(selector).forEach(el => {
+                el.style.display = 'none';
+                el.remove();
+            });
+        });
+        
+        // Add CSS to prevent notifications from showing
+        const style = document.createElement('style');
+        style.id = 'hide-notifications';
+        style.textContent = `
+            .success-toast,
+            .notification-box,
+            .feedback-message,
+            .alert-success,
+            .message-success,
+            [class*="selections-recorded"],
+            [class*="notification"],
+            [class*="feedback"] {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+            }
+        `;
+        
+        // Remove existing style if present
+        const existingStyle = document.getElementById('hide-notifications');
+        if (existingStyle) {
+            existingStyle.remove();
+        }
+        
+        document.head.appendChild(style);
     }
 
     start() {
@@ -149,8 +179,7 @@ export class QuestionnaireEngine {
             return;
         }
         
-        console.log('🔧 DEBUG: Starting questionnaire...');
-        this.debugCallStack.push('START_CALLED');
+        console.log('Starting questionnaire...');
         
         if (this.modules.length === 0) {
             console.error('No modules registered');
@@ -165,7 +194,6 @@ export class QuestionnaireEngine {
     }
 
     showModal() {
-        console.log('🔧 DEBUG: Showing modal...');
         if (this.questionModal) {
             this.questionModal.classList.add('active');
             this.questionModal.classList.add('question-mode');
@@ -182,11 +210,7 @@ export class QuestionnaireEngine {
     }
 
     showCurrentModule() {
-        console.log('🔧 DEBUG: showCurrentModule called');
-        console.log('🔧 DEBUG: Call stack when showing module:', this.debugCallStack);
-        
         if (this.isProcessingNavigation) {
-            console.log('🔧 DEBUG: Already processing navigation, skipping');
             return;
         }
         
@@ -197,12 +221,10 @@ export class QuestionnaireEngine {
             return;
         }
         
-        console.log(`🔧 DEBUG: Showing module: ${currentModule.id}`);
-        console.log(`🔧 DEBUG: User has interacted: ${this.userHasInteracted}`);
+        console.log(`Showing module: ${currentModule.id}`);
         
         // Reset interaction flag for new module
         this.userHasInteracted = false;
-        this.debugCallStack = ['SHOW_MODULE_' + currentModule.id];
         
         // Update header
         if (this.questionTitle) {
@@ -218,7 +240,6 @@ export class QuestionnaireEngine {
             this.questionContent.innerHTML = '';
             
             try {
-                console.log(`🔧 DEBUG: Rendering module ${currentModule.id}...`);
                 const content = currentModule.render();
                 if (content instanceof HTMLElement) {
                     this.questionContent.appendChild(content);
@@ -229,7 +250,6 @@ export class QuestionnaireEngine {
                 // Add interaction tracking
                 this.addInteractionTracking(this.questionContent);
                 
-                console.log(`🔧 DEBUG: Module ${currentModule.id} rendered successfully`);
             } catch (error) {
                 console.error(`Error rendering module ${currentModule.id}:`, error);
                 this.questionContent.innerHTML = `<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
@@ -246,19 +266,11 @@ export class QuestionnaireEngine {
         
         // Load previous response if exists
         if (this.responses[currentModule.id] && currentModule.loadResponse) {
-            console.log(`🔧 DEBUG: Loading previous response for ${currentModule.id}`);
             currentModule.loadResponse(this.responses[currentModule.id]);
         }
         
-        console.log(`🔧 DEBUG: Module ${currentModule.id} setup complete - waiting for user interaction`);
-        
-        // CHECK: Is something calling handleNext immediately after this?
-        setTimeout(() => {
-            if (this.currentModuleIndex !== this.modules.findIndex(m => m.id === currentModule.id)) {
-                console.error('🚨 FOUND THE BUG: Module advanced without user interaction!');
-                console.error('🚨 Call stack that caused advance:', this.debugCallStack);
-            }
-        }, 100);
+        // Hide notifications after module renders
+        setTimeout(() => this.hideNotifications(), 100);
     }
     
     addInteractionTracking(container) {
@@ -267,9 +279,7 @@ export class QuestionnaireEngine {
         interactionEvents.forEach(eventType => {
             container.addEventListener(eventType, (e) => {
                 if (e.isTrusted) {
-                    console.log(`🔧 DEBUG: User interaction detected: ${eventType} on`, e.target);
                     this.userHasInteracted = true;
-                    this.debugCallStack.push(`USER_${eventType.toUpperCase()}`);
                 }
             }, true);
         });
@@ -300,26 +310,14 @@ export class QuestionnaireEngine {
     }
 
     handleNext() {
-        console.log('🚨 DEBUG: handleNext() called!');
-        console.log('🚨 DEBUG: Stack trace:');
-        console.trace();
-        console.log('🚨 DEBUG: Call history:', this.debugCallStack);
-        console.log('🚨 DEBUG: User has interacted:', this.userHasInteracted);
-        console.log('🚨 DEBUG: Is processing navigation:', this.isProcessingNavigation);
-        
-        this.debugCallStack.push('HANDLE_NEXT_CALLED');
-        
         if (this.isProcessingNavigation) {
-            console.log('🔧 DEBUG: Already processing navigation, ignoring');
             return;
         }
         
         // CRITICAL: Only proceed if user has interacted
         if (!this.userHasInteracted) {
-            console.log('🚨 BUG IDENTIFIED: handleNext called without user interaction!');
-            console.log('🚨 This is the source of auto-advancement');
-            console.log('🚨 Call stack that led here:', this.debugCallStack);
-            return; // STOP AUTO-ADVANCEMENT
+            console.log('No user interaction detected - not advancing automatically');
+            return;
         }
         
         this.isProcessingNavigation = true;
@@ -331,8 +329,6 @@ export class QuestionnaireEngine {
                 this.isProcessingNavigation = false;
                 return;
             }
-            
-            console.log(`🔧 DEBUG: Processing legitimate navigation from module: ${currentModule.id}`);
             
             // Collect response from current module
             if (currentModule.getResponse) {
@@ -374,9 +370,6 @@ export class QuestionnaireEngine {
     }
 
     handleBack() {
-        console.log('🔧 DEBUG: handleBack() called');
-        this.debugCallStack.push('HANDLE_BACK_CALLED');
-        
         if (this.isProcessingNavigation) {
             return;
         }
@@ -402,6 +395,7 @@ export class QuestionnaireEngine {
                     <h3 style="color: #8b5cf6; margin-bottom: 20px; font-size: 1.8rem;">Questionnaire Complete!</h3>
                     <p style="color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 1.1rem; line-height: 1.6;">
                         Thank you for completing our questionnaire. We've captured all your responses and our team will now create your custom financial model.
+                        You'll receive an email within 24-48 hours with your model and instructions for next steps.
                     </p>
                 </div>
             `;
@@ -470,7 +464,6 @@ export class QuestionnaireEngine {
         this.responses = {};
         this.userHasInteracted = false;
         this.isProcessingNavigation = false;
-        this.debugCallStack = [];
         console.log('Questionnaire reset');
     }
 }
