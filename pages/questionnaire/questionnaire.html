@@ -4451,17 +4451,17 @@
         };
 
         // Navigation functions for questions
-        window.nextQuestion = function() {
-            if (window.questionnaireEngine) {
-                window.questionnaireEngine.nextQuestion();
-            }
-        };
+window.nextQuestion = function() {
+    if (window.questionnaireEngine) {
+        window.questionnaireEngine.handleNext(); // CORRECT METHOD
+    }
+};
 
-        window.previousQuestion = function() {
-            if (window.questionnaireEngine) {
-                window.questionnaireEngine.previousQuestion();
-            }
-        };
+window.previousQuestion = function() {
+    if (window.questionnaireEngine) {
+        window.questionnaireEngine.handleBack(); // CORRECT METHOD
+    }
+};
 
         // Modal functions (for navigation links)
         window.showModal = function(modalType) {
