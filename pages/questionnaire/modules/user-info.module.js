@@ -1,4 +1,6 @@
 // /pages/questionnaire/modules/user-info.module.js
+import { BaseComponent } from '../components/base-component.js';
+
 export class UserInfoModule {
     constructor() {
         this.id = 'user-info';
