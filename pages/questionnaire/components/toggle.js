@@ -10,6 +10,9 @@ export class Toggle extends BaseComponent {
         this.width = config.width || '140px';
         this.onChange = config.onChange || (() => {});
         
+        // IMPORTANT: Setup value mapping BEFORE calling getInitialState
+        this.valueMapping = this.setupValueMapping();
+        
         // State - false = left option (inactive), true = right option (active)
         this.isActive = this.getInitialState();
         this.value = this.isActive ? 'active' : 'inactive';
@@ -17,9 +20,6 @@ export class Toggle extends BaseComponent {
         // Elements
         this.toggleElement = null;
         this.labelsContainer = null;
-        
-        // Map specific values to active state if provided
-        this.valueMapping = this.setupValueMapping();
     }
 
     setupValueMapping() {
@@ -52,7 +52,7 @@ export class Toggle extends BaseComponent {
         if (this.defaultValue === 'active') return true;
         if (this.defaultValue === 'inactive') return false;
         
-        if (this.valueMapping.hasOwnProperty(this.defaultValue)) {
+        if (this.valueMapping && this.valueMapping.hasOwnProperty(this.defaultValue)) {
             return this.valueMapping[this.defaultValue];
         }
         
@@ -202,7 +202,7 @@ export class Toggle extends BaseComponent {
         if (typeof value === 'boolean') {
             this.isActive = value;
         } else if (typeof value === 'string') {
-            if (this.valueMapping.hasOwnProperty(value.toLowerCase())) {
+            if (this.valueMapping && this.valueMapping.hasOwnProperty(value.toLowerCase())) {
                 this.isActive = this.valueMapping[value.toLowerCase()];
             } else if (value === 'active') {
                 this.isActive = true;
@@ -283,3 +283,5 @@ export class Toggle extends BaseComponent {
         };
     }
 }
+
+export default Toggle;
