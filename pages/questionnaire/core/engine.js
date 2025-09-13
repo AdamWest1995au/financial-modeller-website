@@ -552,25 +552,16 @@ export class QuestionnaireEngine {
         this.submitResponses();
     }
 
-    // reCAPTCHA verification
+    // reCAPTCHA verification - now uses token from verification screen
     async verifyRecaptcha() {
-        if (!this.config.recaptchaSiteKey) {
-            console.warn('reCAPTCHA not configured, skipping verification');
-            return null;
+        // Return the token we collected from the reCAPTCHA verification screen
+        if (this.recaptchaToken) {
+            console.log('Using collected reCAPTCHA token');
+            return this.recaptchaToken;
         }
         
-        return new Promise((resolve, reject) => {
-            if (typeof grecaptcha !== 'undefined') {
-                grecaptcha.ready(() => {
-                    grecaptcha.execute(this.config.recaptchaSiteKey, {action: 'submit'})
-                        .then(token => resolve(token))
-                        .catch(reject);
-                });
-            } else {
-                console.warn('reCAPTCHA not loaded, skipping verification');
-                resolve(null);
-            }
-        });
+        console.warn('No reCAPTCHA token available, proceeding without verification');
+        return null;
     }
 
     // Prepare submission data in the format your API expects
