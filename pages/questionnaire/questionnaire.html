@@ -4472,46 +4472,47 @@ window.previousQuestion = function() {
 
    <!-- NEW: Modular Questionnaire System -->
     <script type="module">
-    import { QuestionnaireEngine } from './core/engine.js';
-    import { UserInfoModule } from './modules/user-info.module.js';
-    import { CustomizationModule } from './modules/customization.module.js';
-    import { CombinedParametersModule } from './modules/combined-parameters.module.js';
-    import { ModelingApproachModule } from './modules/modeling-approach.module.js';
-    import { RevenueModule } from './modules/revenue.module.js';
-    import { CogsCodbModule } from './modules/cogs-codb.module.js';
+import { QuestionnaireEngine } from './core/engine.js';
+import { UserInfoModule } from './modules/user-info.module.js';
+import { CustomizationModule } from './modules/customization.module.js';
+import { CombinedParametersModule } from './modules/combined-parameters.module.js';
+import { ModelingApproachModule } from './modules/modeling-approach.module.js';
+import { RevenueModule } from './modules/revenue.module.js';
+import { CogsCodbModule } from './modules/cogs-codb.module.js';
 
-    // Initialize the questionnaire engine
-    async function initializeQuestionnaire() {
-        try {
-            const engine = new QuestionnaireEngine({
-                apiEndpoint: '/api/submit-questionnaire',
-                recaptchaSiteKey: '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF',
-                debug: false
-            });
+// Initialize the questionnaire engine
+async function initializeQuestionnaire() {
+    try {
+        const engine = new QuestionnaireEngine({
+            apiEndpoint: '/api/submit-questionnaire',
+            recaptchaSiteKey: '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF',
+            debug: true // Enable debug mode to see interaction tracking
+        });
 
-            // Register only the modules that exist
-            engine.registerModule(new CustomizationModule());
-            engine.registerModule(new UserInfoModule());
-            engine.registerModule(new CombinedParametersModule());
-            engine.registerModule(new ModelingApproachModule());
-            engine.registerModule(new RevenueModule());
-            engine.registerModule(new CogsCodbModule());
+        // Register only the modules that exist
+        engine.registerModule(new CustomizationModule());
+        engine.registerModule(new UserInfoModule());
+        engine.registerModule(new CombinedParametersModule());
+        engine.registerModule(new ModelingApproachModule());
+        engine.registerModule(new RevenueModule());
+        engine.registerModule(new CogsCodbModule());
 
-            await engine.initialize();
-            window.questionnaireEngine = engine;
+        await engine.initialize();
+        window.questionnaireEngine = engine;
 
-            console.log('Modular questionnaire system initialized successfully');
-        } catch (error) {
-            console.error('Failed to initialize questionnaire system:', error);
-            alert('There was an error loading the questionnaire. Please refresh the page or contact support if the problem persists.');
-        }
+        console.log('Modular questionnaire system initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize questionnaire system:', error);
+        alert('There was an error loading the questionnaire. Please refresh the page or contact support if the problem persists.');
     }
+}
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeQuestionnaire);
-    } else {
-        initializeQuestionnaire();
-    }
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeQuestionnaire);
+} else {
+    initializeQuestionnaire();
+}
 </script>
 
     <!-- Keep existing scripts -->
