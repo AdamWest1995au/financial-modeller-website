@@ -1,5 +1,5 @@
 // /pages/questionnaire/modules/revenue.module.js
-class RevenueModule {
+export class RevenueModule {
     constructor() {
         this.id = 'revenue-structure';
         this.title = 'Revenue Structure';
@@ -506,5 +506,10 @@ class RevenueModule {
     }
 }
 
-// Export the module
-window.RevenueModule = RevenueModule;
+// Export the module for ES6 imports
+export default RevenueModule;
+
+// Also add to window for backward compatibility if needed
+if (typeof window !== 'undefined') {
+    window.RevenueModule = RevenueModule;
+}
