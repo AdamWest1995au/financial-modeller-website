@@ -18,6 +18,7 @@ export class QuestionnaireEngine {
         this.submissionId = null;
         this.submissionRecaptchaToken = null;
         this.recaptchaToken = null;
+        this.submissionRecaptchaWidgetId = undefined;
         
         // UI Elements
         this.questionModal = null;
@@ -552,6 +553,9 @@ export class QuestionnaireEngine {
         // Store reference to engine for the callback
         window.currentQuestionnaireEngine = this;
         
+        // Clean up any existing reCAPTCHA first
+        this.cleanupSubmissionRecaptcha();
+        
         // First, check if the modal exists
         const submissionModal = document.getElementById('submissionRecaptchaModal');
         console.log('Submission modal found:', !!submissionModal);
@@ -589,7 +593,7 @@ export class QuestionnaireEngine {
                 console.log('Loading content hidden');
             }
             
-            // Reset and render reCAPTCHA
+            // FIXED: Properly reset and render reCAPTCHA
             setTimeout(() => {
                 if (window.grecaptcha) {
                     try {
@@ -597,23 +601,39 @@ export class QuestionnaireEngine {
                         const submissionRecaptchaElement = document.getElementById('submissionRecaptcha');
                         
                         if (submissionRecaptchaElement) {
-                            console.log('reCAPTCHA element found, rendering...');
+                            console.log('reCAPTCHA element found, resetting...');
                             
-                            // Clear any existing reCAPTCHA
+                            // CRITICAL FIX: Completely clear the element and create a new unique container
                             submissionRecaptchaElement.innerHTML = '';
                             
-                            // Render new reCAPTCHA
-                            window.grecaptcha.render(submissionRecaptchaElement, {
+                            // Create a new div with a unique ID to avoid the "already rendered" error
+                            const newRecaptchaDiv = document.createElement('div');
+                            newRecaptchaDiv.id = 'submissionRecaptcha-' + Date.now(); // Unique ID
+                            submissionRecaptchaElement.appendChild(newRecaptchaDiv);
+                            
+                            // Render reCAPTCHA in the new container
+                            const widgetId = window.grecaptcha.render(newRecaptchaDiv, {
                                 'sitekey': '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF',
                                 'callback': 'onSubmissionRecaptchaComplete'
                             });
                             
-                            console.log('reCAPTCHA rendered successfully');
+                            console.log('reCAPTCHA rendered successfully with widget ID:', widgetId);
+                            
+                            // Store widget ID for future cleanup
+                            this.submissionRecaptchaWidgetId = widgetId;
+                            
                         } else {
                             console.error('submissionRecaptcha element not found');
                         }
                     } catch (error) {
                         console.warn('reCAPTCHA render failed:', error);
+                        
+                        // Fallback: Try to use the existing reCAPTCHA if it's already rendered
+                        console.log('Attempting fallback - using existing reCAPTCHA');
+                        const existingRecaptcha = submissionModal.querySelector('.g-recaptcha');
+                        if (existingRecaptcha) {
+                            console.log('Found existing reCAPTCHA widget');
+                        }
                     }
                 } else {
                     console.warn('grecaptcha not available');
@@ -631,6 +651,19 @@ export class QuestionnaireEngine {
                 this.showSubmissionRecaptcha();
             }, 100);
         }
+    }
+
+    // Add cleanup method for reCAPTCHA
+    cleanupSubmissionRecaptcha() {
+        if (this.submissionRecaptchaWidgetId !== undefined && window.grecaptcha) {
+            try {
+                window.grecaptcha.reset(this.submissionRecaptchaWidgetId);
+                console.log('reCAPTCHA widget reset successfully');
+            } catch (error) {
+                console.warn('reCAPTCHA reset failed:', error);
+            }
+        }
+        this.submissionRecaptchaWidgetId = undefined;
     }
 
     // Add this new method to create the modal if it doesn't exist
@@ -1062,6 +1095,7 @@ export class QuestionnaireEngine {
         this.submissionId = null;
         this.submissionRecaptchaToken = null;
         this.recaptchaToken = null;
+        this.submissionRecaptchaWidgetId = undefined;
         console.log('Questionnaire reset');
     }
 }
