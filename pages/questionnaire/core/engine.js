@@ -1,4 +1,4 @@
-// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH SUBMISSION FUNCTIONALITY
+// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH SUBMISSION FUNCTIONALITY AND REDIRECT
 
 export class QuestionnaireEngine {
     constructor(config = {}) {
@@ -954,24 +954,57 @@ export class QuestionnaireEngine {
         }
     }
 
-    // Show success message
+    // FIXED: Show success message and redirect to loading page
     showSuccessMessage() {
+        console.log('✅ Submission successful, redirecting to loading page...');
+        
+        // Show brief success message before redirect
         const statusDiv = document.getElementById('submission-status');
         if (statusDiv) {
             statusDiv.innerHTML = `
                 <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; padding: 20px; margin-top: 20px;">
                     <h4 style="color: #4ade80; margin-bottom: 10px;">Successfully Submitted!</h4>
-                    <p style="color: #4ade80; margin-bottom: 0;">Your responses have been saved. We'll be in touch within 24-48 hours.</p>
+                    <p style="color: #4ade80; margin-bottom: 10px;">Your responses have been saved.</p>
+                    <p style="color: #4ade80; font-size: 0.9rem;">Redirecting to loading page...</p>
                 </div>
             `;
         }
         
-        // Update next button to close
-        if (this.nextBtn) {
-            this.nextBtn.disabled = false;
-            this.nextBtn.textContent = 'Close';
-            this.nextBtn.onclick = () => this.hideModal();
+        // Also update the question content to show redirect message
+        if (this.questionContent) {
+            this.questionContent.innerHTML = `
+                <div style="text-align: center; padding: 60px 40px;">
+                    <div style="font-size: 3rem; margin-bottom: 20px;">✅</div>
+                    <h3 style="color: #22c55e; margin-bottom: 20px; font-size: 1.8rem;">Successfully Submitted!</h3>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px; font-size: 1.1rem; line-height: 1.6;">
+                        Your questionnaire has been submitted successfully. 
+                    </p>
+                    <p style="color: rgba(255,255,255,0.6); font-size: 1rem;">
+                        Redirecting to the loading page...
+                    </p>
+                    <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #22c55e; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-top: 20px;"></div>
+                </div>
+            `;
         }
+        
+        // Hide the submission modal
+        const submissionModal = document.getElementById('submissionRecaptchaModal');
+        if (submissionModal) {
+            submissionModal.style.display = 'none';
+            submissionModal.classList.remove('active');
+        }
+        
+        // Redirect to loading page after a short delay (2 seconds)
+        setTimeout(() => {
+            if (this.submissionId) {
+                console.log(`🔄 Redirecting to loading page with submission_id: ${this.submissionId}`);
+                window.location.href = `loading.html?submission_id=${this.submissionId}`;
+            } else {
+                console.error('❌ No submission ID available for redirect');
+                // Fallback: try to redirect anyway or show error
+                alert('Submission was successful, but there was an issue with the redirect. Please contact support.');
+            }
+        }, 2000);
     }
 
     // Retry submission
@@ -1033,12 +1066,15 @@ export class QuestionnaireEngine {
             const result = await response.json();
             console.log('Submission successful:', result);
             
-            // Store the submission ID for future reference
+            // ⭐ CRITICAL: Store the submission ID for the redirect
             if (result.submission_id) {
                 this.submissionId = result.submission_id;
+                console.log('✅ Submission ID stored:', this.submissionId);
+            } else {
+                console.error('❌ No submission_id in response:', result);
             }
             
-            // Show success message
+            // Show success message (which will now redirect)
             this.showSuccessMessage();
             
             return result;
