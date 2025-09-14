@@ -1,4 +1,5 @@
-// /pages/questionnaire/security/security-manager.js
+// /pages/questionnaire/security/security-manager.js - UPDATED WITH PROPER CALLBACK HANDLING
+
 class SecurityManager {
     constructor(config = {}) {
         this.config = {
@@ -28,6 +29,10 @@ class SecurityManager {
             initial: null,
             submission: null
         };
+
+        // Callbacks
+        this.onInitialRecaptchaComplete = null;
+        this.onSubmissionRecaptchaComplete = null;
     }
 
     async initialize() {
@@ -65,63 +70,53 @@ class SecurityManager {
         if (!honeypotContainer) {
             honeypotContainer = document.createElement('div');
             honeypotContainer.id = 'honeypotContainer';
-            honeypotContainer.style.cssText = `
-                position: absolute; 
-                left: -9999px; 
-                visibility: hidden; 
-                opacity: 0; 
-                pointer-events: none;
-            `;
+            honeypotContainer.style.cssText = 'position: absolute; left: -9999px; opacity: 0; pointer-events: none;';
             document.body.appendChild(honeypotContainer);
         }
 
-        // Add honeypot fields
+        // Create honeypot fields
         this.config.honeypotFields.forEach(fieldName => {
-            let field = document.getElementById(fieldName);
-            if (!field) {
-                field = document.createElement('input');
+            if (!document.getElementById(fieldName)) {
+                const field = document.createElement('input');
                 field.type = 'text';
                 field.name = fieldName;
                 field.id = fieldName;
-                field.setAttribute('tabindex', '-1');
-                field.setAttribute('autocomplete', 'off');
+                field.tabIndex = -1;
+                field.autocomplete = 'off';
+                
+                // Monitor honeypot values
+                field.addEventListener('input', (e) => {
+                    this.state.honeypotValues[fieldName] = e.target.value;
+                    console.warn('🚨 Honeypot field filled:', fieldName);
+                });
+                
                 honeypotContainer.appendChild(field);
             }
-
-            // Monitor honeypot field changes
-            field.addEventListener('input', (e) => {
-                this.state.honeypotValues[fieldName] = e.target.value;
-                if (e.target.value.trim() !== '') {
-                    console.warn('🚨 Honeypot field filled - potential spam detected');
-                }
-            });
         });
     }
 
     initializeRateLimit() {
         if (!this.config.rateLimit.enabled) return;
         
-        // Load previous attempts from storage
-        const stored = localStorage.getItem('security_attempts');
-        if (stored) {
-            try {
+        try {
+            const stored = localStorage.getItem('questionnaire_attempts');
+            if (stored) {
                 const data = JSON.parse(stored);
                 const now = Date.now();
                 
-                // Check if window has expired
+                // Check if within rate limit window
                 if (now - data.lastAttempt < this.config.rateLimit.windowMs) {
-                    this.state.attemptCount = data.count || 0;
+                    this.state.attemptCount = data.attemptCount || 0;
                     this.state.lastAttempt = data.lastAttempt;
                     
-                    // Check if blocked
                     if (this.state.attemptCount >= this.config.rateLimit.maxAttempts) {
                         this.state.isBlocked = true;
                         console.warn('🚨 Rate limit exceeded - user blocked');
                     }
                 }
-            } catch (error) {
-                console.warn('Failed to load rate limit data:', error);
             }
+        } catch (error) {
+            console.warn('Failed to load rate limit data:', error);
         }
     }
 
@@ -196,7 +191,7 @@ class SecurityManager {
                 if (loadingContent) loadingContent.style.display = 'block';
             }
             
-            // Trigger submission completion
+            // Trigger submission completion callback
             if (this.onSubmissionRecaptchaComplete) {
                 this.onSubmissionRecaptchaComplete(token);
             }
@@ -238,8 +233,8 @@ class SecurityManager {
                 </div>
                 
                 <div class="recaptcha-actions">
-                    <button class="btn btn-secondary" onclick="securityManager.closeInitialRecaptcha()">Cancel</button>
-                    <button class="btn btn-primary" id="continueBtn" onclick="securityManager.handleInitialRecaptchaComplete()" disabled>Continue to Questionnaire</button>
+                    <button class="btn btn-secondary" onclick="window.securityManager.closeInitialRecaptcha()">Cancel</button>
+                    <button class="btn btn-primary" id="continueBtn" onclick="window.securityManager.handleInitialRecaptchaComplete()" disabled>Continue to Questionnaire</button>
                 </div>
             </div>
         `;
@@ -385,6 +380,15 @@ class SecurityManager {
         this.state.submissionRecaptchaToken = null;
     }
 
+    // Callback setter methods
+    setInitialRecaptchaCallback(callback) {
+        this.onInitialRecaptchaComplete = callback;
+    }
+
+    setSubmissionRecaptchaCallback(callback) {
+        this.onSubmissionRecaptchaComplete = callback;
+    }
+
     detectSpam() {
         const spamIndicators = [];
         
@@ -400,17 +404,10 @@ class SecurityManager {
             spamIndicators.push('Rate limit exceeded');
         }
         
-        // Additional spam detection can be added here
-        // - Check submission timing
-        // - Validate email format
-        // - Check for suspicious patterns
-        
-        if (spamIndicators.length > 0) {
-            console.warn('🚨 Spam detected:', spamIndicators);
-            return true;
-        }
-        
-        return false;
+        return {
+            isSpam: spamIndicators.length > 0,
+            indicators: spamIndicators
+        };
     }
 
     recordAttempt() {
@@ -419,109 +416,43 @@ class SecurityManager {
         this.state.attemptCount++;
         this.state.lastAttempt = Date.now();
         
-        // Save to storage
         try {
-            localStorage.setItem('security_attempts', JSON.stringify({
-                count: this.state.attemptCount,
+            localStorage.setItem('questionnaire_attempts', JSON.stringify({
+                attemptCount: this.state.attemptCount,
                 lastAttempt: this.state.lastAttempt
             }));
         } catch (error) {
             console.warn('Failed to save rate limit data:', error);
         }
         
-        // Check if should be blocked
         if (this.state.attemptCount >= this.config.rateLimit.maxAttempts) {
             this.state.isBlocked = true;
-            console.warn('🚨 Rate limit exceeded - blocking user');
         }
     }
 
     showRateLimitError() {
-        const timeLeft = this.getRemainingBlockTime();
-        const minutes = Math.ceil(timeLeft / 60000);
-        
-        alert(`Too many attempts. Please wait ${minutes} minutes before trying again.`);
+        alert('You have exceeded the maximum number of submission attempts. Please wait before trying again.');
     }
 
-    getRemainingBlockTime() {
-        if (!this.state.isBlocked || !this.state.lastAttempt) return 0;
-        
-        const elapsed = Date.now() - this.state.lastAttempt;
-        const remaining = this.config.rateLimit.windowMs - elapsed;
-        
-        return Math.max(0, remaining);
-    }
-
-    // Public API methods
-    isInitialRecaptchaComplete() {
-        return this.state.initialRecaptchaComplete;
-    }
-
-    isSubmissionRecaptchaComplete() {
-        return this.state.submissionRecaptchaComplete;
-    }
-
-    getInitialRecaptchaToken() {
-        return this.state.initialRecaptchaToken;
-    }
-
-    getSubmissionRecaptchaToken() {
-        return this.state.submissionRecaptchaToken;
-    }
-
-    getHoneypotValue(fieldName) {
-        return this.state.honeypotValues[fieldName] || null;
-    }
-
-    getAllHoneypotValues() {
-        return { ...this.state.honeypotValues };
-    }
-
-    validateSubmission(submissionData) {
-        const validation = {
-            isValid: true,
-            errors: []
-        };
-
-        // Check spam detection
-        if (this.detectSpam()) {
-            validation.isValid = false;
-            validation.errors.push('Submission failed security validation');
-        }
-
-        // Check reCAPTCHA tokens
-        if (!this.state.submissionRecaptchaToken) {
-            validation.isValid = false;
-            validation.errors.push('reCAPTCHA verification required');
-        }
-
-        // Check rate limiting
-        if (this.state.isBlocked) {
-            validation.isValid = false;
-            validation.errors.push('Rate limit exceeded');
-        }
-
-        return validation;
-    }
-
-    // Callback setters
-    setInitialRecaptchaCallback(callback) {
-        this.onInitialRecaptchaComplete = callback;
-    }
-
-    setSubmissionRecaptchaCallback(callback) {
-        this.onSubmissionRecaptchaComplete = callback;
-    }
-
-    // Debug methods
-    getSecurityState() {
+    // Validation methods
+    validateRecaptchaTokens() {
         return {
-            ...this.state,
-            config: this.config
+            initialValid: !!this.state.initialRecaptchaToken,
+            submissionValid: !!this.state.submissionRecaptchaToken,
+            hasRequiredTokens: !!this.state.initialRecaptchaToken && !!this.state.submissionRecaptchaToken
         };
     }
 
-    resetSecurity() {
+    getSubmissionData() {
+        return {
+            initialRecaptchaToken: this.state.initialRecaptchaToken,
+            submissionRecaptchaToken: this.state.submissionRecaptchaToken,
+            honeypotValues: { ...this.state.honeypotValues },
+            spamDetection: this.detectSpam()
+        };
+    }
+
+    reset() {
         this.state = {
             initialRecaptchaComplete: false,
             submissionRecaptchaComplete: false,
@@ -533,15 +464,14 @@ class SecurityManager {
             isBlocked: false
         };
         
-        // Clear storage
-        localStorage.removeItem('security_attempts');
-        
-        console.log('🔄 Security state reset');
+        console.log('🔄 Security Manager reset');
     }
 }
 
-// Export and make globally available
-window.SecurityManager = SecurityManager;
+// Export for module use
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = SecurityManager;
+}
 
-// Create global instance
-window.securityManager = new SecurityManager();
+// Also make available globally for backward compatibility
+window.SecurityManager = SecurityManager;

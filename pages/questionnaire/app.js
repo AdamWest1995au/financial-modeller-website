@@ -1,7 +1,9 @@
-// /pages/questionnaire/app.js
+// /pages/questionnaire/app.js - UPDATED WITH PROPER SECURITY INTEGRATION
+
 class QuestionnaireApp {
     constructor() {
         this.engine = null;
+        this.securityManager = null;
         this.modules = [];
         this.initialized = false;
         this.startTime = Date.now();
@@ -14,11 +16,14 @@ class QuestionnaireApp {
             // Check for required dependencies
             this.checkDependencies();
             
+            // Initialize the security manager first
+            await this.initializeSecurityManager();
+            
             // Initialize the core engine
             this.engine = new QuestionnaireEngine({
-                saveToStorage: true,
-                storageKey: 'questionnaire_state_v2',
-                autoSave: true
+                apiEndpoint: '/api/submit-questionnaire',
+                recaptchaSiteKey: '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF',
+                debug: true
             });
             
             await this.engine.initialize();
@@ -29,8 +34,12 @@ class QuestionnaireApp {
             // Setup application-level event handlers
             this.setupEventHandlers();
             
-            // Setup security callbacks
+            // Setup security callbacks - THIS IS THE KEY CONNECTION
             this.setupSecurityCallbacks();
+            
+            // Make instances globally available
+            window.questionnaireEngine = this.engine;
+            window.securityManager = this.securityManager;
             
             this.initialized = true;
             
@@ -45,15 +54,22 @@ class QuestionnaireApp {
         }
     }
 
+    async initializeSecurityManager() {
+        console.log('🛡️ Initializing Security Manager...');
+        
+        this.securityManager = new SecurityManager({
+            recaptchaSiteKey: '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF'
+        });
+        
+        await this.securityManager.initialize();
+        
+        console.log('✅ Security Manager initialized');
+    }
+
     checkDependencies() {
         const required = [
             'QuestionnaireEngine',
-            'QuestionnaireState', 
-            'SecurityManager',
-            'ConditionalLogic',
-            'QuestionnaireValidator',
-            'UIManager',
-            'BaseComponent'
+            'SecurityManager'
         ];
         
         const missing = required.filter(dep => !window[dep]);
@@ -61,146 +77,136 @@ class QuestionnaireApp {
         if (missing.length > 0) {
             throw new Error(`Missing required dependencies: ${missing.join(', ')}`);
         }
-        
-        console.log('✅ All dependencies available');
     }
 
     async registerModules() {
-        console.log('📦 Registering modules...');
+        console.log('📦 Registering questionnaire modules...');
         
-        // Define module loading order
-        const moduleConfigs = [
-            { 
-                name: 'CustomizationModule', 
-                file: 'customization.module.js',
-                className: 'CustomizationModule' 
-            },
-            { 
-                name: 'UserInfoModule', 
-                file: 'user-info.module.js',
-                className: 'UserInfoModule' 
-            },
-            { 
-                name: 'CombinedParametersModule', 
-                file: 'combined-parameters.module.js',
-                className: 'CombinedParametersModule' 
-            },
-            { 
-                name: 'ModelingApproachModule', 
-                file: 'modeling-approach.module.js',
-                className: 'ModelingApproachModule' 
-            },
-            { 
-                name: 'RevenueModule', 
-                file: 'revenue.module.js',
-                className: 'RevenueModule' 
-            },
-            { 
-                name: 'CogsCodbModule', 
-                file: 'cogs-codb.module.js',
-                className: 'CogsCodbModule' 
-            },
-            { 
-                name: 'ExpensesModule', 
-                file: 'expenses.module.js',
-                className: 'ExpensesModule' 
-            },
-            { 
-                name: 'AssetsModule', 
-                file: 'assets.module.js',
-                className: 'AssetsModule' 
-            },
-            { 
-                name: 'DebtModule', 
-                file: 'debt.module.js',
-                className: 'DebtModule' 
-            },
-            { 
-                name: 'EquityModule', 
-                file: 'equity.module.js',
-                className: 'EquityModule' 
+        try {
+            // Import and register modules in order
+            const moduleConfigs = [
+                { name: 'CustomizationModule', file: './modules/customization.module.js' },
+                { name: 'UserInfoModule', file: './modules/user-info.module.js' },
+                { name: 'CombinedParametersModule', file: './modules/combined-parameters.module.js' },
+                { name: 'ModelingApproachModule', file: './modules/modeling-approach.module.js' },
+                { name: 'RevenueModule', file: './modules/revenue.module.js' },
+                { name: 'CogsCodbModule', file: './modules/cogs-codb.module.js' }
+            ];
+
+            for (const config of moduleConfigs) {
+                try {
+                    const module = await import(config.file);
+                    const ModuleClass = module[config.name] || module.default;
+                    
+                    if (ModuleClass) {
+                        const moduleInstance = new ModuleClass();
+                        this.engine.registerModule(moduleInstance);
+                        this.modules.push(moduleInstance);
+                        console.log(`✅ Registered ${config.name}`);
+                    } else {
+                        console.warn(`⚠️ Module class not found in ${config.file}`);
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ Failed to load module ${config.name}:`, error);
+                }
             }
-        ];
-
-        // Register available modules
-        for (const config of moduleConfigs) {
-            try {
-                await this.registerModule(config);
-            } catch (error) {
-                console.warn(`⚠️ Failed to load module ${config.name}:`, error);
-                // Continue with other modules - some may not be implemented yet
-            }
+            
+            console.log(`📋 Registered ${this.modules.length} modules total`);
+            
+        } catch (error) {
+            console.error('Failed to register modules:', error);
+            throw error;
         }
-
-        console.log(`✅ Registered ${this.modules.length} modules successfully`);
-    }
-
-    async registerModule(config) {
-        const { name, className } = config;
-        
-        // Check if module class is available
-        const ModuleClass = window[className];
-        if (!ModuleClass) {
-            console.log(`⏭️ Module ${name} not yet implemented, skipping...`);
-            return;
-        }
-
-        // Create and register module instance
-        const moduleInstance = new ModuleClass();
-        this.engine.registerModule(moduleInstance);
-        this.modules.push(moduleInstance);
-        
-        console.log(`✅ Module registered: ${name}`);
     }
 
     setupEventHandlers() {
-        // Global error handler
-        window.addEventListener('error', (event) => {
-            console.error('🚨 Global error caught:', event.error);
-            this.handleError(event.error);
-        });
-
-        // Unhandled promise rejection handler
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('🚨 Unhandled promise rejection:', event.reason);
-            this.handleError(event.reason);
-            event.preventDefault();
-        });
-
-        // Page visibility change (for auto-save)
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && this.engine && this.engine.state) {
-                this.engine.state.saveToStorage();
+        // Handle browser navigation during questionnaire
+        window.addEventListener('popstate', (event) => {
+            if (this.engine && this.engine.questionModal && this.engine.questionModal.classList.contains('active')) {
+                // Prevent default browser navigation during questionnaire
+                history.pushState(null, '', window.location.pathname);
             }
         });
 
-        // Browser back/forward buttons
-        window.addEventListener('popstate', (event) => {
-            if (this.engine && this.engine.isModalOpen) {
-                // Prevent default browser navigation during questionnaire
-                history.pushState(null, '', window.location.pathname);
+        // Global error handling
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+        });
+
+        // Handle page beforeunload
+        window.addEventListener('beforeunload', (event) => {
+            if (this.engine && this.engine.userHasInteracted) {
+                event.preventDefault();
+                event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                return event.returnValue;
             }
         });
     }
 
     setupSecurityCallbacks() {
-        if (!this.engine || !this.engine.security) return;
+        if (!this.engine || !this.securityManager) return;
 
-        // Set initial reCAPTCHA callback
-        this.engine.security.setInitialRecaptchaCallback(() => {
-            console.log('🔐 Initial reCAPTCHA completed, starting questionnaire...');
+        console.log('🔗 Setting up security callbacks...');
+
+        // Set initial reCAPTCHA callback - starts questionnaire
+        this.securityManager.setInitialRecaptchaCallback(() => {
+            console.log('🔓 Initial reCAPTCHA completed, starting questionnaire...');
             this.engine.startQuestionnaire();
         });
 
-        // Set submission reCAPTCHA callback
-        this.engine.security.setSubmissionRecaptchaCallback((token) => {
-            console.log('🔐 Submission reCAPTCHA completed, proceeding with submission...');
-            // The engine will handle the actual submission
+        // Set submission reCAPTCHA callback - finalizes submission
+        this.securityManager.setSubmissionRecaptchaCallback((token) => {
+            console.log('🔒 Submission reCAPTCHA completed, finalizing submission...');
+            // Pass the token to the engine for final submission
+            this.engine.finalizeSubmission(token);
         });
+
+        console.log('✅ Security callbacks configured');
+    }
+
+    // Public API methods
+    async start() {
+        if (!this.initialized) {
+            throw new Error('Application not initialized');
+        }
+
+        console.log('🎬 Starting questionnaire application...');
+        
+        // Show initial reCAPTCHA
+        const shown = await this.securityManager.showInitialRecaptcha();
+        if (!shown) {
+            throw new Error('Failed to show initial reCAPTCHA (possibly rate limited)');
+        }
+        
+        return true;
+    }
+
+    reset() {
+        if (this.engine) {
+            this.engine.reset();
+        }
+        
+        if (this.securityManager) {
+            this.securityManager.reset();
+        }
+        
+        console.log('🔄 Application reset');
+    }
+
+    getCurrentState() {
+        return {
+            initialized: this.initialized,
+            engine: this.engine ? this.engine.getCurrentState() : null,
+            security: this.securityManager ? this.securityManager.getSubmissionData() : null,
+            modules: this.modules.length,
+            uptime: Date.now() - this.startTime
+        };
     }
 
     handleInitializationError(error) {
         const errorMessage = error.message || 'Unknown initialization error';
+        
+        console.error('💥 Initialization failed:', errorMessage);
         
         // Show user-friendly error
         const errorContainer = this.createErrorDisplay(
@@ -213,26 +219,12 @@ class QuestionnaireApp {
                 },
                 {
                     text: 'Contact Support',
-                    action: () => window.location.href = 'mailto:support@thefinancialmodeller.com'
+                    action: () => window.location.href = 'mailto:info@thefinancialmodeller.com'
                 }
             ]
         );
 
         document.body.appendChild(errorContainer);
-    }
-
-    handleError(error) {
-        console.error('🚨 Application error:', error);
-        
-        // Don't show error UI during development
-        if (window.location.hostname === 'localhost') {
-            return;
-        }
-
-        // Show user-friendly error for production
-        if (this.engine && this.engine.ui) {
-            this.engine.ui.showError('An unexpected error occurred. Please try again.');
-        }
     }
 
     createErrorDisplay(title, message, actions = []) {
@@ -243,84 +235,74 @@ class QuestionnaireApp {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 10000;
-            color: white;
+            z-index: 9999;
             font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
         `;
 
-        const content = document.createElement('div');
-        content.style.cssText = `
+        const modal = document.createElement('div');
+        modal.style.cssText = `
             background: rgba(220, 38, 38, 0.1);
             border: 1px solid rgba(220, 38, 38, 0.3);
-            border-radius: 16px;
+            border-radius: 12px;
             padding: 40px;
             max-width: 500px;
             text-align: center;
+            color: white;
         `;
 
-        content.innerHTML = `
-            <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
-            <h2 style="margin-bottom: 15px; color: #fca5a5;">${title}</h2>
-            <p style="margin-bottom: 30px; color: rgba(255, 255, 255, 0.8); line-height: 1.6;">${message}</p>
-            <div style="display: flex; gap: 15px; justify-content: center;">
-                ${actions.map(action => `
-                    <button style="
-                        background: #dc2626;
-                        color: white;
-                        border: none;
-                        padding: 12px 24px;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        font-size: 1rem;
-                    " onclick="(${action.action.toString()})()">${action.text}</button>
-                `).join('')}
-            </div>
-        `;
+        const titleEl = document.createElement('h2');
+        titleEl.textContent = title;
+        titleEl.style.cssText = 'color: #fca5a5; margin-bottom: 20px; font-size: 1.5rem;';
 
-        container.appendChild(content);
+        const messageEl = document.createElement('p');
+        messageEl.textContent = message;
+        messageEl.style.cssText = 'color: #fca5a5; margin-bottom: 30px; line-height: 1.5;';
+
+        const actionsContainer = document.createElement('div');
+        actionsContainer.style.cssText = 'display: flex; gap: 15px; justify-content: center;';
+
+        actions.forEach(action => {
+            const button = document.createElement('button');
+            button.textContent = action.text;
+            button.style.cssText = `
+                background: #dc2626;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 12px 24px;
+                cursor: pointer;
+                font-size: 1rem;
+                transition: background-color 0.2s;
+            `;
+            button.addEventListener('click', action.action);
+            button.addEventListener('mouseenter', () => {
+                button.style.backgroundColor = '#b91c1c';
+            });
+            button.addEventListener('mouseleave', () => {
+                button.style.backgroundColor = '#dc2626';
+            });
+            actionsContainer.appendChild(button);
+        });
+
+        modal.appendChild(titleEl);
+        modal.appendChild(messageEl);
+        modal.appendChild(actionsContainer);
+        container.appendChild(modal);
+
         return container;
-    }
-
-    // Public API methods
-    async start() {
-        if (!this.initialized) {
-            throw new Error('Application not initialized. Call initialize() first.');
-        }
-
-        console.log('🎯 Starting questionnaire application...');
-
-        // Show the initial reCAPTCHA
-        await this.engine.security.showInitialRecaptcha();
-    }
-
-    getCurrentState() {
-        if (!this.engine) return null;
-        return this.engine.getCurrentState();
-    }
-
-    async reset() {
-        if (!this.engine) return;
-        await this.engine.reset();
-        console.log('🔄 Application reset');
-    }
-
-    getDebugInfo() {
-        return {
-            initialized: this.initialized,
-            moduleCount: this.modules.length,
-            modules: this.modules.map(m => m.id),
-            engineState: this.engine ? this.engine.getCurrentState() : null,
-            uptime: Date.now() - this.startTime
-        };
     }
 
     destroy() {
         if (this.engine) {
-            this.engine.destroy();
+            this.engine.reset();
+        }
+        
+        if (this.securityManager) {
+            this.securityManager.reset();
         }
         
         this.modules.forEach(module => {
@@ -336,6 +318,42 @@ class QuestionnaireApp {
     }
 }
 
+// Global functions for backward compatibility and HTML onclick handlers
+window.showInfoPane = function() {
+    alert('Info pane functionality will be added in the modular system');
+};
+
+window.showAIModal = function() {
+    alert('AI integration coming soon!');
+};
+
+window.startQuestionnaire = function() {
+    if (window.questionnaireApp) {
+        window.questionnaireApp.start();
+    } else {
+        console.error('Questionnaire app not initialized');
+    }
+};
+
+// Navigation functions for questions - these are called from HTML onclick handlers
+window.nextQuestion = function() {
+    if (window.questionnaireEngine) {
+        window.questionnaireEngine.handleNext();
+    }
+};
+
+window.previousQuestion = function() {
+    if (window.questionnaireEngine) {
+        window.questionnaireEngine.handleBack();
+    }
+};
+
+// Modal functions (for navigation links)
+window.showModal = function(modalType) {
+    console.log('Modal type:', modalType);
+    alert(`${modalType} modal not implemented yet`);
+};
+
 // Auto-initialization when DOM is ready
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('📄 DOM loaded, initializing questionnaire app...');
@@ -347,14 +365,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Initialize the application
         await window.questionnaireApp.initialize();
         
-        // Make app methods globally available for backward compatibility
-        window.startQuestionnaire = () => window.questionnaireApp.start();
-        window.resetQuestionnaire = () => window.questionnaireApp.reset();
-        window.getQuestionnaireState = () => window.questionnaireApp.getCurrentState();
-        
         console.log('🎉 Questionnaire app ready!');
         
-        // Auto-start if requested
+        // Auto-start if requested via URL parameter
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('autostart') === 'true') {
             await window.questionnaireApp.start();
@@ -363,11 +376,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     } catch (error) {
         console.error('❌ Failed to initialize questionnaire app:', error);
         
-        // Fallback to legacy system if available
-        if (window.startLegacyQuestionnaire) {
-            console.log('🔄 Falling back to legacy questionnaire system...');
-            window.startLegacyQuestionnaire();
-        }
+        // Show error to user
+        alert('Failed to initialize the questionnaire. Please refresh the page or contact support if the problem persists.');
     }
 });
 
