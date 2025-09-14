@@ -552,30 +552,202 @@ export class QuestionnaireEngine {
         // Store reference to engine for the callback
         window.currentQuestionnaireEngine = this;
         
-        // Show the submission reCAPTCHA modal
+        // First, check if the modal exists
         const submissionModal = document.getElementById('submissionRecaptchaModal');
+        console.log('Submission modal found:', !!submissionModal);
+        
         if (submissionModal) {
+            // Debug: Check current modal state
+            console.log('Modal current classes:', submissionModal.className);
+            console.log('Modal current display:', window.getComputedStyle(submissionModal).display);
+            
+            // Force show the modal with multiple approaches
+            submissionModal.style.display = 'flex';
+            submissionModal.style.visibility = 'visible';
+            submissionModal.style.opacity = '1';
+            submissionModal.style.zIndex = '10000';
             submissionModal.classList.add('active');
             document.body.style.overflow = 'hidden';
             
-            // Reset reCAPTCHA if it exists
+            // Debug: Check if modal is now visible
+            setTimeout(() => {
+                const modalRect = submissionModal.getBoundingClientRect();
+                console.log('Modal position after show:', modalRect);
+                console.log('Modal computed display:', window.getComputedStyle(submissionModal).display);
+            }, 100);
+            
+            // Ensure reCAPTCHA content is visible
+            const recaptchaContent = submissionModal.querySelector('.recaptcha-content');
+            const loadingContent = submissionModal.querySelector('.submission-loading');
+            
+            if (recaptchaContent) {
+                recaptchaContent.style.display = 'block';
+                console.log('reCAPTCHA content shown');
+            }
+            if (loadingContent) {
+                loadingContent.style.display = 'none';
+                console.log('Loading content hidden');
+            }
+            
+            // Reset and render reCAPTCHA
             setTimeout(() => {
                 if (window.grecaptcha) {
                     try {
+                        console.log('Attempting to render reCAPTCHA...');
                         const submissionRecaptchaElement = document.getElementById('submissionRecaptcha');
+                        
                         if (submissionRecaptchaElement) {
-                            grecaptcha.reset(submissionRecaptchaElement);
+                            console.log('reCAPTCHA element found, rendering...');
+                            
+                            // Clear any existing reCAPTCHA
+                            submissionRecaptchaElement.innerHTML = '';
+                            
+                            // Render new reCAPTCHA
+                            window.grecaptcha.render(submissionRecaptchaElement, {
+                                'sitekey': '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF',
+                                'callback': 'onSubmissionRecaptchaComplete'
+                            });
+                            
+                            console.log('reCAPTCHA rendered successfully');
+                        } else {
+                            console.error('submissionRecaptcha element not found');
                         }
                     } catch (error) {
-                        console.warn('reCAPTCHA reset failed:', error);
+                        console.warn('reCAPTCHA render failed:', error);
                     }
+                } else {
+                    console.warn('grecaptcha not available');
                 }
-            }, 100);
+            }, 200);
+            
         } else {
             console.error('Submission reCAPTCHA modal not found');
-            // Fallback - proceed without second reCAPTCHA
-            this.proceedWithSubmission(null);
+            
+            // Create the modal if it doesn't exist
+            this.createSubmissionModal();
+            
+            // Try again after creation
+            setTimeout(() => {
+                this.showSubmissionRecaptcha();
+            }, 100);
         }
+    }
+
+    // Add this new method to create the modal if it doesn't exist
+    createSubmissionModal() {
+        console.log('Creating submission reCAPTCHA modal...');
+        
+        const modalHTML = `
+            <div class="modal-overlay" id="submissionRecaptchaModal">
+                <div class="submission-recaptcha-modal">
+                    <div class="recaptcha-header">
+                        <div class="recaptcha-icon">🔒</div>
+                        <h2 class="recaptcha-title">Final Security Check</h2>
+                        <p class="recaptcha-description">Please complete one final security verification before submitting your responses.</p>
+                    </div>
+                    
+                    <div class="recaptcha-content">
+                        <div class="recaptcha-container">
+                            <div class="g-recaptcha" id="submissionRecaptcha" data-sitekey="6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF" data-callback="onSubmissionRecaptchaComplete"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="submission-loading" id="submissionLoading" style="display: none;">
+                        <div class="loading-spinner" style="display: inline-block; width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+                        <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem;">Submitting your questionnaire...</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add to document body
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Add CSS if not already present
+        if (!document.getElementById('submission-modal-styles')) {
+            const style = document.createElement('style');
+            style.id = 'submission-modal-styles';
+            style.textContent = `
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: none;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 9999;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                }
+                
+                .modal-overlay.active {
+                    display: flex !important;
+                    opacity: 1 !important;
+                }
+                
+                .submission-recaptcha-modal {
+                    background: rgba(0, 0, 0, 0.9);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 16px;
+                    padding: 40px;
+                    max-width: 500px;
+                    width: 90%;
+                    text-align: center;
+                    transform: scale(0.8);
+                    transition: transform 0.3s ease;
+                }
+                
+                .modal-overlay.active .submission-recaptcha-modal {
+                    transform: scale(1);
+                }
+                
+                .recaptcha-header {
+                    margin-bottom: 30px;
+                }
+                
+                .recaptcha-icon {
+                    font-size: 3rem;
+                    margin-bottom: 20px;
+                }
+                
+                .recaptcha-title {
+                    font-size: 1.6rem;
+                    color: #ffffff;
+                    margin-bottom: 10px;
+                    font-weight: 600;
+                }
+                
+                .recaptcha-description {
+                    color: rgba(255, 255, 255, 0.6);
+                    font-size: 1rem;
+                    line-height: 1.5;
+                }
+                
+                .recaptcha-content {
+                    margin-bottom: 20px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+                
+                .recaptcha-container {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 78px;
+                }
+                
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        console.log('Submission modal created');
     }
 
     proceedWithSubmission(recaptchaToken) {

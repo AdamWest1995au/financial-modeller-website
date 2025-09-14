@@ -4455,8 +4455,12 @@
         engine.proceedWithSubmission(response);
     } else {
         console.error('Questionnaire engine not found for submission');
+        // Fallback - try to submit anyway
+        if (window.questionnaireEngine) {
+            window.questionnaireEngine.proceedWithSubmission(response);
+        }
     }
-};0
+};
 
         // Navigation functions for questions
 window.nextQuestion = function() {
