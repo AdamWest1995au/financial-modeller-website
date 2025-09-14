@@ -998,7 +998,7 @@ export class QuestionnaireEngine {
         setTimeout(() => {
             if (this.submissionId) {
                 console.log(`🔄 Redirecting to loading page with submission_id: ${this.submissionId}`);
-                window.location.href = `loading.html?submission_id=${this.submissionId}`;
+                window.location.href = `/pages/loading.html?submission_id=${this.submissionId}`;
             } else {
                 console.error('❌ No submission ID available for redirect');
                 // Fallback: try to redirect anyway or show error
