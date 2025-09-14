@@ -4470,152 +4470,51 @@ window.previousQuestion = function() {
         };
     </script>
 
-    <!-- Load countries data first -->
-    <script src="../assets/js/countries.js"></script>
-
-    <!-- Load reCAPTCHA script -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    
-    <!-- Logo JavaScript -->
-    <script src="../assets/js/logo.js"></script>
-
-    <!-- Load core dependencies first -->
+   <!-- NEW: Modular Questionnaire System -->
     <script type="module">
-        // Import all required modules
-        import { QuestionnaireEngine } from './core/engine.js';
-        import { SecurityManager } from './security/security-manager.js';
-        import { UserInfoModule } from './modules/user-info.module.js';
-        import { CustomizationModule } from './modules/customization.module.js';
-        import { CombinedParametersModule } from './modules/combined-parameters.module.js';
-        import { ModelingApproachModule } from './modules/modeling-approach.module.js';
-        import { RevenueModule } from './modules/revenue.module.js';
-        import { CogsCodbModule } from './modules/cogs-codb.module.js';
+import { QuestionnaireEngine } from './core/engine.js';
+import { UserInfoModule } from './modules/user-info.module.js';
+import { CustomizationModule } from './modules/customization.module.js';
+import { CombinedParametersModule } from './modules/combined-parameters.module.js';
+import { ModelingApproachModule } from './modules/modeling-approach.module.js';
+import { RevenueModule } from './modules/revenue.module.js';
+import { CogsCodbModule } from './modules/cogs-codb.module.js';
 
-        // Make classes globally available
-        window.QuestionnaireEngine = QuestionnaireEngine;
-        window.SecurityManager = SecurityManager;
-        window.UserInfoModule = UserInfoModule;
-        window.CustomizationModule = CustomizationModule;
-        window.CombinedParametersModule = CombinedParametersModule;
-        window.ModelingApproachModule = ModelingApproachModule;
-        window.RevenueModule = RevenueModule;
-        window.CogsCodbModule = CogsCodbModule;
+// Initialize the questionnaire engine
+async function initializeQuestionnaire() {
+    try {
+         const engine = new QuestionnaireEngine({
+       apiEndpoint: '/api/submit-questionnaire',
+       recaptchaSiteKey: '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF', // Hard-coded public key
+       debug: true
+   });
 
-        console.log('Core modules loaded successfully');
-    </script>
+        // Register only the modules that exist
+        engine.registerModule(new CustomizationModule());
+        engine.registerModule(new UserInfoModule());
+        engine.registerModule(new CombinedParametersModule());
+        engine.registerModule(new ModelingApproachModule());
+        engine.registerModule(new RevenueModule());
+        engine.registerModule(new CogsCodbModule());
 
-    <!-- Initialize application -->
-    <script type="module" src="./app.js"></script>
+        await engine.initialize();
+        window.questionnaireEngine = engine;
 
-    <!-- Legacy compatibility and HTML onclick handlers -->
-    <script>
-        // Global variables for compatibility
-        let questionnaireApp = null;
-        let questionnaireEngine = null;
-        let securityManager = null;
+        console.log('Modular questionnaire system initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize questionnaire system:', error);
+        alert('There was an error loading the questionnaire. Please refresh the page or contact support if the problem persists.');
+    }
+}
 
-        // Functions called from HTML onclick handlers
-        window.showInfoPane = function() {
-            console.log('showInfoPane called - starting questionnaire flow');
-            if (window.questionnaireApp) {
-                window.questionnaireApp.start().catch(error => {
-                    console.error('Failed to start questionnaire:', error);
-                    alert('Failed to start the questionnaire. Please refresh and try again.');
-                });
-            } else {
-                console.error('QuestionnaireApp not initialized yet');
-                alert('The questionnaire is still loading. Please wait a moment and try again.');
-            }
-        };
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeQuestionnaire);
+} else {
+    initializeQuestionnaire();
+}
+</script>
 
-        window.showAIModal = function() {
-            alert('AI integration coming soon!');
-        };
-
-        // Navigation functions for HTML onclick handlers
-        window.nextQuestion = function() {
-            if (window.questionnaireEngine) {
-                window.questionnaireEngine.handleNext();
-            } else {
-                console.error('QuestionnaireEngine not available');
-            }
-        };
-
-        window.previousQuestion = function() {
-            if (window.questionnaireEngine) {
-                window.questionnaireEngine.handleBack();
-            } else {
-                console.error('QuestionnaireEngine not available');
-            }
-        };
-
-        // Legacy function for backward compatibility
-        window.startQuestionnaire = function() {
-            if (window.questionnaireApp) {
-                window.questionnaireApp.start();
-            } else {
-                console.error('QuestionnaireApp not available');
-            }
-        };
-
-        // Modal functions (for navigation links) 
-        window.showModal = function(modalType) {
-            const messages = {
-                'templates': 'Our model templates library is coming soon',
-                'how-it-works': 'Stay tuned for our in-depth tutorial', 
-                'pricing': 'As we are not yet live, this is coming soon.',
-                'about': 'Learn more about The Financial Modeller - coming soon'
-            };
-            
-            alert(messages[modalType] || 'Coming soon!');
-        };
-
-        // Wait for app to be fully initialized
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, waiting for app initialization...');
-            
-            // Check if app is ready every 100ms
-            const checkReady = setInterval(() => {
-                if (window.questionnaireApp && window.questionnaireApp.initialized) {
-                    console.log('App is ready!');
-                    clearInterval(checkReady);
-                    
-                    // Update global references
-                    questionnaireApp = window.questionnaireApp;
-                    questionnaireEngine = window.questionnaireEngine;
-                    securityManager = window.securityManager;
-                    
-                    console.log('Global references updated');
-                }
-            }, 100);
-            
-            // Timeout after 10 seconds
-            setTimeout(() => {
-                clearInterval(checkReady);
-                if (!window.questionnaireApp || !window.questionnaireApp.initialized) {
-                    console.error('App initialization timeout');
-                    alert('The questionnaire failed to load properly. Please refresh the page.');
-                }
-            }, 10000);
-        });
-
-        // Error handling for uncaught errors
-        window.addEventListener('error', function(event) {
-            console.error('Global error caught:', event.error);
-            
-            // Don't show error alerts in development
-            if (window.location.hostname !== 'localhost') {
-                // Only show user-friendly errors in production
-                console.log('Error occurred, but suppressing alert for production');
-            }
-        });
-
-        // Handle unhandled promise rejections
-        window.addEventListener('unhandledrejection', function(event) {
-            console.error('Unhandled promise rejection:', event.reason);
-            event.preventDefault(); // Prevent the default browser behavior
-        });
-    </script>
     <!-- Keep existing scripts -->
     <!-- reCAPTCHA script -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
