@@ -20,6 +20,93 @@ export class UserInfoModule {
             country: null,
             industry: null,
             parameterToggle: true
+        }; // Semicolon was missing here in the original, added for correctness.
+
+        // This method has been moved inside the constructor where it belongs.
+        this.addIndustryStyles = function() {
+            if (document.getElementById('industry-styles')) return;
+    
+            const style = document.createElement('style');
+            style.id = 'industry-styles';
+            // FIXED: Added backticks (`) to enclose the multi-line CSS string.
+            style.textContent = `
+                .industry-dropdown {
+                    position: relative;
+                    width: 100%;
+                }
+    
+                .industry-input {
+                    width: 100%;
+                    padding: 12px 16px;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.05);
+                    color: #ffffff;
+                    font-size: 1rem;
+                    transition: all 0.3s ease;
+                }
+    
+                .industry-input:focus {
+                    outline: none;
+                    border-color: #8b5cf6;
+                    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+                    background: rgba(255, 255, 255, 0.08);
+                }
+    
+                .industry-input::placeholder {
+                    color: rgba(255, 255, 255, 0.5);
+                }
+    
+                .industry-options {
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    background: rgba(0, 0, 0, 0.95);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-top: none;
+                    border-radius: 0 0 8px 8px;
+                    z-index: 1000;
+                    display: none;
+                    backdrop-filter: blur(20px);
+                }
+    
+                .industry-option {
+                    padding: 12px 16px;
+                    cursor: pointer;
+                    transition: background-color 0.2s ease;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    color: rgba(255, 255, 255, 0.8);
+                }
+    
+                .industry-option:last-child {
+                    border-bottom: none;
+                }
+    
+                .industry-option:hover {
+                    background-color: rgba(139, 92, 246, 0.2);
+                    color: #ffffff;
+                }
+    
+                .industry-custom-indicator {
+                    margin-top: 10px;
+                    padding: 8px 12px;
+                    background: rgba(139, 92, 246, 0.1);
+                    border: 1px solid rgba(139, 92, 246, 0.3);
+                    border-radius: 6px;
+                    color: rgba(255, 255, 255, 0.7);
+                    font-size: 0.85rem;
+                    font-style: italic;
+                    display: none;
+                }
+    
+                .industry-custom-indicator.show {
+                    display: block;
+                }
+            `;        
+            document.head.appendChild(style);
         };
 
         // Industry options
@@ -48,6 +135,7 @@ export class UserInfoModule {
         const honeypot = document.createElement('div');
         honeypot.style.position = 'absolute';
         honeypot.style.left = '-9999px';
+        // FIXED: Added backticks (`) to enclose the multi-line HTML string.
         honeypot.innerHTML = `
             <label for="website">Website:</label>
             <input type="text" name="website" id="website" />
@@ -203,293 +291,218 @@ export class UserInfoModule {
         const section = document.createElement('div');
         section.className = 'form-group';
 
-        // Create enhanced searchable country dropdown
-        const countryContainer = document.createElement('div');
-        countryContainer.className = 'country-dropdown-container';
-
         const label = document.createElement('label');
         label.textContent = 'Country';
         label.className = 'form-label required';
-        countryContainer.appendChild(label);
+        section.appendChild(label);
 
-        const searchableDropdown = this.createSearchableCountryDropdown();
-        countryContainer.appendChild(searchableDropdown);
+        // Create country dropdown matching HTML structure
+        const countryContainer = document.createElement('div');
+        countryContainer.className = 'country-dropdown';
 
+        // Country flag image
+        const countryFlag = document.createElement('img');
+        countryFlag.className = 'country-flag';
+        countryFlag.id = 'countryFlag';
+        countryFlag.src = 'https://flagcdn.com/24x18/un.png';
+        countryFlag.alt = 'Select country';
+        countryContainer.appendChild(countryFlag);
+
+        // Country input field
+        const countryInput = document.createElement('input');
+        countryInput.type = 'text';
+        countryInput.className = 'country-input';
+        countryInput.id = 'country';
+        countryInput.placeholder = 'Search for your country...';
+        countryInput.autocomplete = 'off';
+        countryInput.required = true;
+        countryContainer.appendChild(countryInput);
+
+        // Country options dropdown
+        const countryOptions = document.createElement('div');
+        countryOptions.className = 'country-options';
+        countryOptions.id = 'countryOptions';
+
+        // Populate country options
+        const countries = window.countries || [];
+        countries.forEach(country => {
+            const option = document.createElement('div');
+            option.className = 'country-option';
+            option.dataset.value = country.code;
+            option.dataset.name = country.name;
+            option.dataset.flag = country.flag;
+            
+            // FIXED: Added backticks (`) to enclose the multi-line HTML string.
+            option.innerHTML = `
+                <img class="country-option-flag" src="${country.flag}" alt="${country.name}" />
+                <span class="country-option-name">${country.name}</span>
+            `;            
+            countryOptions.appendChild(option);
+        });
+
+        countryContainer.appendChild(countryOptions);
         section.appendChild(countryContainer);
+
+        // Setup country dropdown functionality
+        this.setupCountryDropdown(countryInput, countryOptions, countryFlag);
+
         return section;
     }
 
-    createSearchableCountryDropdown() {
-        const container = document.createElement('div');
-        container.className = 'searchable-dropdown-container';
+    setupCountryDropdown(countryInput, countryOptions, countryFlag) {
+        // Show dropdown on focus and input
+        countryInput.addEventListener('focus', () => {
+            countryOptions.style.display = 'block';
+            this.filterCountries('', countryOptions);
+            this.onResponseChange();
+        });
 
-        // Create the input field
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'searchable-dropdown-input';
-        input.placeholder = 'Search or select your country...';
-        input.autocomplete = 'off';
+        // Filter countries as user types
+        countryInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            this.filterCountries(searchTerm, countryOptions);
+            countryOptions.style.display = 'block';
+            this.onResponseChange();
+        });
 
-        // Create the dropdown list
-        const dropdown = document.createElement('div');
-        dropdown.className = 'searchable-dropdown-list';
-        dropdown.style.display = 'none';
-
-        // Get countries data
-        const countries = window.countries || [];
-        let filteredCountries = [...countries];
-        let selectedCountryIndex = -1;
-
-        // Populate dropdown
-        const updateDropdown = (searchTerm = '') => {
-            dropdown.innerHTML = '';
-            
-            filteredCountries = countries.filter(country => 
-                country.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-
-            if (filteredCountries.length === 0) {
-                const noResults = document.createElement('div');
-                noResults.className = 'dropdown-item no-results';
-                noResults.textContent = 'No countries found';
-                dropdown.appendChild(noResults);
-                return;
+        // Handle country selection
+        countryOptions.addEventListener('click', (e) => {
+            const option = e.target.closest('.country-option');
+            if (option) {
+                const countryName = option.dataset.name;
+                const countryCode = option.dataset.value;
+                const flagUrl = option.dataset.flag;
+                
+                countryInput.value = countryName;
+                countryInput.dataset.value = countryCode;
+                countryFlag.src = flagUrl;
+                countryFlag.alt = countryName;
+                countryOptions.style.display = 'none';
+                
+                this.responses.country = {
+                    name: countryName,
+                    code: countryCode,
+                    flag: flagUrl
+                };
+                
+                countryInput.classList.remove('invalid');
+                this.onResponseChange();
             }
-
-            filteredCountries.slice(0, 10).forEach((country, index) => {
-                const item = document.createElement('div');
-                item.className = 'dropdown-item country-item';
-                item.innerHTML = `
-                    <img src="${country.flag}" alt="${country.name} flag" class="country-flag" />
-                    <span class="country-name">${country.name}</span>
-                `;
-                item.dataset.code = country.code;
-                item.dataset.name = country.name;
-                item.dataset.flag = country.flag;
-                item.dataset.index = index;
-
-                item.addEventListener('click', () => {
-                    this.selectCountry(country, input, dropdown);
-                });
-
-                dropdown.appendChild(item);
-            });
-        };
-
-        // Input event handlers
-        input.addEventListener('input', (e) => {
-            const searchTerm = e.target.value;
-            updateDropdown(searchTerm);
-            dropdown.style.display = 'block';
-            selectedCountryIndex = -1;
         });
 
-        input.addEventListener('focus', () => {
-            updateDropdown(input.value);
-            dropdown.style.display = 'block';
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!countryInput.contains(e.target) && !countryOptions.contains(e.target)) {
+                countryOptions.style.display = 'none';
+                this.onResponseChange();
+            }
         });
 
-        input.addEventListener('blur', (e) => {
-            // Delay hiding to allow clicks on dropdown items
-            setTimeout(() => {
-                dropdown.style.display = 'none';
-            }, 200);
+        // Handle keyboard navigation
+        countryInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                countryOptions.style.display = 'none';
+                this.onResponseChange();
+            }
         });
 
-        // Keyboard navigation
-        input.addEventListener('keydown', (e) => {
-            const items = dropdown.querySelectorAll('.dropdown-item:not(.no-results)');
-            
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                selectedCountryIndex = Math.min(selectedCountryIndex + 1, items.length - 1);
-                this.highlightItem(items, selectedCountryIndex);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                selectedCountryIndex = Math.max(selectedCountryIndex - 1, 0);
-                this.highlightItem(items, selectedCountryIndex);
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (selectedCountryIndex >= 0 && items[selectedCountryIndex]) {
-                    const item = items[selectedCountryIndex];
-                    const country = {
-                        code: item.dataset.code,
-                        name: item.dataset.name,
-                        flag: item.dataset.flag
-                    };
-                    this.selectCountry(country, input, dropdown);
+        // Clear selection when input is manually cleared
+        countryInput.addEventListener('keyup', (e) => {
+            if (countryInput.value === '') {
+                countryFlag.src = 'https://flagcdn.com/24x18/un.png';
+                countryFlag.alt = 'Select country';
+                countryInput.dataset.value = '';
+                this.responses.country = null;
+                this.onResponseChange();
+            }
+        });
+
+        this.components.country = {
+            validate: () => {
+                const isValid = countryInput.value.trim() !== '' && countryInput.dataset.value;
+                if (!isValid) {
+                    countryInput.classList.add('invalid');
+                    return { isValid: false, errors: ['Please select a valid country'] };
+                } else {
+                    countryInput.classList.remove('invalid');
+                    return { isValid: true, errors: [] };
                 }
-            } else if (e.key === 'Escape') {
-                dropdown.style.display = 'none';
-                selectedCountryIndex = -1;
+            },
+            setValue: (value) => {
+                if (value && typeof value === 'object') {
+                    countryInput.value = value.name || '';
+                    countryInput.dataset.value = value.code || '';
+                    if (value.flag) {
+                        countryFlag.src = value.flag;
+                        countryFlag.alt = value.name || 'Selected country';
+                    }
+                    this.responses.country = value;
+                }
             }
-        });
-
-        // Initial population
-        updateDropdown();
-
-        container.appendChild(input);
-        container.appendChild(dropdown);
-
-        // Store references for validation
-        this.countryInput = input;
-        this.countryDropdown = dropdown;
-
-        // Add styles
-        this.addCountryDropdownStyles();
-
-        return container;
-    }
-
-    highlightItem(items, index) {
-        items.forEach((item, i) => {
-            item.classList.toggle('highlighted', i === index);
-        });
-    }
-
-    selectCountry(country, input, dropdown) {
-        input.value = country.name;
-        dropdown.style.display = 'none';
-        
-        this.responses.country = {
-            name: country.name,
-            code: country.code,
-            flag: country.flag
         };
-        
-        this.onResponseChange();
     }
 
-    addCountryDropdownStyles() {
-        if (document.getElementById('country-dropdown-styles')) return;
-
-        const style = document.createElement('style');
-        style.id = 'country-dropdown-styles';
-        style.textContent = `
-            .searchable-dropdown-container {
-                position: relative;
-                width: 100%;
-            }
-
-            .searchable-dropdown-input {
-                width: 100%;
-                padding: 12px 16px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 8px;
-                background: rgba(255, 255, 255, 0.05);
-                color: #ffffff;
-                font-size: 1rem;
-                transition: all 0.3s ease;
-            }
-
-            .searchable-dropdown-input:focus {
-                outline: none;
-                border-color: #8b5cf6;
-                box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
-                background: rgba(255, 255, 255, 0.08);
-            }
-
-            .searchable-dropdown-input::placeholder {
-                color: rgba(255, 255, 255, 0.5);
-            }
-
-            .searchable-dropdown-list {
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                max-height: 200px;
-                overflow-y: auto;
-                background: rgba(0, 0, 0, 0.9);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 8px;
-                margin-top: 4px;
-                z-index: 1000;
-                backdrop-filter: blur(10px);
-            }
-
-            .dropdown-item {
-                padding: 12px 16px;
-                cursor: pointer;
-                transition: background-color 0.2s ease;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-
-            .dropdown-item:last-child {
-                border-bottom: none;
-            }
-
-            .dropdown-item:hover,
-            .dropdown-item.highlighted {
-                background: rgba(139, 92, 246, 0.2);
-            }
-
-            .country-item {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-
-            .country-flag {
-                width: 24px;
-                height: 18px;
-                border-radius: 2px;
-                object-fit: cover;
-            }
-
-            .country-name {
-                color: #ffffff;
-                font-size: 0.95rem;
-            }
-
-            .no-results {
-                color: rgba(255, 255, 255, 0.6);
-                font-style: italic;
-                cursor: default;
-            }
-
-            .no-results:hover {
-                background: transparent;
-            }
-        `;
-        document.head.appendChild(style);
+    filterCountries(searchTerm, countryOptions) {
+        const options = countryOptions.querySelectorAll('.country-option');
+        options.forEach(option => {
+            const countryName = option.dataset.name.toLowerCase();
+            const countryCode = option.dataset.value.toLowerCase();
+            const matches = countryName.includes(searchTerm) || countryCode.includes(searchTerm);
+            option.style.display = matches ? 'flex' : 'none';
+        });
     }
 
     createIndustrySection() {
         const section = document.createElement('div');
         section.className = 'form-group';
 
-        const container = document.createElement('div');
-        container.className = 'industry-container';
-
         const label = document.createElement('label');
         label.textContent = 'Industry';
         label.className = 'form-label';
-        container.appendChild(label);
+        section.appendChild(label);
 
-        // Create dropdown
+        // Simple dropdown with built-in "Other" option
         const dropdown = document.createElement('select');
-        dropdown.className = 'industry-dropdown';
-        dropdown.innerHTML = `
-            <option value="">Select your industry...</option>
-            ${this.industryOptions.map(option => 
-                `<option value="${option.value}">${option.text}</option>`
-            ).join('')}
-        `;
+        dropdown.className = 'form-input';
+        dropdown.id = 'industry';
+
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select your industry...';
+        dropdown.appendChild(defaultOption);
+
+        // Add industry options
+        this.industryOptions.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option.value;
+            optionElement.textContent = option.text;
+            dropdown.appendChild(optionElement);
+        });
+
+        section.appendChild(dropdown);
 
         // Create free text input (initially hidden)
         const freeTextContainer = document.createElement('div');
         freeTextContainer.className = 'free-text-container';
         freeTextContainer.style.display = 'none';
+        freeTextContainer.style.marginTop = '8px';
 
         const freeTextInput = document.createElement('input');
         freeTextInput.type = 'text';
-        freeTextInput.className = 'industry-free-text';
+        freeTextInput.className = 'form-input';
         freeTextInput.placeholder = 'Please specify your industry...';
 
         freeTextContainer.appendChild(freeTextInput);
+        section.appendChild(freeTextContainer);
 
-        // Event handlers
+        // Setup industry dropdown functionality
+        this.setupIndustryDropdown(dropdown, freeTextInput, freeTextContainer);
+
+        return section;
+    }
+
+    setupIndustryDropdown(dropdown, freeTextInput, freeTextContainer) {
         dropdown.addEventListener('change', (e) => {
             const value = e.target.value;
             
@@ -513,64 +526,36 @@ export class UserInfoModule {
             }
         });
 
-        container.appendChild(dropdown);
-        container.appendChild(freeTextContainer);
-        section.appendChild(container);
-
-        // Store references
-        this.industryDropdown = dropdown;
-        this.industryFreeText = freeTextInput;
-
-        // Add styles
-        this.addIndustryStyles();
-
-        return section;
-    }
-
-    addIndustryStyles() {
-        if (document.getElementById('industry-styles')) return;
-
-        const style = document.createElement('style');
-        style.id = 'industry-styles';
-        style.textContent = `
-            .industry-container {
-                width: 100%;
+        this.components.industry = {
+            validate: () => {
+                const dropdownValue = dropdown.value;
+                const freeTextValue = freeTextInput.value.trim();
+                
+                // Industry is optional, so always return valid
+                return { isValid: true, errors: [] };
+            },
+            setValue: (value) => {
+                if (value && typeof value === 'object') {
+                    if (value.dropdown) {
+                        dropdown.value = value.dropdown;
+                        if (value.dropdown === 'other') {
+                            freeTextContainer.style.display = 'block';
+                            if (value.freeText) {
+                                freeTextInput.value = value.freeText;
+                            }
+                        }
+                    }
+                    this.responses.industry = value;
+                } else if (typeof value === 'string') {
+                    // Handle simple string value
+                    const option = Array.from(dropdown.options).find(opt => opt.value === value);
+                    if (option) {
+                        dropdown.value = value;
+                        this.responses.industry = { dropdown: value, freeText: null };
+                    }
+                }
             }
-
-            .industry-dropdown,
-            .industry-free-text {
-                width: 100%;
-                padding: 12px 16px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 8px;
-                background: rgba(255, 255, 255, 0.05);
-                color: #ffffff;
-                font-size: 1rem;
-                transition: all 0.3s ease;
-            }
-
-            .industry-dropdown:focus,
-            .industry-free-text:focus {
-                outline: none;
-                border-color: #8b5cf6;
-                box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
-                background: rgba(255, 255, 255, 0.08);
-            }
-
-            .industry-dropdown option {
-                background: #1a1a1a;
-                color: #ffffff;
-            }
-
-            .industry-free-text::placeholder {
-                color: rgba(255, 255, 255, 0.5);
-            }
-
-            .free-text-container {
-                margin-top: 8px;
-            }
-        `;
-        document.head.appendChild(style);
+        };
     }
 
     createParameterToggleSection() {
@@ -649,18 +634,7 @@ export class UserInfoModule {
             Object.entries(this.responses).forEach(([key, value]) => {
                 const component = this.components[key];
                 if (component && value !== undefined && value !== null) {
-                    if (key === 'country' && typeof value === 'object' && this.countryInput) {
-                        this.countryInput.value = value.name || '';
-                    } else if (key === 'industry' && typeof value === 'object') {
-                        if (this.industryDropdown) {
-                            this.industryDropdown.value = value.dropdown || '';
-                            if (value.dropdown === 'other') {
-                                const freeTextContainer = document.querySelector('.free-text-container');
-                                if (freeTextContainer) freeTextContainer.style.display = 'block';
-                                if (this.industryFreeText) this.industryFreeText.value = value.freeText || '';
-                            }
-                        }
-                    } else if (component.setValue) {
+                    if (component.setValue) {
                         component.setValue(value);
                     }
                 }
@@ -682,12 +656,6 @@ export class UserInfoModule {
                     errors.push(...validation.errors);
                 }
             }
-        }
-
-        // Additional validation for country
-        if (!this.responses.country || !this.responses.country.code) {
-            isValid = false;
-            errors.push('Please select a valid country');
         }
 
         // Validate industry free text if "other" is selected
