@@ -176,6 +176,169 @@
             pointer-events: none;
         }
 
+        /* Essential Modal Styles - Add to your existing CSS */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(10px);
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-overlay.question-mode {
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.95);
+}
+
+.question-modal {
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 40px;
+    width: 90vw;
+    max-width: 800px;
+    height: 90vh;
+    max-height: 700px;
+    overflow-y: auto;
+    backdrop-filter: blur(20px);
+    transform: scale(0.9);
+    opacity: 0;
+    transition: all 0.3s ease;
+    position: relative;
+    color: white;
+}
+
+.modal-overlay.active .question-modal {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.modal-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.modal-progress {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.modal-progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #8b5cf6 0%, #c084fc 100%);
+    transition: width 0.5s ease;
+    border-radius: 3px;
+    width: 0%;
+}
+
+.modal-progress-text {
+    text-align: center;
+    margin-top: 8px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+}
+
+.question-header {
+    margin-bottom: 30px;
+}
+
+.question-title {
+    font-size: 1.8rem;
+    color: #ffffff;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.question-description {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+}
+
+.question-content {
+    margin-bottom: 30px;
+    min-height: 200px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 15px;
+}
+
+.modal-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.modal-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.modal-btn.primary {
+    background: linear-gradient(135deg, #8b5cf6 0%, #c084fc 100%);
+    color: white;
+}
+
+.modal-btn.primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    transform: translateY(-2px);
+}
+
+.modal-btn.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.loading-content {
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.skip-text {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    flex: 1;
+}
+
+/* Debug styles */
+.debug-output .success { color: #22c55e; }
+.debug-output .warning { color: #f59e0b; }
+.debug-output .error { color: #dc2626; }
+.debug-output .info { color: #8b5cf6; }
+
         .floating-stat {
     position: absolute;
     font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
@@ -186,6 +349,8 @@
     will-change: transform;
     transition: all 0.8s ease;
     font-weight: 400;
+
+    
 }
 
 .floating-stat.large {
@@ -996,32 +1161,6 @@
             margin-top: 10px;
             color: rgba(255, 255, 255, 0.6);
             font-size: 0.9rem;
-        }
-
-        /* Modal Overlay - Default centered for reCAPTCHA */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            backdrop-filter: blur(10px);
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        /* Question Modal Overlay - Different positioning only when in question mode */
-        .modal-overlay.question-mode {
-            justify-content: center;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.95);
         }
 
         /* Information Pane Modal Styles */
@@ -1888,2146 +2027,9 @@
             position: relative;
         }
 
-        /* User Info Form Styles */
-        .user-info-form {
-            display: grid;
-            gap: 20px;
-            text-align: left;
-        }
+        /* ... [rest of the extensive CSS remains the same] ... */
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-label {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .form-label .required {
-            color: #8b5cf6;
-            margin-left: 3px;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-        }
-
-        .form-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .form-input.invalid {
-            border-color: #dc2626;
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
-        }
-
-        /* Country Dropdown Styles */
-        .country-dropdown {
-            position: relative;
-        }
-
-        .country-input {
-            width: 100%;
-            padding: 15px 20px 15px 55px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-            cursor: text;
-        }
-
-        .country-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .country-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .country-flag {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1.2rem;
-            z-index: 2;
-        }
-
-        .country-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            backdrop-filter: blur(20px);
-        }
-
-        .country-option {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .country-option:hover {
-            background-color: rgba(139, 92, 246, 0.2);
-            color: #ffffff;
-        }
-
-        .country-option.selected {
-            background-color: #8b5cf6;
-            color: white;
-        }
-
-        .country-option:last-child {
-            border-bottom: none;
-        }
-
-        .country-option-flag {
-            font-size: 1.1rem;
-            min-width: 20px;
-        }
-
-        .country-option-name {
-            flex: 1;
-        }
-
-        /* Industry Dropdown in User Info Form - UPDATED */
-        .industry-dropdown {
-            position: relative;
-        }
-
-        .industry-input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-            cursor: text;
-        }
-
-        .industry-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .industry-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        /* Industry options now positioned directly below input */
-        .industry-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-             z-index: 99999;  /* CHANGE TO: z-index: 999999; */
-            display: none;
-            backdrop-filter: blur(20px);
-        }
-
-        .industry-option {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .industry-option:hover {
-            background-color: rgba(139, 92, 246, 0.2);
-            color: #ffffff;
-        }
-
-        .industry-option.selected {
-            background-color: #8b5cf6;
-            color: white;
-        }
-
-        .industry-option:last-child {
-            border-bottom: none;
-        }
-
-        /* Custom industry indicator - UPDATED */
-        .industry-custom-indicator {
-            margin-top: 10px;
-            padding: 8px 12px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 6px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.85rem;
-            font-style: italic;
-            display: none;
-        }
-
-        .industry-custom-indicator.show {
-            display: block;
-        }
-
-        /* Purpose Dropdown Styles (similar to industry) */
-        .purpose-dropdown-container {
-            position: relative;
-        }
-
-        .purpose-dropdown {
-            position: relative;
-        }
-
-        .purpose-dropdown.dropdown-open {
-            z-index: 99999;
-            position: relative;
-        }
-
-        .purpose-input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-            cursor: text;
-        }
-
-        .purpose-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .purpose-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .purpose-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-             z-index: 99999;  /* CHANGE TO: z-index: 999999; */
-            display: none;
-            backdrop-filter: blur(20px);
-        }
-
-        .purpose-option {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .purpose-option:hover {
-            background-color: rgba(139, 92, 246, 0.2);
-            color: #ffffff;
-        }
-
-        .purpose-option.selected {
-            background-color: rgba(34, 197, 94, 0.2);
-            color: #ffffff;
-            border-left: 3px solid #22c55e;
-        }
-
-        .purpose-option.selected:hover {
-            background-color: rgba(34, 197, 94, 0.3);
-        }
-
-        .purpose-option:last-child {
-            border-bottom: none;
-        }
-
-        .purpose-custom-indicator {
-            margin-top: 10px;
-            padding: 8px 12px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 6px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.85rem;
-            font-style: italic;
-            display: none;
-        }
-
-        .purpose-custom-indicator.show {
-            display: block;
-        }
-
-        /* Revenue Dropdown Styles (similar to purpose) */
-        .revenue-dropdown-container {
-            position: relative;
-        }
-
-        .revenue-dropdown {
-            position: relative;
-        }
-
-        .revenue-dropdown.dropdown-open {
-            z-index: 99999;
-            position: relative;
-        }
-
-        .revenue-input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-            cursor: text;
-        }
-
-        .revenue-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .revenue-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .revenue-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 99999;  /* CHANGE TO: z-index: 999999; */
-            display: none;
-            backdrop-filter: blur(20px);
-        }
-
-        .revenue-option {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .revenue-option:hover {
-            background-color: rgba(139, 92, 246, 0.2);
-            color: #ffffff;
-        }
-
-        .revenue-option.selected {
-            background-color: rgba(34, 197, 94, 0.2);
-            color: #ffffff;
-            border-left: 3px solid #22c55e;
-        }
-
-        .revenue-option.selected:hover {
-            background-color: rgba(34, 197, 94, 0.3);
-        }
-
-        .revenue-option:last-child {
-            border-bottom: none;
-        }
-
-        .revenue-custom-indicator {
-            margin-top: 10px;
-            padding: 8px 12px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 6px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.85rem;
-            font-style: italic;
-            display: none;
-        }
-
-        .revenue-custom-indicator.show {
-            display: block;
-        }
-
-        /* GLOBAL FIX: Force maximum z-index for all open dropdowns */
-        .dropdown-open {
-            z-index: 999999 !important;
-            position: relative !important;
-        }
-
-        /* Force all dropdown options to have maximum z-index */
-        .industry-options,
-        .purpose-options,
-        .revenue-options,
-        .charging-model-options,
-        .procurement-options,
-        .channels-options,
-        .country-options {
-            z-index: 999999 !important;
-        }
-
-        /* When any dropdown is open, ensure its container has high z-index */
-        .industry-dropdown.dropdown-open,
-        .purpose-dropdown.dropdown-open,
-        .revenue-dropdown.dropdown-open,
-        .charging-model-dropdown.dropdown-open,
-        .procurement-dropdown.dropdown-open,
-        .channels-dropdown.dropdown-open,
-        .country-dropdown.dropdown-open {
-            z-index: 999998 !important;
-            position: relative !important;
-        }
-
-        /* Ensure parameter sections with open dropdowns are above others */
-        .parameter-section.dropdown-open,
-        .conditional-section.dropdown-open,
-        .charging-models-section.dropdown-open {
-    z-index: 100001 !important;
-    position: relative;
-}
-
-
-        /* Fix for nested dropdowns in charging models */
-        .charging-models-section.dropdown-open .charging-model-options {
-            z-index: 999999 !important;
-        }
-
-        /* Ensure question content doesn't interfere */
-        .question-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Fix stacking context for all dropdown containers */
-        .combined-parameters-container {
-            position: relative;
-            z-index: 10;
-        }
-
-        .combined-parameters-container .parameter-section {
-            position: relative;
-        }
-
-        /* Ensure dropdowns are always on top when open */
-        .revenue-dropdown.dropdown-open ~ *,
-        .charging-model-dropdown.dropdown-open ~ *,
-        .procurement-dropdown.dropdown-open ~ *,
-        .channels-dropdown.dropdown-open ~ * {
-            position: relative;
-            z-index: 1 !important;
-        }
-
-        /* FIXED: Dynamic Charging Model Styles - Fixed z-index and layout */
-       .charging-models-section {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 25px;
-    backdrop-filter: blur(10px);
-    position: relative;
-    display: none; /* Hidden by default */
-    transition: all 0.3s ease;
-    margin-top: 20px;
-    margin-bottom: 30px;
-    z-index: 20; /* Higher than parameter sections */
-}
-
-        .charging-models-section.show {
-            display: block;
-            animation: fadeInUp 0.3s ease;
-        }
-
-        .charging-models-section.dropdown-open {
-            z-index: 100000 !important; /* Highest priority when dropdown is open */
-            position: relative;
-        }
-
-        /* FIXED: Ensure charging model dropdowns have proper z-index */
-        .charging-model-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 100001 !important; /* Higher than section z-index */
-            display: none;
-            backdrop-filter: blur(20px);
-        }
-
-        .charging-model-dropdown.dropdown-open {
-            z-index: 100001 !important;
-            position: relative;
-        }
-
-        /* FIXED: Header section for charging models */
-        .charging-models-header {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .charging-models-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-
-        .charging-models-description {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.6);
-            line-height: 1.4;
-        }
-
-        /* FIXED: Container for all charging model rows */
-        .charging-models-container {
-            display: grid;
-            gap: 15px;
-        }
-
-        /* FIXED: Individual charging model row - aligned with other dropdowns */
-        .charging-model-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 15px;
-        }
-
-        /* FIXED: Revenue type label - left side like other parameter titles */
-        .charging-model-label {
-            flex: 1;
-            font-size: 1rem;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        /* FIXED: Dropdown container - same positioning as other dropdowns */
-        .charging-model-dropdown-container {
-            flex: 0 0 375px;
-        }
-
-        .charging-model-dropdown {
-            position: relative;
-        }
-
-        .charging-model-dropdown.dropdown-open {
-            z-index: 99999;
-            position: relative;
-        }
-
-        .charging-model-input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-            cursor: text;
-        }
-
-        .charging-model-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .charging-model-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .charging-model-option {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .charging-model-option:hover {
-            background-color: rgba(139, 92, 246, 0.2);
-            color: #ffffff;
-        }
-
-        .charging-model-option.selected {
-            background-color: rgba(34, 197, 94, 0.2);
-            color: #ffffff;
-            border-left: 3px solid #22c55e;
-        }
-
-        .charging-model-option.selected:hover {
-            background-color: rgba(34, 197, 94, 0.3);
-        }
-
-        .charging-model-option:last-child {
-            border-bottom: none;
-        }
-
-        .charging-model-custom-indicator {
-            margin-top: 10px;
-            padding: 8px 12px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 6px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.85rem;
-            font-style: italic;
-            display: none;
-        }
-
-        .charging-model-custom-indicator.show {
-            display: block;
-        }
-
-        /* FIXED: Mobile responsiveness for charging models */
-        @media (max-width: 768px) {
-            .charging-model-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-                margin-bottom: 20px;
-            }
-
-            .charging-model-label {
-                margin-bottom: 5px;
-            }
-
-            .charging-model-dropdown-container {
-                flex: 1 1 100% !important;
-                max-width: 100% !important;
-            }
-        }
-
-        /* Force charging model dropdowns to always be on top */
-        .charging-model-dropdown {
-            position: relative !important;
-        }
-
-
-
-        .charging-model-options {
-            z-index: 999999 !important;
-            position: absolute !important;
-        }
-
-        .charging-models-section.show {
-            position: relative !important;
-        }
-
-        /* Ensure all parameter sections respect stacking context */
-        .parameter-section {
-            position: relative;
-            z-index: auto;
-        }
-
-        .parameter-section:has(.dropdown-open) {
-            z-index: 999998 !important;
-        }
-
-        /* Fix for charging models specifically */
-        .charging-models-section:has(.charging-model-dropdown.dropdown-open) {
-            z-index: 999999 !important;
-        }
-
-        /* NEW: Product Procurement Dropdown Styles */
-        .procurement-dropdown-container {
-            position: relative;
-        }
-
-        .procurement-dropdown {
-            position: relative;
-        }
-
-        .procurement-dropdown.dropdown-open {
-            z-index: 99999;
-            position: relative;
-        }
-
-        .procurement-input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-            cursor: text;
-        }
-
-        .procurement-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .procurement-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .procurement-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 99999;
-            display: none;
-            backdrop-filter: blur(20px);
-        }
-
-        .procurement-option {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .procurement-option:hover {
-            background-color: rgba(139, 92, 246, 0.2);
-            color: #ffffff;
-        }
-
-        .procurement-option.selected {
-            background-color: rgba(34, 197, 94, 0.2);
-            color: #ffffff;
-            border-left: 3px solid #22c55e;
-        }
-
-        .procurement-option.selected:hover {
-            background-color: rgba(34, 197, 94, 0.3);
-        }
-
-        .procurement-option:last-child {
-            border-bottom: none;
-        }
-
-        .procurement-custom-indicator {
-            margin-top: 10px;
-            padding: 8px 12px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 6px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.85rem;
-            font-style: italic;
-            display: none;
-        }
-
-        .procurement-custom-indicator.show {
-            display: block;
-        }
-
-        /* NEW: Sales Channels Dropdown Styles */
-        .channels-dropdown-container {
-            position: relative;
-        }
-
-        .channels-dropdown {
-            position: relative;
-        }
-
-        .channels-dropdown.dropdown-open {
-            z-index: 99999;
-            position: relative;
-        }
-
-        .channels-input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-            cursor: text;
-        }
-
-        .channels-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .channels-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .channels-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 99999;
-            display: none;
-            backdrop-filter: blur(20px);
-        }
-
-        .channels-option {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .channels-option:hover {
-            background-color: rgba(139, 92, 246, 0.2);
-            color: #ffffff;
-        }
-
-        .channels-option.selected {
-            background-color: rgba(34, 197, 94, 0.2);
-            color: #ffffff;
-            border-left: 3px solid #22c55e;
-        }
-
-        .channels-option.selected:hover {
-            background-color: rgba(34, 197, 94, 0.3);
-        }
-
-        .channels-option:last-child {
-            border-bottom: none;
-        }
-
-        .channels-custom-indicator {
-            margin-top: 10px;
-            padding: 8px 12px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 6px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.85rem;
-            font-style: italic;
-            display: none;
-        }
-
-        .channels-custom-indicator.show {
-            display: block;
-        }
-
-        /* Toggle Switch Styles */
-        .parameter-toggle-container {
-            margin-top: 30px;
-            padding-top: 25px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .parameter-toggle-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .parameter-toggle-text {
-            flex: 1;
-        }
-
-        .parameter-toggle-title {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1rem;
-            font-weight: 500;
-            margin-bottom: 4px;
-            line-height: 1.3;
-        }
-
-        .parameter-toggle-subtitle {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.85rem;
-            line-height: 1.3;
-        }
-
-        .toggle-switch-container {
-            display: flex;
-            align-items: center;
-            gap: 0;
-        }
-
-        .toggle-switch {
-            position: relative;
-            display: flex;
-            width: 140px;
-            height: 36px;
-            background: #2a2a2a;
-            border-radius: 18px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-        }
-
-        /* Wider toggle for modeling approach */
-        .toggle-switch[style*="width: 300px"] {
-            width: 300px;
-        }
-
-        .toggle-switch[style*="width: 300px"] .toggle-label {
-            font-size: 0.9rem;
-        }
-
-        .toggle-labels {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            position: relative;
-            z-index: 2;
-        }
-
-        .toggle-label {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 2;
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .toggle-switch::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 50%;
-            height: 100%;
-            background: #8b5cf6;
-            border-radius: 18px;
-            transition: all 0.3s ease;
-            z-index: 1;
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
-        }
-
-        .toggle-switch.active::before {
-            transform: translateX(100%);
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
-        }
-
-        /* Default state - No is selected (purple on left) */
-        .toggle-switch .toggle-label:first-child {
-            color: #ffffff;
-        }
-
-        .toggle-switch .toggle-label:last-child {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        /* Active state - Yes is selected (purple on right) */
-        .toggle-switch.active .toggle-label:first-child {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .toggle-switch.active .toggle-label:last-child {
-            color: #ffffff;
-        }
-
-        @media (max-width: 768px) {
-            .parameter-toggle-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-
-            .toggle-switch-container {
-                align-self: flex-end;
-            }
-            
-            /* Make wider toggles responsive on mobile */
-            .toggle-switch[style*="width: 300px"] {
-                width: 100% !important;
-                max-width: 300px;
-            }
-
-            /* FIXED: Make charging model items responsive */
-            .charging-model-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-
-            .charging-model-label {
-                min-width: auto;
-                margin-bottom: 5px;
-            }
-
-            .charging-model-dropdown-container {
-                flex: 1 1 100% !important;
-                max-width: 100% !important;
-            }
-        }
-
-        /* Hide skip text when dropdowns are open */
-        .skip-text.hidden {
-            display: none;
-        }
-
-        /* Multi-Select Searchable Dropdown Form Styles */
-        .searchable-dropdown {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .dropdown-input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-            cursor: text;
-        }
-
-        .dropdown-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .dropdown-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .dropdown-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            backdrop-filter: blur(20px);
-        }
-
-        .dropdown-options.show {
-            display: block;
-        }
-
-        .dropdown-option {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .dropdown-option:hover {
-            background-color: rgba(139, 92, 246, 0.2);
-            color: #ffffff;
-        }
-
-        .dropdown-option.selected {
-            background-color: rgba(34, 197, 94, 0.2);
-            color: #ffffff;
-            border-left: 3px solid #22c55e;
-        }
-
-        .dropdown-option.selected:hover {
-            background-color: rgba(34, 197, 94, 0.3);
-        }
-
-        .dropdown-option:last-child {
-            border-bottom: none;
-        }
-
-        .free-text-section {
-            margin-top: 20px;
-        }
-
-        .free-text-label {
-            display: block;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1rem;
-            margin-bottom: 10px;
-            font-weight: 500;
-            text-align: left;
-        }
-
-        .free-text-input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            min-height: 100px;
-            resize: vertical;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-        }
-
-        .free-text-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .free-text-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        /* Button Choice Question Styles */
-        .button-choice-container {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            align-items: center;
-            margin: 30px 0;
-            flex-wrap: wrap;
-        }
-
-        .choice-button {
-            flex: 1;
-            min-width: 200px;
-            max-width: 300px;
-            padding: 20px 30px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 1.1rem;
-            font-weight: 500;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            backdrop-filter: blur(10px);
-        }
-
-        .choice-button:hover {
-            background: rgba(139, 92, 246, 0.2);
-            border-color: rgba(139, 92, 246, 0.5);
-            color: #ffffff;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
-        }
-
-        .choice-button.selected {
-            background: #8b5cf6;
-            border-color: #8b5cf6;
-            color: #ffffff;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
-        }
-
-        .choice-button.selected:hover {
-            background: #7c3aed;
-            border-color: #7c3aed;
-        }
-
-        @media (max-width: 768px) {
-            .button-choice-container {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .choice-button {
-                min-width: 100%;
-                max-width: 100%;
-            }
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 15px;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-            margin-top: 30px;
-        }
-
-        /* ADD THIS NEW CSS HERE */
-.modal-actions:has(#backBtn[style*="display: none"]) {
-    justify-content: center;
-}
-
-        .btn-secondary {
-            background: transparent;
-            color: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-            transform: translateY(-1px);
-        }
-
-        .skip-text {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.9rem;
-            margin-top: 15px;
-            text-align: center;
-            position: relative;
-            z-index: 1;
-            max-width: 900px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .required-indicator {
-            color: #8b5cf6;
-            margin-left: 3px;
-        }
-
-        /* NEW: Quick Parameters Choice Styles */
-        .quick-parameters-choice-container {
-            display: flex;
-            justify-content: center;
-            margin: 30px 0;
-        }
-        
-        .choice-buttons-container {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .choice-button-enhanced {
-            min-width: 180px;
-            max-width: 220px;
-            padding: 20px 25px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.8);
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            backdrop-filter: blur(10px);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .choice-main-text {
-            font-size: 1.2rem;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-        
-        .choice-main-text.primary-text {
-            font-size: 1.2rem;
-            font-weight: 700;
-        }
-        
-        .choice-sub-text {
-            font-size: 0.8rem;
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.6);
-            line-height: 1.3;
-        }
-        
-        .choice-button-enhanced:hover {
-            background: rgba(139, 92, 246, 0.2);
-            border-color: rgba(139, 92, 246, 0.5);
-            color: #ffffff;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
-        }
-        
-        .choice-button-enhanced.selected {
-            background: #8b5cf6;
-            border-color: #8b5cf6;
-            color: #ffffff;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
-        }
-        
-        .choice-button-enhanced.selected .choice-sub-text {
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        /* NEW: Placeholder Question Styles */
-.placeholder-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 60px 0;
-    min-height: 300px;
-}
-
-.placeholder-content {
-    text-align: center;
-    background: rgba(139, 92, 246, 0.1);
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    border-radius: 16px;
-    padding: 40px;
-    backdrop-filter: blur(20px);
-    position: relative;
-    overflow: hidden;
-    max-width: 500px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.placeholder-content::before {
-    display: none;
-}
-
-.placeholder-icon {
-    display: none; /* Hide the emoji icon */
-}
-
-/* Animated graphic container */
-.animated-graphic {
-    width: 120px;
-    height: 80px;
-    margin-bottom: 20px;
-    position: relative;
-}
-
-.animated-graphic svg {
-    width: 100%;
-    height: 100%;
-}
-
-.circle {
-    fill: #8b5cf6;
-    stroke: none;
-}
-
-.connecting-line {
-    stroke: #8b5cf6;
-    stroke-width: 1.5;
-    fill: none;
-    opacity: 0.8;
-}
-
-/* Pendulum-like animations with different speeds and ranges */
-@keyframes pendulum1 {
-    0% { transform: translateY(0); }
-    50% { transform: translateY(-12px); }
-    100% { transform: translateY(0); }
-}
-
-@keyframes pendulum2 {
-    0% { transform: translateY(0); }
-    35% { transform: translateY(8px); }
-    70% { transform: translateY(-10px); }
-    100% { transform: translateY(0); }
-}
-
-@keyframes pendulum3 {
-    0% { transform: translateY(0); }
-    25% { transform: translateY(-6px); }
-    75% { transform: translateY(10px); }
-    100% { transform: translateY(0); }
-}
-
-.circle-group-1 {
-    animation: pendulum1 2.5s ease-in-out infinite;
-}
-
-.circle-group-2 {
-    animation: pendulum2 3s ease-in-out infinite 0.8s;
-}
-
-.circle-group-3 {
-    animation: pendulum3 2s ease-in-out infinite 1.5s;
-}
-
-.placeholder-title {
-    color: #c084fc !important;
-    font-size: 0.85rem;
-    margin-bottom: 15px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    position: relative;
-    z-index: 1;
-}
-
-.placeholder-description {
-    color: #c084fc !important;
-    font-size: 0.75rem;
-    line-height: 1.6;
-    margin: 0;
-    font-weight: 300;
-    opacity: 0.9;
-    max-width: 400px;
-    position: relative;
-    z-index: 1;
-}
-
-        /* NEW: Single Dropdown Styles */
-        .single-dropdown-container {
-            margin: 30px 0;
-        }
-        
-        .single-dropdown-select {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .single-dropdown-select:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-        
-        .single-dropdown-select option {
-            background: #1a1a1a;
-            color: #ffffff;
-            padding: 10px;
-        }
-
-        /* NEW: Date Dropdown Styles */
-        .date-dropdown-container {
-            margin: 30px 0;
-        }
-        
-        .date-dropdowns {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-        }
-        
-        .date-dropdown-group {
-            flex: 1;
-            max-width: 150px;
-        }
-        
-        .date-label {
-            display: block;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-        
-        .date-dropdown {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-        
-        .date-dropdown:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-        
-        .date-dropdown option {
-            background: #1a1a1a;
-            color: #ffffff;
-            padding: 10px;
-        }
-
-        /* NEW: Numeric Input Styles */
-        .numeric-input-container {
-            margin: 30px 0;
-            max-width: 300px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .numeric-input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .numeric-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-        
-        .numeric-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-        }
-        
-        .numeric-input.invalid {
-            border-color: #dc2626;
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
-            background: rgba(220, 38, 38, 0.1);
-            color: #fecaca;
-        }
-        
-        .validation-message {
-            margin-top: 8px;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.5);
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .validation-message.error {
-            color: #fca5a5;
-        }
-
-        /* NEW: Combined Parameters Styles */
-        .combined-parameters-container {
-    display: grid;
-    gap: 30px;
-    margin: 30px 0;
-    position: relative;
-    z-index: 10;
-}
-
-        .parameter-section {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 25px;
-    backdrop-filter: blur(10px);
-    position: relative;
-    z-index: auto;
-    margin-bottom: 30px;
-}
-
-.parameter-section:nth-child(1) { z-index: 15; }
-.parameter-section:nth-child(2) { z-index: 14; }
-.parameter-section:nth-child(3) { z-index: 13; }
-.parameter-section:nth-child(4) { z-index: 12; }
-.parameter-section:nth-child(5) { z-index: 11; }
-
-        .parameter-section.dropdown-open {
-    z-index: 100000 !important;
-    position: relative;
-}
-
-
-        .parameter-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-
-        .parameter-description {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 20px;
-            line-height: 1.4;
-        }
-
-       /* Customization Preference Styles */
-.customization-preference-container {
-    display: grid;
-    gap: 20px;
-    margin: 30px 0;
-}
-
-.customization-time-box-top {
-    background: #2a2a2a;
-    border-radius: 6px;
-    padding: 8px 12px;
-    text-align: left;
-    margin-top: 5px;        /* Reduced from 15px to bring it closer to progress bar */
-    margin-bottom: 20px;    /* Add space before the question title */
-    display: inline-block;
-    max-width: fit-content;
-    margin-left: 0;
-    margin-right: auto;
-}
-
-/* FIXED: Title row layout */
-.title-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 30px;
-    margin-bottom: 20px;
-    width: 100%;
-    flex-direction: row;
-    justify-content: space-between;
-}
-
-.title-content {
-    flex: 1;
-    min-width: 0; /* Prevents flex item from growing beyond container */
-    text-align: left; /* Ensure left alignment */
-}
-
-.title-content .question-title {
-    margin-bottom: 10px;
-    margin-top: 0;
-    line-height: 1.3;
-    text-align: left; /* Ensure left alignment */
-    font-size: 1.4rem;
-    color: #ffffff;
-    font-weight: 600;
-}
-
-.title-content .question-description {
-    text-align: left; /* Ensure left alignment */
-    margin: 0;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 1rem;
-    line-height: 1.5;
-}
-
-/* FIXED: Time box alignment */
-.customization-time-box-top {
-    background: #2a2a2a;
-    border-radius: 6px;
-    padding: 8px 12px;
-    flex-shrink: 0;
-    min-width: 140px;
-    margin-top: 0; /* Align with title */
-}
-
-/* Updated Customization Preference Styles */
-.customization-time-box {
-    background: #2a2a2a;
-    border-radius: 6px;
-    padding: 8px 12px;
-    text-align: left;
-    margin-bottom: 20px;
-    display: inline-block;
-    max-width: fit-content;
-}
-
-.customization-time-label {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.75rem;
-    font-weight: 400;
-    margin-bottom: 2px;
-}
-
-.customization-time-value {
-    color: #ffffff;
-    font-size: 1rem;
-    font-weight: 500;
-}
-
-.customization-sections {
-    display: grid;
-    gap: 15px;
-}
-
-.customization-section {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 20px;
-    backdrop-filter: blur(10px);
-}
-
-.customization-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-}
-
-.customization-text {
-    flex: 1;
-}
-
-.customization-section-title {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0;
-}
-
-.customization-controls {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0;
-}
-
-.time-badge {
-    display: none; /* Hide the time badges below toggles */
-}
-
-.customization-toggle-container {
-    order: 1;
-}
-
-/* NEW: Time estimate below section titles */
-.customization-section-subtitle {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.75rem;
-    font-weight: 400;
-    margin-top: 4px;
-}
-
-.customization-toggle-container {
-    display: flex;
-    align-items: center;
-}
-
-.customization-toggle {
-    position: relative;
-    display: flex;
-    width: 180px;
-    height: 36px;
-    background: #2a2a2a;
-    border-radius: 18px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    overflow: hidden;
-}
-
-.customization-toggle::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 50%;
-    height: 100%;
-    background: #8b5cf6;
-    border-radius: 18px;
-    transition: all 0.3s ease;
-    z-index: 1;
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
-}
-
-.customization-toggle.active::before {
-    transform: translateX(100%);
-}
-
-.customization-toggle-labels {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    position: relative;
-    z-index: 2;
-}
-
-.customization-toggle-label {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 2;
-}
-
-/* Default state - Generic is selected (purple on left) */
-.customization-toggle .customization-toggle-label:first-child {
-    color: #ffffff;
-}
-
-.customization-toggle .customization-toggle-label:last-child {
-    color: rgba(255, 255, 255, 0.4);
-}
-
-/* Active state - Custom is selected (purple on right) */
-.customization-toggle.active .customization-toggle-label:first-child {
-    color: rgba(255, 255, 255, 0.4);
-}
-
-.customization-toggle.active .customization-toggle-label:last-child {
-    color: #ffffff;
-}
-
-@media (max-width: 768px) {
-    .customization-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-    
-    .customization-controls {
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-    }
-    
-    .customization-toggle-container {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-    
-    .customization-toggle {
-        width: 100%;
-        max-width: 180px;
-    }
-    
-    .time-badge {
-        text-align: center;
-        width: 100%;
-    }
-}
-
-        /* Conditional Section Styles - FIXED z-index issues */
-        .conditional-section {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 25px;
-    backdrop-filter: blur(10px);
-    position: relative;
-    display: none; /* Hidden by default */
-    transition: all 0.3s ease;
-    margin-bottom: 30px;
-    z-index: 25; /* Highest for conditional sections */
-}
-
-        .conditional-section.show {
-            display: block;
-            animation: fadeInUp 0.3s ease;
-        }
-
-        .conditional-section.dropdown-open {
-    z-index: 100002 !important;
-    position: relative;
-}
-
-        .conditional-section .parameter-toggle-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .conditional-section .parameter-title {
-            color: #ffffff;
-            margin-bottom: 20px;
-        }
-
-        /* FIXED: Ensure all dropdowns in conditional sections have proper z-index */
-        .conditional-section .procurement-options,
-        .conditional-section .channels-options {
-            z-index: 100001 !important;
-        }
-
-        .conditional-section .procurement-dropdown.dropdown-open,
-        .conditional-section .channels-dropdown.dropdown-open {
-            z-index: 100001 !important;
-            position: relative;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* Footer */
-        .footer {
-            background: rgba(0, 0, 0, 0.5);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 60px 20px 20px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-        }
-
-        .footer-section h3 {
-            margin-bottom: 20px;
-            color: #ffffff;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .footer-section p {
-            line-height: 1.6;
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 12px;
-            font-size: 0.9rem;
-        }
-
-        .footer-links {
-            list-style: none;
-        }
-
-        .footer-links li {
-            margin-bottom: 10px;
-        }
-
-        .footer-links a {
-            color: rgba(255, 255, 255, 0.5);
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .footer-links a:hover {
-            color: #8b5cf6;
-        }
-
-        .footer-bottom {
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            margin-top: 40px;
-            padding-top: 20px;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.85rem;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero p {
-                font-size: 1.1rem;
-            }
-
-            .question-modal {
-                padding: 30px 20px;
-                width: 95vw;
-                height: 95vh;
-            }
-
-            .recaptcha-modal {
-                padding: 30px 20px;
-                width: 90%;
-                max-width: 500px;
-            }
-
-            .modal-actions, .recaptcha-actions {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
-            .checkbox-group {
-                grid-template-columns: 1fr;
-            }
-
-            .checkbox-dropdown-options {
-                max-height: 200px;
-            }
-
-            .searchable-dropdown-options {
-                max-height: 200px;
-            }
-
-            .choice-buttons-container {
-                flex-direction: column;
-                gap: 20px;
-            }
-            
-            .choice-button-enhanced {
-                min-width: 100%;
-                max-width: 100%;
-            }
-
-            .combined-parameters-container {
-                gap: 20px;
-            }
-
-            .parameter-section {
-                padding: 20px;
-            }
-
-            .date-dropdowns {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .date-dropdown-group {
-                max-width: 100%;
-            }
-            
-            /* Make purpose dropdown responsive */
-            .purpose-dropdown-container {
-                flex: 1 1 100% !important;
-                max-width: 100% !important;
-            }
-
-            /* Make all dropdown containers responsive */
-            .revenue-dropdown-container,
-            .procurement-dropdown-container,
-            .channels-dropdown-container {
-                flex: 1 1 100% !important;
-                max-width: 100% !important;
-            }
-
-            /* Responsive products specific section */
-            #productsSpecificSection .parameter-section {
-                padding: 15px;
-            }
-
-            /* Responsive placeholder content */
-            .placeholder-content {
-                padding: 40px 20px;
-                margin: 0 10px;
-            }
-
-            .placeholder-icon {
-                font-size: 3rem;
-            }
-
-            .placeholder-title {
-                font-size: 1.5rem;
-            }
-
-            .placeholder-description {
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .hero h1 {
-                font-size: 2rem;
-            }
-
-            .country-input {
-                padding-left: 50px;
-            }
-
-            .question-modal {
-                padding: 20px 15px;
-                width: 98vw;
-                height: 98vh;
-            }
-        }
-    /* Force pane content to be hidden by default */
+        /* Force pane content to be hidden by default */
         .pane-content {
             opacity: 0 !important;
             transition: opacity 0.5s ease !important;
@@ -4327,10 +2329,10 @@
                 <!-- Content will be populated dynamically based on question type -->
             </div>
             
-            <div class="modal-actions">
-                <button class="btn btn-secondary" id="backBtn" onclick="previousQuestion()" style="display: none;">← Back</button>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" id="backBtn" onclick="previousQuestion()" style="display: none;">← Back</button>
                 <div style="flex: 1;"></div>
-                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>Next →</button>
+                <button class="modal-btn primary" id="nextBtn" onclick="nextQuestion()" disabled>Next →</button>
             </div>
             
             <div class="skip-text" id="skipTextContainer">
@@ -4338,6 +2340,24 @@
             </div>
         </div>
     </div>
+
+    <!-- Debug Output (for troubleshooting) -->
+    <div id="debug-output" style="position: fixed; bottom: 10px; right: 10px; width: 300px; max-height: 200px; 
+         overflow-y: auto; background: rgba(0,0,0,0.9); border: 1px solid rgba(255,255,255,0.2); 
+         border-radius: 8px; padding: 10px; font-family: monospace; font-size: 0.8rem; z-index: 3000;
+         display: none;" onclick="this.style.display='none';">
+        <div style="color: #8b5cf6; font-weight: bold; margin-bottom: 10px; cursor: pointer;">
+            Debug Log (Click to hide)
+        </div>
+    </div>
+
+    <!-- Debug Toggle Button -->
+    <button onclick="toggleDebug()" 
+            style="position: fixed; bottom: 10px; left: 10px; background: rgba(139, 92, 246, 0.8); 
+                   color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; 
+                   cursor: pointer; z-index: 3000;">
+        Debug
+    </button>
 
     <!-- Footer -->
     <footer class="footer">
@@ -4373,6 +2393,38 @@
 
     <!-- Missing Functions for Button Interactions -->
     <script>
+        // Debug toggle function
+        function toggleDebug() {
+            const debugOutput = document.getElementById('debug-output');
+            if (debugOutput) {
+                debugOutput.style.display = debugOutput.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        // Enhanced debug logging that shows in the debug panel
+        function debugLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            console.log(`[${timestamp}] ${message}`);
+            
+            const debugElement = document.getElementById('debug-output');
+            if (debugElement) {
+                const colors = {
+                    info: '#8b5cf6',
+                    success: '#22c55e',
+                    warning: '#f59e0b',
+                    error: '#dc2626'
+                };
+                
+                debugElement.innerHTML += `<div style="color: ${colors[type] || colors.info}; margin: 2px 0; font-size: 0.8rem;">[${timestamp}] ${message}</div>`;
+                debugElement.scrollTop = debugElement.scrollHeight;
+                
+                // Auto-show debug panel on errors
+                if (type === 'error') {
+                    debugElement.style.display = 'block';
+                }
+            }
+        }
+
         // Global functions for button interactions
         window.showInfoPane = function() {
             console.log('showInfoPane called');
@@ -4423,6 +2475,7 @@
 
         window.startQuestionnaire = function() {
             console.log('startQuestionnaire called');
+            debugLog('startQuestionnaire function called');
             const recaptchaModal = document.getElementById('recaptchaModal');
             if (recaptchaModal) {
                 recaptchaModal.classList.remove('active');
@@ -4430,9 +2483,10 @@
             
             // Initialize questionnaire if engine is available
             if (window.questionnaireEngine) {
+                debugLog('QuestionnaireEngine found, starting questionnaire');
                 window.questionnaireEngine.start();
             } else {
-                console.error('Questionnaire engine not initialized');
+                debugLog('QuestionnaireEngine not found, attempting manual initialization', 'error');
                 alert('Questionnaire system is still loading. Please wait a moment and try again.');
             }
         };
@@ -4440,6 +2494,7 @@
         // reCAPTCHA callbacks
         window.onRecaptchaComplete = function(response) {
             console.log('reCAPTCHA completed');
+            debugLog('reCAPTCHA completed successfully', 'success');
             const continueBtn = document.getElementById('continueBtn');
             if (continueBtn) {
                 continueBtn.disabled = false;
@@ -4448,20 +2503,25 @@
 
         window.onSubmissionRecaptchaComplete = function(response) {
             console.log('Submission reCAPTCHA completed');
+            debugLog('Submission reCAPTCHA completed', 'success');
         };
 
         // Navigation functions for questions
-window.nextQuestion = function() {
-    if (window.questionnaireEngine) {
-        window.questionnaireEngine.handleNext(); // CORRECT METHOD
-    }
-};
+        window.nextQuestion = function() {
+            if (window.questionnaireEngine) {
+                window.questionnaireEngine.handleNext();
+            } else {
+                debugLog('QuestionnaireEngine not available for nextQuestion', 'error');
+            }
+        };
 
-window.previousQuestion = function() {
-    if (window.questionnaireEngine) {
-        window.questionnaireEngine.handleBack(); // CORRECT METHOD
-    }
-};
+        window.previousQuestion = function() {
+            if (window.questionnaireEngine) {
+                window.questionnaireEngine.handleBack();
+            } else {
+                debugLog('QuestionnaireEngine not available for previousQuestion', 'error');
+            }
+        };
 
         // Modal functions (for navigation links)
         window.showModal = function(modalType) {
@@ -4470,10 +2530,552 @@ window.previousQuestion = function() {
         };
     </script>
 
-   <!-- NEW: Modular Questionnaire System -->
-   
+   <!-- FIXED: Enhanced Modular Questionnaire System -->
+    <script type="module">
+        // Debug function to track initialization
+        function debugLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            console.log(`[${timestamp}] ${message}`);
+            
+            // Add visual debug indicator if available
+            const debugElement = document.getElementById('debug-output');
+            if (debugElement) {
+                const colors = {
+                    info: '#8b5cf6',
+                    success: '#22c55e',
+                    warning: '#f59e0b',
+                    error: '#dc2626'
+                };
+                
+                debugElement.innerHTML += `<div style="color: ${colors[type] || colors.info}; margin: 2px 0; font-size: 0.8rem;">[${timestamp}] ${message}</div>`;
+                debugElement.scrollTop = debugElement.scrollHeight;
+                
+                // Auto-show debug panel on errors
+                if (type === 'error') {
+                    debugElement.style.display = 'block';
+                }
+            }
+        }
 
-    <!-- Keep existing scripts -->
+        // Check if all required dependencies are available
+        function checkDependencies() {
+            const required = [
+                'QuestionnaireEngine', 
+                'UserInfoModule', 
+                'CustomizationModule',
+                'CombinedParametersModule',
+                'ModelingApproachModule',
+                'RevenueModule',
+                'CogsCodbModule'
+            ];
+            
+            const available = [];
+            const missing = [];
+            
+            required.forEach(dep => {
+                if (window[dep]) {
+                    available.push(dep);
+                } else {
+                    missing.push(dep);
+                }
+            });
+            
+            debugLog(`Available dependencies: ${available.join(', ')}`, 'success');
+            if (missing.length > 0) {
+                debugLog(`Missing dependencies: ${missing.join(', ')}`, 'warning');
+            }
+            
+            return { available, missing };
+        }
+
+        // Enhanced error handling
+        function handleInitializationError(error) {
+            debugLog(`Initialization failed: ${error.message}`, 'error');
+            
+            // Show user-friendly error message
+            const questionModal = document.getElementById('questionModal');
+            const questionContent = document.getElementById('questionContent');
+            
+            if (questionModal && questionContent) {
+                questionContent.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <div style="color: #dc2626; font-size: 3rem; margin-bottom: 20px;">⚠️</div>
+                        <h3 style="color: #dc2626; margin-bottom: 15px;">System Loading Error</h3>
+                        <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                            The questionnaire system encountered an error while loading.
+                        </p>
+                        <div style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); 
+                                   border-radius: 8px; padding: 15px; margin: 20px 0; font-family: monospace; 
+                                   font-size: 0.9rem; text-align: left;">
+                            Error: ${error.message}
+                        </div>
+                        <div style="margin-top: 30px;">
+                            <button onclick="window.location.reload()" 
+                                    style="background: #8b5cf6; color: white; border: none; padding: 12px 24px; 
+                                           border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 0 10px;">
+                                Retry
+                            </button>
+                            <button onclick="window.location.href = '../../index.html'" 
+                                    style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); 
+                                           padding: 12px 24px; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 0 10px;">
+                                Go Back
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Show the modal with error
+                questionModal.classList.add('active');
+            }
+        }
+
+        // Create a fallback simple engine if modules don't load
+        function createFallbackEngine() {
+            debugLog('Creating fallback engine...', 'warning');
+            
+            // Simple fallback implementation
+            window.QuestionnaireEngine = class QuestionnaireEngine {
+                constructor(config = {}) {
+                    this.config = config;
+                    this.modules = [];
+                    this.currentModuleIndex = 0;
+                    this.responses = {};
+                    this.isInitialized = false;
+                    debugLog('Fallback QuestionnaireEngine created');
+                }
+
+                async initialize() {
+                    debugLog('Initializing fallback engine...');
+                    
+                    // Get UI elements
+                    this.questionModal = document.getElementById('questionModal');
+                    this.questionTitle = document.getElementById('questionTitle');
+                    this.questionDescription = document.getElementById('questionDescription');
+                    this.questionContent = document.getElementById('questionContent');
+                    this.nextBtn = document.getElementById('nextBtn');
+                    this.backBtn = document.getElementById('backBtn');
+                    this.progressFill = document.getElementById('modalProgressFill');
+                    this.progressText = document.getElementById('modalProgressText');
+                    
+                    if (!this.questionModal) {
+                        throw new Error('Question modal element not found in DOM');
+                    }
+                    
+                    // Setup event listeners
+                    this.setupEventListeners();
+                    
+                    this.isInitialized = true;
+                    debugLog('Fallback engine initialized successfully', 'success');
+                    return true;
+                }
+
+                setupEventListeners() {
+                    // Remove existing listeners to prevent duplicates
+                    if (this.nextBtn) {
+                        const newNextBtn = this.nextBtn.cloneNode(true);
+                        this.nextBtn.parentNode.replaceChild(newNextBtn, this.nextBtn);
+                        this.nextBtn = newNextBtn;
+                        
+                        this.nextBtn.addEventListener('click', () => {
+                            debugLog('Next button clicked');
+                            this.handleNext();
+                        });
+                    }
+                    
+                    if (this.backBtn) {
+                        const newBackBtn = this.backBtn.cloneNode(true);
+                        this.backBtn.parentNode.replaceChild(newBackBtn, this.backBtn);
+                        this.backBtn = newBackBtn;
+                        
+                        this.backBtn.addEventListener('click', () => {
+                            debugLog('Back button clicked');
+                            this.handleBack();
+                        });
+                    }
+                }
+
+                registerModule(moduleInstance) {
+                    if (!moduleInstance || !moduleInstance.id) {
+                        debugLog('Invalid module provided to registerModule', 'error');
+                        return;
+                    }
+                    
+                    debugLog(`Registering module: ${moduleInstance.id}`);
+                    this.modules.push(moduleInstance);
+                }
+
+                start() {
+                    if (!this.isInitialized) {
+                        debugLog('Cannot start - engine not initialized', 'error');
+                        return;
+                    }
+
+                    debugLog('Starting questionnaire...');
+                    
+                    if (this.modules.length === 0) {
+                        // Show message that no modules are loaded
+                        this.showNoModulesMessage();
+                        return;
+                    }
+                    
+                    this.showModal();
+                    this.showCurrentModule();
+                }
+
+                showModal() {
+                    if (this.questionModal) {
+                        this.questionModal.classList.add('active');
+                        this.questionModal.classList.add('question-mode');
+                        document.body.style.overflow = 'hidden';
+                        debugLog('Modal displayed');
+                    }
+                }
+
+                showNoModulesMessage() {
+                    this.showModal();
+                    
+                    if (this.questionTitle) {
+                        this.questionTitle.textContent = 'Questionnaire System Status';
+                    }
+                    
+                    if (this.questionDescription) {
+                        this.questionDescription.textContent = 'Checking module availability...';
+                    }
+                    
+                    if (this.questionContent) {
+                        this.questionContent.innerHTML = `
+                            <div style="text-align: center; padding: 40px 20px;">
+                                <div style="color: #f59e0b; font-size: 3rem; margin-bottom: 20px;">⚙️</div>
+                                <h3 style="color: #f59e0b; margin-bottom: 15px;">No Modules Loaded</h3>
+                                <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                                    The questionnaire modules are not currently available. This could be due to:
+                                </p>
+                                <ul style="text-align: left; max-width: 400px; margin: 20px auto; color: rgba(255,255,255,0.6);">
+                                    <li>Modules are still being developed</li>
+                                    <li>Import paths are incorrect</li>
+                                    <li>JavaScript files are not loading properly</li>
+                                    <li>Network connectivity issues</li>
+                                </ul>
+                                <div style="margin-top: 30px;">
+                                    <button onclick="window.location.reload()" 
+                                            style="background: #8b5cf6; color: white; border: none; padding: 12px 24px; 
+                                                   border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 0 10px;">
+                                        Retry Loading
+                                    </button>
+                                    <button onclick="checkSystemStatus()" 
+                                            style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); 
+                                                   padding: 12px 24px; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 0 10px;">
+                                        Check Status
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                showCurrentModule() {
+                    const currentModule = this.modules[this.currentModuleIndex];
+                    if (!currentModule) {
+                        this.completeQuestionnaire();
+                        return;
+                    }
+
+                    debugLog(`Showing module: ${currentModule.id}`);
+
+                    // Update header
+                    if (this.questionTitle) {
+                        this.questionTitle.textContent = currentModule.title || 'Question';
+                    }
+                    
+                    if (this.questionDescription) {
+                        this.questionDescription.textContent = currentModule.description || '';
+                    }
+                    
+                    // Render module content
+                    if (this.questionContent && currentModule.render) {
+                        try {
+                            const content = currentModule.render();
+                            if (content instanceof HTMLElement) {
+                                this.questionContent.innerHTML = '';
+                                this.questionContent.appendChild(content);
+                            } else if (typeof content === 'string') {
+                                this.questionContent.innerHTML = content;
+                            }
+                        } catch (error) {
+                            debugLog(`Error rendering module ${currentModule.id}: ${error.message}`, 'error');
+                            this.questionContent.innerHTML = `
+                                <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                                    <p>Error loading this section.</p>
+                                    <button onclick="window.questionnaireEngine.handleNext()" 
+                                            style="background: #8b5cf6; color: white; border: none; padding: 12px 24px; 
+                                                   border-radius: 8px; margin-top: 20px; cursor: pointer;">
+                                        Skip This Section
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    // Update progress
+                    const progress = ((this.currentModuleIndex + 1) / this.modules.length) * 100;
+                    this.updateProgress(progress);
+
+                    // Update buttons
+                    this.updateButtons();
+                }
+
+                updateProgress(percentage) {
+                    const progressValue = Math.min(Math.max(percentage, 0), 100);
+                    
+                    if (this.progressFill) {
+                        this.progressFill.style.width = progressValue + '%';
+                    }
+                    
+                    if (this.progressText) {
+                        this.progressText.textContent = Math.round(progressValue) + '% Complete';
+                    }
+                }
+
+                updateButtons() {
+                    // Back button
+                    if (this.backBtn) {
+                        this.backBtn.style.display = this.currentModuleIndex > 0 ? 'block' : 'none';
+                    }
+
+                    // Next button
+                    if (this.nextBtn) {
+                        const isLast = this.currentModuleIndex >= this.modules.length - 1;
+                        this.nextBtn.textContent = isLast ? 'Complete' : 'Next →';
+                        this.nextBtn.style.display = 'block';
+                        this.nextBtn.disabled = false;
+                    }
+                }
+
+                handleNext() {
+                    const currentModule = this.modules[this.currentModuleIndex];
+                    
+                    // Save data if module provides it
+                    if (currentModule && currentModule.getData) {
+                        try {
+                            this.responses[currentModule.id] = currentModule.getData();
+                            debugLog(`Data saved for module: ${currentModule.id}`, 'success');
+                        } catch (error) {
+                            debugLog(`Error saving data for module ${currentModule.id}: ${error.message}`, 'error');
+                        }
+                    }
+
+                    // Move to next or complete
+                    if (this.currentModuleIndex >= this.modules.length - 1) {
+                        this.completeQuestionnaire();
+                    } else {
+                        this.currentModuleIndex++;
+                        this.showCurrentModule();
+                    }
+                }
+
+                handleBack() {
+                    if (this.currentModuleIndex > 0) {
+                        this.currentModuleIndex--;
+                        this.showCurrentModule();
+                        debugLog('Moved to previous module');
+                    }
+                }
+
+                completeQuestionnaire() {
+                    debugLog('Questionnaire completed!', 'success');
+                    
+                    if (this.questionTitle) {
+                        this.questionTitle.textContent = 'Questionnaire Complete!';
+                    }
+                    
+                    if (this.questionDescription) {
+                        this.questionDescription.textContent = 'Thank you for completing the questionnaire.';
+                    }
+                    
+                    if (this.questionContent) {
+                        this.questionContent.innerHTML = `
+                            <div style="text-align: center; padding: 40px 20px;">
+                                <div style="color: #22c55e; font-size: 4rem; margin-bottom: 20px;">✓</div>
+                                <h3 style="color: #22c55e; margin-bottom: 20px;">Questionnaire Complete</h3>
+                                <p style="color: rgba(255,255,255,0.7); margin-bottom: 30px;">
+                                    Your responses have been recorded successfully.
+                                </p>
+                                <button onclick="this.closest('.modal-overlay').classList.remove('active'); document.body.style.overflow = 'auto';" 
+                                        style="background: #8b5cf6; color: white; border: none; padding: 15px 30px; 
+                                               border-radius: 8px; font-size: 1.1rem; cursor: pointer;">
+                                    Close
+                                </button>
+                            </div>
+                        `;
+                    }
+
+                    this.updateProgress(100);
+                    
+                    // Hide navigation buttons
+                    if (this.nextBtn) this.nextBtn.style.display = 'none';
+                    if (this.backBtn) this.backBtn.style.display = 'none';
+                }
+            };
+        }
+
+        // System status checker
+        function checkSystemStatus() {
+            const deps = checkDependencies();
+            
+            const statusContent = `
+                <div style="text-align: left; max-width: 600px; margin: 0 auto;">
+                    <h4 style="color: #8b5cf6; margin-bottom: 15px;">System Dependencies</h4>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="color: #22c55e; margin-bottom: 10px;">✓ Available (${deps.available.length}):</h5>
+                        <div style="background: rgba(34, 197, 94, 0.1); padding: 10px; border-radius: 4px; 
+                                   font-family: monospace; font-size: 0.9rem;">
+                            ${deps.available.length > 0 ? deps.available.join('<br>') : 'None'}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="color: #dc2626; margin-bottom: 10px;">✗ Missing (${deps.missing.length}):</h5>
+                        <div style="background: rgba(220, 38, 38, 0.1); padding: 10px; border-radius: 4px; 
+                                   font-family: monospace; font-size: 0.9rem;">
+                            ${deps.missing.length > 0 ? deps.missing.join('<br>') : 'None'}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="color: #f59e0b; margin-bottom: 10px;">📁 Expected File Structure:</h5>
+                        <div style="background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 4px; 
+                                   font-family: monospace; font-size: 0.9rem; white-space: pre-line;">
+        pages/questionnaire/
+        ├── core/
+        │   ├── engine.js
+        │   └── ui-manager.js
+        ├── modules/
+        │   ├── user-info.module.js
+        │   ├── customization.module.js
+        │   ├── combined-parameters.module.js
+        │   ├── modeling-approach.module.js
+        │   ├── revenue.module.js
+        │   └── cogs-codb.module.js
+        └── components/
+            └── base-component.js
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 30px;">
+                        <button onclick="window.location.reload()" 
+                                style="background: #8b5cf6; color: white; border: none; padding: 12px 24px; 
+                                       border-radius: 8px; font-size: 1rem; cursor: pointer;">
+                            Reload Page
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            const questionContent = document.getElementById('questionContent');
+            if (questionContent) {
+                questionContent.innerHTML = statusContent;
+            }
+        }
+
+        // Enhanced initialization function
+        async function initializeQuestionnaire() {
+            try {
+                debugLog('Starting questionnaire initialization...');
+                
+                // Check dependencies first
+                const deps = checkDependencies();
+                
+                // Try to import modules first
+                try {
+                    const { QuestionnaireEngine } = await import('./core/engine.js');
+                    window.QuestionnaireEngine = QuestionnaireEngine;
+                    debugLog('✓ QuestionnaireEngine imported successfully', 'success');
+                } catch (error) {
+                    debugLog('✗ Failed to import QuestionnaireEngine, using fallback', 'warning');
+                    createFallbackEngine();
+                }
+
+                // Try to import modules
+                const moduleImports = [
+                    { name: 'UserInfoModule', path: './modules/user-info.module.js' },
+                    { name: 'CustomizationModule', path: './modules/customization.module.js' },
+                    { name: 'CombinedParametersModule', path: './modules/combined-parameters.module.js' },
+                    { name: 'ModelingApproachModule', path: './modules/modeling-approach.module.js' },
+                    { name: 'RevenueModule', path: './modules/revenue.module.js' },
+                    { name: 'CogsCodbModule', path: './modules/cogs-codb.module.js' }
+                ];
+
+                for (const moduleImport of moduleImports) {
+                    try {
+                        const module = await import(moduleImport.path);
+                        window[moduleImport.name] = module[moduleImport.name];
+                        debugLog(`✓ ${moduleImport.name} imported successfully`, 'success');
+                    } catch (error) {
+                        debugLog(`✗ Failed to import ${moduleImport.name}: ${error.message}`, 'warning');
+                    }
+                }
+                
+                // Initialize the engine
+                const engine = new QuestionnaireEngine({
+                    apiEndpoint: '/api/submit-questionnaire',
+                    recaptchaSiteKey: '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF',
+                    debug: true
+                });
+
+                // Try to register available modules
+                const moduleConfigs = [
+                    { name: 'CustomizationModule', class: window.CustomizationModule },
+                    { name: 'UserInfoModule', class: window.UserInfoModule },
+                    { name: 'CombinedParametersModule', class: window.CombinedParametersModule },
+                    { name: 'ModelingApproachModule', class: window.ModelingApproachModule },
+                    { name: 'RevenueModule', class: window.RevenueModule },
+                    { name: 'CogsCodbModule', class: window.CogsCodbModule }
+                ];
+
+                let registeredCount = 0;
+                
+                for (const config of moduleConfigs) {
+                    if (config.class) {
+                        try {
+                            const moduleInstance = new config.class();
+                            engine.registerModule(moduleInstance);
+                            registeredCount++;
+                            debugLog(`✓ Registered ${config.name}`, 'success');
+                        } catch (error) {
+                            debugLog(`✗ Failed to register ${config.name}: ${error.message}`, 'error');
+                        }
+                    } else {
+                        debugLog(`⚠ ${config.name} not available`, 'warning');
+                    }
+                }
+
+                await engine.initialize();
+                window.questionnaireEngine = engine;
+
+                debugLog(`Questionnaire system initialized with ${registeredCount} modules`, 'success');
+                
+                return engine;
+                
+            } catch (error) {
+                debugLog(`Initialization failed: ${error.message}`, 'error');
+                handleInitializationError(error);
+                throw error;
+            }
+        }
+
+        // Make functions globally available
+        window.checkSystemStatus = checkSystemStatus;
+        window.initializeQuestionnaire = initializeQuestionnaire;
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeQuestionnaire);
+        } else {
+            initializeQuestionnaire();
+        }
+    </script>
+
     <!-- reCAPTCHA script -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     
