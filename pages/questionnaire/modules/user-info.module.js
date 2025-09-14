@@ -202,20 +202,59 @@ export class UserInfoModule {
         const section = document.createElement('div');
         section.className = 'form-group';
 
-        // For now, create a simple dropdown - you can enhance this later with the CountryDropdown
-        const countryInput = new TextInput({
+        // Use the countries data that's already loaded from /assets/js/countries.js
+        let countryOptions = [];
+        
+        if (window.countries && Array.isArray(window.countries)) {
+            countryOptions = window.countries.map(country => ({
+                value: country.code,
+                text: `${country.name}`,
+                flag: country.flag,
+                code: country.code,
+                name: country.name
+            }));
+        } else {
+            // Fallback if countries.js hasn't loaded yet
+            console.warn('Countries data not found. Make sure /assets/js/countries.js is loaded.');
+            countryOptions = [
+                { value: 'US', text: 'United States', flag: '', code: 'US', name: 'United States' },
+                { value: 'AU', text: 'Australia', flag: '', code: 'AU', name: 'Australia' },
+                { value: 'GB', text: 'United Kingdom', flag: '', code: 'GB', name: 'United Kingdom' },
+                { value: 'CA', text: 'Canada', flag: '', code: 'CA', name: 'Canada' }
+            ];
+        }
+
+        const countryDropdown = new Dropdown({
             id: 'country',
             label: 'Country',
-            placeholder: 'Enter your country',
+            placeholder: 'Search or select your country...',
+            options: countryOptions,
             required: true,
             onChange: (value) => {
-                this.responses.country = { name: value, code: '', flag: '' };
+                // Find the selected country data from the original countries array
+                let selectedCountry = null;
+                
+                if (window.countries && Array.isArray(window.countries)) {
+                    selectedCountry = window.countries.find(country => country.code === value);
+                }
+                
+                // Fallback to the dropdown option if countries data not available
+                if (!selectedCountry) {
+                    selectedCountry = countryOptions.find(option => option.value === value);
+                }
+
+                this.responses.country = {
+                    name: selectedCountry?.name || '',
+                    code: selectedCountry?.code || value || '',
+                    flag: selectedCountry?.flag || ''
+                };
+                
                 this.onResponseChange();
             }
         });
 
-        this.components.country = countryInput;
-        countryInput.render(section);
+        this.components.country = countryDropdown;
+        countryDropdown.render(section);
 
         return section;
     }
@@ -319,7 +358,7 @@ export class UserInfoModule {
                 const component = this.components[key];
                 if (component && value !== undefined && value !== null) {
                     if (key === 'country' && typeof value === 'object') {
-                        component.setValue(value.name || '');
+                        component.setValue(value.code || '');
                     } else if (key === 'industry' && typeof value === 'object') {
                         component.setValue(value.dropdown || '');
                     } else {
@@ -346,6 +385,12 @@ export class UserInfoModule {
             }
         }
 
+        // Additional validation for country to ensure we have a valid code
+        if (!this.responses.country || !this.responses.country.code) {
+            isValid = false;
+            errors.push('Please select a valid country');
+        }
+
         return { isValid, errors };
     }
 
@@ -361,7 +406,7 @@ export class UserInfoModule {
             email: this.responses.email || '',
             phone: this.responses.phone || '',
             country_name: this.responses.country?.name || '',
-            country_code: this.responses.country?.code || '',
+            country_code: this.responses.country?.code || null, // Changed from empty string to null
             country_flag: this.responses.country?.flag || null,
             industry_dropdown: this.responses.industry?.dropdown || null,
             industry_freetext: this.responses.industry?.freeText || null,
