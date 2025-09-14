@@ -4471,48 +4471,359 @@ window.previousQuestion = function() {
     </script>
 
    <!-- NEW: Modular Questionnaire System -->
-    <script type="module">
-import { QuestionnaireEngine } from './core/engine.js';
-import { UserInfoModule } from './modules/user-info.module.js';
-import { CustomizationModule } from './modules/customization.module.js';
-import { CombinedParametersModule } from './modules/combined-parameters.module.js';
-import { ModelingApproachModule } from './modules/modeling-approach.module.js';
-import { RevenueModule } from './modules/revenue.module.js';
-import { CogsCodbModule } from './modules/cogs-codb.module.js';
+   <!-- STEP 1: Enhanced Global Functions with System Detection -->
+<script>
+    // Global system state tracking
+    window.questionnaireSystem = {
+        moduleSystemLoaded: false,
+        fallbackSystemLoaded: false,
+        activeSystem: null,
+        loadingErrors: []
+    };
 
-// Initialize the questionnaire engine
-async function initializeQuestionnaire() {
+    // Enhanced global functions (keep your existing ones and add these)
+    const originalStartQuestionnaire = window.startQuestionnaire;
+    
+    window.startQuestionnaire = function() {
+        console.log('🚀 startQuestionnaire called - system detection');
+        const recaptchaModal = document.getElementById('recaptchaModal');
+        if (recaptchaModal) {
+            recaptchaModal.classList.remove('active');
+        }
+        
+        // Try modular system first
+        if (window.questionnaireEngine && window.questionnaireSystem.moduleSystemLoaded) {
+            console.log('✅ Using modular questionnaire system');
+            window.questionnaireSystem.activeSystem = 'modular';
+            try {
+                window.questionnaireEngine.start();
+            } catch (error) {
+                console.error('❌ Modular system failed:', error);
+                window.fallbackToLegacySystem();
+            }
+        }
+        // Try legacy fallback if available
+        else if (window.legacyQuestionnaireSystem && window.questionnaireSystem.fallbackSystemLoaded) {
+            console.log('⚠️  Using fallback questionnaire system');
+            window.questionnaireSystem.activeSystem = 'fallback';
+            window.showFallbackNotification();
+            try {
+                window.legacyQuestionnaireSystem.start();
+            } catch (error) {
+                console.error('❌ Both systems failed:', error);
+                alert('Questionnaire system unavailable. Please refresh the page and try again.');
+            }
+        }
+        // Use original function if nothing else works
+        else if (originalStartQuestionnaire) {
+            console.log('⚠️  Using original questionnaire function');
+            originalStartQuestionnaire();
+        }
+        // Final fallback
+        else {
+            console.error('❌ No questionnaire system available');
+            alert('Questionnaire system is still loading. Please wait a moment and try again.');
+        }
+    };
+
+    // Enhanced navigation functions with fallback support
+    const originalNextQuestion = window.nextQuestion;
+    const originalPreviousQuestion = window.previousQuestion;
+
+    window.nextQuestion = function() {
+        if (window.questionnaireEngine && window.questionnaireSystem.activeSystem === 'modular') {
+            window.questionnaireEngine.handleNext();
+        } else if (window.legacyQuestionnaireSystem && window.questionnaireSystem.activeSystem === 'fallback') {
+            window.legacyQuestionnaireSystem.nextQuestion();
+        } else if (originalNextQuestion) {
+            originalNextQuestion();
+        }
+    };
+
+    window.previousQuestion = function() {
+        if (window.questionnaireEngine && window.questionnaireSystem.activeSystem === 'modular') {
+            window.questionnaireEngine.handleBack();
+        } else if (window.legacyQuestionnaireSystem && window.questionnaireSystem.activeSystem === 'fallback') {
+            window.legacyQuestionnaireSystem.previousQuestion();
+        } else if (originalPreviousQuestion) {
+            originalPreviousQuestion();
+        }
+    };
+
+    // Utility functions
+    window.fallbackToLegacySystem = function() {
+        if (window.legacyQuestionnaireSystem && window.questionnaireSystem.fallbackSystemLoaded) {
+            console.log('🔄 Falling back to legacy system');
+            window.questionnaireSystem.activeSystem = 'fallback';
+            window.showFallbackNotification();
+            window.legacyQuestionnaireSystem.start();
+        } else {
+            alert('Both questionnaire systems failed to load. Please refresh the page.');
+        }
+    };
+
+    window.showFallbackNotification = function() {
+        const notification = document.createElement('div');
+        notification.className = 'fallback-notification';
+        notification.innerHTML = `
+            <strong>Notice:</strong> Using compatibility mode. 
+            <button onclick="this.parentElement.remove()" style="border: none; background: none; color: inherit; margin-left: 10px; cursor: pointer;">&times;</button>
+        `;
+        notification.style.cssText = `
+            position: fixed; top: 20px; right: 20px; background: #fbbf24; color: #92400e; 
+            padding: 12px 20px; border-radius: 8px; z-index: 10000; font-size: 14px; max-width: 300px;
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
+    };
+</script>
+
+<!-- STEP 2: Enhanced Modular System with Better Error Handling -->
+<script type="module">
+    console.log('📦 Loading enhanced modular questionnaire system...');
+    
     try {
-        const engine = new QuestionnaireEngine({
-    apiEndpoint: '/api/submit-questionnaire',
-    recaptchaSiteKey: '{{RECAPTCHA_SITE_KEY}}', // Will be replaced by server
-    debug: true
-});
+        // Dynamic imports with better error handling
+        const [
+            { QuestionnaireEngine },
+            { UserInfoModule },
+            { CustomizationModule }, 
+            { CombinedParametersModule },
+            { ModelingApproachModule },
+            { RevenueModule },
+            { CogsCodbModule }
+        ] = await Promise.all([
+            import('./core/engine.js').catch(e => { throw new Error(`Failed to load engine: ${e.message}`) }),
+            import('./modules/user-info.module.js').catch(e => { throw new Error(`Failed to load user-info module: ${e.message}`) }),
+            import('./modules/customization.module.js').catch(e => { throw new Error(`Failed to load customization module: ${e.message}`) }),
+            import('./modules/combined-parameters.module.js').catch(e => { throw new Error(`Failed to load combined-parameters module: ${e.message}`) }),
+            import('./modules/modeling-approach.module.js').catch(e => { throw new Error(`Failed to load modeling-approach module: ${e.message}`) }),
+            import('./modules/revenue.module.js').catch(e => { throw new Error(`Failed to load revenue module: ${e.message}`) }),
+            import('./modules/cogs-codb.module.js').catch(e => { throw new Error(`Failed to load cogs-codb module: ${e.message}`) })
+        ]);
+        
+        console.log('✅ All modules imported successfully');
 
-        // Register only the modules that exist
-        engine.registerModule(new CustomizationModule());
-        engine.registerModule(new UserInfoModule());
-        engine.registerModule(new CombinedParametersModule());
-        engine.registerModule(new ModelingApproachModule());
-        engine.registerModule(new RevenueModule());
-        engine.registerModule(new CogsCodbModule());
+        // Initialize the questionnaire engine
+        async function initializeModularSystem() {
+            try {
+                console.log('🔧 Initializing modular questionnaire engine...');
+                
+                const engine = new QuestionnaireEngine({
+                    apiEndpoint: '/api/submit-questionnaire',
+                    recaptchaSiteKey: '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF',
+                    debug: true
+                });
 
-        await engine.initialize();
-        window.questionnaireEngine = engine;
+                // Register modules in order with error handling
+                const modules = [
+                    { instance: new CustomizationModule(), name: 'Customization' },
+                    { instance: new UserInfoModule(), name: 'User Info' },
+                    { instance: new CombinedParametersModule(), name: 'Combined Parameters' },
+                    { instance: new ModelingApproachModule(), name: 'Modeling Approach' },
+                    { instance: new RevenueModule(), name: 'Revenue' },
+                    { instance: new CogsCodbModule(), name: 'COGS/CODB' }
+                ];
 
-        console.log('Modular questionnaire system initialized successfully');
+                modules.forEach(({ instance, name }) => {
+                    try {
+                        console.log(`📋 Registering module: ${name}`);
+                        engine.registerModule(instance);
+                    } catch (error) {
+                        console.error(`❌ Failed to register ${name} module:`, error);
+                        window.questionnaireSystem.loadingErrors.push({
+                            system: 'modular',
+                            module: name,
+                            error: error.message,
+                            timestamp: Date.now()
+                        });
+                    }
+                });
+
+                await engine.initialize();
+                
+                // Make globally available
+                window.questionnaireEngine = engine;
+                window.questionnaireSystem.moduleSystemLoaded = true;
+                window.questionnaireSystem.activeSystem = 'modular';
+
+                console.log('✅ Modular questionnaire system initialized successfully');
+                console.log(`📊 Loaded ${modules.length} modules`);
+                
+            } catch (error) {
+                console.error('❌ Failed to initialize modular system:', error);
+                window.questionnaireSystem.loadingErrors.push({
+                    system: 'modular-init',
+                    error: error.message,
+                    timestamp: Date.now()
+                });
+                throw error;
+            }
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeModularSystem);
+        } else {
+            await initializeModularSystem();
+        }
+
     } catch (error) {
-        console.error('Failed to initialize questionnaire system:', error);
-        alert('There was an error loading the questionnaire. Please refresh the page or contact support if the problem persists.');
+        console.error('❌ Failed to load modular questionnaire system:', error);
+        window.questionnaireSystem.loadingErrors.push({
+            system: 'modular-import',
+            error: error.message,
+            timestamp: Date.now()
+        });
+        
+        console.log('🔄 Modular system failed, fallback system will be used if available');
     }
-}
+</script>
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeQuestionnaire);
-} else {
-    initializeQuestionnaire();
-}
+<!-- STEP 3: Fallback Legacy System -->
+<script>
+    console.log('📦 Loading fallback questionnaire system...');
+    
+    // Create a simple fallback system
+    window.legacyQuestionnaireSystem = {
+        initialized: false,
+        currentQuestion: 0,
+        responses: {},
+        
+        init: function() {
+            console.log('🔧 Initializing fallback questionnaire system...');
+            this.initialized = true;
+            window.questionnaireSystem.fallbackSystemLoaded = true;
+            console.log('✅ Fallback system ready');
+        },
+        
+        start: function() {
+            if (!this.initialized) {
+                this.init();
+            }
+            
+            console.log('🚀 Starting fallback questionnaire...');
+            
+            const modal = document.getElementById('questionModal');
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                
+                const content = document.getElementById('questionContent');
+                if (content) {
+                    content.innerHTML = `
+                        <div style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px; padding: 30px; text-align: center;">
+                            <h3 style="color: #8b5cf6; margin-bottom: 15px;">⚠️ Compatibility Mode</h3>
+                            <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 15px;">
+                                The advanced questionnaire system is temporarily unavailable. 
+                                You're now using the compatibility version.
+                            </p>
+                            <p style="color: rgba(255, 255, 255, 0.6); margin-bottom: 20px; font-size: 0.9rem;">
+                                Please contact support if you continue to experience issues.
+                            </p>
+                            <button onclick="window.closeQuestionnaire()" class="btn btn-primary" style="background: #8b5cf6; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer;">
+                                Continue with Basic Version
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                // Update progress
+                const progressFill = document.getElementById('modalProgressFill');
+                const progressText = document.getElementById('modalProgressText');
+                if (progressFill) progressFill.style.width = '0%';
+                if (progressText) progressText.textContent = 'Compatibility Mode';
+                
+            } else {
+                alert('Please use our simplified questionnaire form. Redirecting...');
+                // Could redirect to a simple form page
+                // window.location.href = '/simple-questionnaire.html';
+            }
+        },
+        
+        nextQuestion: function() {
+            console.log('Next question in fallback system');
+            // Basic implementation
+        },
+        
+        previousQuestion: function() {
+            console.log('Previous question in fallback system');
+            // Basic implementation
+        }
+    };
+    
+    // Initialize fallback system
+    window.legacyQuestionnaireSystem.init();
+    
+    // Close questionnaire function
+    window.closeQuestionnaire = function() {
+        const modal = document.getElementById('questionModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    };
+</script>
+
+<!-- STEP 4: System Health Check and Debugging -->
+<script>
+    // Wait for all systems to load
+    setTimeout(function() {
+        console.log('🔍 Questionnaire System Health Check:');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('Modular System Loaded:', window.questionnaireSystem.moduleSystemLoaded);
+        console.log('Fallback System Loaded:', window.questionnaireSystem.fallbackSystemLoaded);
+        console.log('Active System:', window.questionnaireSystem.activeSystem || 'none');
+        console.log('Loading Errors:', window.questionnaireSystem.loadingErrors);
+        console.log('Engine Available:', !!window.questionnaireEngine);
+        console.log('Legacy Available:', !!window.legacyQuestionnaireSystem);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
+        // Add debug functions for testing
+        window.debugQuestionnaire = function() {
+            console.log('🐛 Debug Information:');
+            if (window.questionnaireEngine && window.questionnaireEngine.debugSubmission) {
+                window.questionnaireEngine.debugSubmission();
+            } else {
+                console.log('Debug: No modular engine available');
+                console.log('System State:', window.questionnaireSystem);
+            }
+        };
+        
+        window.testSubmission = function() {
+            if (window.questionnaireEngine && window.questionnaireEngine.testSubmissionWithoutRecaptcha) {
+                window.questionnaireEngine.testSubmissionWithoutRecaptcha();
+            } else {
+                console.log('Test submission not available - modular engine not loaded');
+            }
+        };
+        
+        window.forceModularSystem = function() {
+            if (window.questionnaireEngine) {
+                console.log('🔧 Forcing modular system...');
+                window.questionnaireSystem.activeSystem = 'modular';
+                window.questionnaireEngine.start();
+            } else {
+                console.log('❌ Modular system not available');
+            }
+        };
+        
+        window.forceFallbackSystem = function() {
+            if (window.legacyQuestionnaireSystem) {
+                console.log('🔧 Forcing fallback system...');
+                window.questionnaireSystem.activeSystem = 'fallback';
+                window.legacyQuestionnaireSystem.start();
+            } else {
+                console.log('❌ Fallback system not available');
+            }
+        };
+        
+    }, 2000);
 </script>
 
     <!-- Keep existing scripts -->

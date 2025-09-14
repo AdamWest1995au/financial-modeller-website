@@ -4,7 +4,7 @@ export class QuestionnaireEngine {
     constructor(config = {}) {
         this.config = {
             apiEndpoint: config.apiEndpoint || '/api/submit-questionnaire',
-            recaptchaSiteKey: config.recaptchaSiteKey || '',
+            recaptchaSiteKey: config.recaptchaSiteKey || '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF',
             debug: config.debug || false,
             ...config
         };
@@ -16,6 +16,8 @@ export class QuestionnaireEngine {
         this.isProcessingNavigation = false;
         this.userHasInteracted = false;
         this.submissionId = null;
+        this.recaptchaToken = null;
+        this.isSubmitting = false;
         
         // UI Elements
         this.questionModal = null;
@@ -30,6 +32,7 @@ export class QuestionnaireEngine {
         // Bind methods to prevent context issues
         this.handleNext = this.handleNext.bind(this);
         this.handleBack = this.handleBack.bind(this);
+        this.submitResponses = this.submitResponses.bind(this);
     }
 
     async initialize() {
@@ -510,17 +513,38 @@ export class QuestionnaireEngine {
     completeQuestionnaire() {
         console.log('Questionnaire completed! Responses:', this.responses);
         
-        // Show completion message
+        // Show completion screen first
+        this.showCompletionScreen();
+    }
+
+    showCompletionScreen() {
         if (this.questionContent) {
             this.questionContent.innerHTML = `
                 <div style="text-align: center; padding: 60px 40px;">
                     <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
                     <h3 style="color: #8b5cf6; margin-bottom: 20px; font-size: 1.8rem;">Questionnaire Complete!</h3>
                     <p style="color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 1.1rem; line-height: 1.6;">
-                        Thank you for completing our questionnaire. We're now submitting your responses and our team will create your custom financial model.
-                        You'll receive an email within 24-48 hours with your model and instructions for next steps.
+                        Thank you for completing our questionnaire. Please verify you're not a robot to submit your responses.
                     </p>
-                    <div id="submission-status" style="margin-top: 20px;">
+                    
+                    <!-- reCAPTCHA Container -->
+                    <div id="recaptcha-container" style="display: flex; justify-content: center; margin: 30px 0;">
+                        <div class="g-recaptcha" 
+                             data-sitekey="${this.config.recaptchaSiteKey}" 
+                             data-callback="onRecaptchaComplete">
+                        </div>
+                    </div>
+                    
+                    <div id="submission-actions" style="margin-top: 30px;">
+                        <button id="submitBtn" 
+                                class="btn btn-primary" 
+                                disabled 
+                                style="background: rgba(139, 92, 246, 0.5); cursor: not-allowed; padding: 12px 24px; border-radius: 8px; border: none; color: white;">
+                            Please complete reCAPTCHA
+                        </button>
+                    </div>
+                    
+                    <div id="submission-status" style="margin-top: 20px; display: none;">
                         <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #8b5cf6; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
                         <p style="margin-top: 10px; color: rgba(255,255,255,0.6);">Submitting your responses...</p>
                     </div>
@@ -537,35 +561,109 @@ export class QuestionnaireEngine {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
                 }
+                
+                .btn {
+                    transition: all 0.3s ease;
+                    font-size: 1rem;
+                    font-weight: 500;
+                }
+                
+                .btn:not(:disabled):hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+                }
+                
+                .btn:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed !important;
+                    transform: none !important;
+                }
             `;
             document.head.appendChild(style);
         }
         
-        // Hide back button, disable next button during submission
+        // Hide back button during completion
         if (this.backBtn) this.backBtn.style.display = 'none';
-        if (this.nextBtn) {
-            this.nextBtn.disabled = true;
-            this.nextBtn.textContent = 'Submitting...';
+        if (this.nextBtn) this.nextBtn.style.display = 'none';
+        
+        // Setup submit button click handler
+        setTimeout(() => {
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', () => {
+                    this.initiateSubmission();
+                });
+            }
+            
+            // Render reCAPTCHA
+            if (typeof grecaptcha !== 'undefined') {
+                grecaptcha.render();
+            }
+        }, 100);
+    }
+
+    // Called when reCAPTCHA is completed
+    onRecaptchaComplete(token) {
+        console.log('reCAPTCHA completed with token:', token ? 'Present' : 'Missing');
+        this.recaptchaToken = token;
+        
+        // Enable submit button
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.background = '#8b5cf6';
+            submitBtn.style.cursor = 'pointer';
+            submitBtn.textContent = 'Submit Questionnaire';
+        }
+    }
+
+    // Called when reCAPTCHA expires
+    onRecaptchaExpired() {
+        console.log('reCAPTCHA expired');
+        this.recaptchaToken = null;
+        
+        // Disable submit button
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.style.background = 'rgba(139, 92, 246, 0.5)';
+            submitBtn.style.cursor = 'not-allowed';
+            submitBtn.textContent = 'Please complete reCAPTCHA';
+        }
+    }
+
+    initiateSubmission() {
+        if (!this.recaptchaToken) {
+            alert('Please complete the reCAPTCHA verification first.');
+            return;
         }
         
-        // Submit responses
+        if (this.isSubmitting) {
+            console.log('Submission already in progress');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtn');
+        const statusDiv = document.getElementById('submission-status');
+        const actionsDiv = document.getElementById('submission-actions');
+        
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+        }
+        
+        if (statusDiv) statusDiv.style.display = 'block';
+        if (actionsDiv) actionsDiv.style.display = 'none';
+        
+        // Start submission
         this.submitResponses();
     }
 
-    // reCAPTCHA verification - now uses token from verification screen
-    async verifyRecaptcha() {
-        // Return the token we collected from the reCAPTCHA verification screen
-        if (this.recaptchaToken) {
-            console.log('Using collected reCAPTCHA token');
-            return this.recaptchaToken;
-        }
-        
-        console.warn('No reCAPTCHA token available, proceeding without verification');
-        return null;
-    }
-
-    // Prepare submission data in the format your API expects
+    // Prepare submission data matching your API schema
     prepareSubmissionData() {
+        console.log('Preparing submission data...');
+        
         // Initialize with default structure matching your API schema
         const submissionData = {
             // Required fields
@@ -585,7 +683,7 @@ export class QuestionnaireEngine {
             historical_start_date: null,
             forecast_years: null,
             
-            // Business model questions (JSONB fields)
+            // Business model questions (JSONB fields for your API)
             model_purpose_selected: null,
             model_purpose_freetext: null,
             modeling_approach: null,
@@ -599,9 +697,11 @@ export class QuestionnaireEngine {
             revenue_staff: null,
             
             // Metadata
-            ip_address: null,
             user_agent: navigator.userAgent,
             submission_count: 1,
+            recaptchaToken: this.recaptchaToken,
+            
+            // Honeypot fields for spam detection
             honeypot_website: null,
             honeypot_phone: null
         };
@@ -623,90 +723,26 @@ export class QuestionnaireEngine {
             }
         }
         
+        console.log('Submission data prepared:', submissionData);
         return submissionData;
-    }
-
-    // Show error message
-    showErrorMessage(errorMessage) {
-        const statusDiv = document.getElementById('submission-status');
-        if (statusDiv) {
-            statusDiv.innerHTML = `
-                <div style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px; padding: 20px; margin-top: 20px;">
-                    <h4 style="color: #fca5a5; margin-bottom: 10px;">Submission Failed</h4>
-                    <p style="color: #fca5a5; margin-bottom: 15px;">${errorMessage}</p>
-                    <button onclick="window.questionnaireEngine.retrySubmission()" style="background: #dc2626; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer;">
-                        Try Again
-                    </button>
-                </div>
-            `;
-        }
-        
-        // Re-enable next button for retry
-        if (this.nextBtn) {
-            this.nextBtn.disabled = false;
-            this.nextBtn.textContent = 'Try Again';
-            this.nextBtn.onclick = () => this.retrySubmission();
-        }
-    }
-
-    // Show success message
-    showSuccessMessage() {
-        const statusDiv = document.getElementById('submission-status');
-        if (statusDiv) {
-            statusDiv.innerHTML = `
-                <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; padding: 20px; margin-top: 20px;">
-                    <h4 style="color: #4ade80; margin-bottom: 10px;">Successfully Submitted!</h4>
-                    <p style="color: #4ade80; margin-bottom: 0;">Your responses have been saved. We'll be in touch within 24-48 hours.</p>
-                </div>
-            `;
-        }
-        
-        // Update next button to close
-        if (this.nextBtn) {
-            this.nextBtn.disabled = false;
-            this.nextBtn.textContent = 'Close';
-            this.nextBtn.onclick = () => this.hideModal();
-        }
-    }
-
-    // Retry submission
-    retrySubmission() {
-        // Reset the status display
-        const statusDiv = document.getElementById('submission-status');
-        if (statusDiv) {
-            statusDiv.innerHTML = `
-                <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #8b5cf6; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                <p style="margin-top: 10px; color: rgba(255,255,255,0.6);">Submitting your responses...</p>
-            `;
-        }
-        
-        // Disable button during retry
-        if (this.nextBtn) {
-            this.nextBtn.disabled = true;
-            this.nextBtn.textContent = 'Submitting...';
-        }
-        
-        // Retry submission
-        this.submitResponses();
     }
 
     // Main submission method
     async submitResponses() {
+        if (this.isSubmitting) {
+            console.log('Submission already in progress');
+            return;
+        }
+        
+        this.isSubmitting = true;
+        
         try {
             console.log('Submitting responses...');
-            
-            // Verify reCAPTCHA if configured
-            const recaptchaToken = await this.verifyRecaptcha();
             
             // Prepare submission data
             const submissionData = this.prepareSubmissionData();
             
-            // Add reCAPTCHA token if available
-            if (recaptchaToken) {
-                submissionData.recaptchaToken = recaptchaToken;
-            }
-            
-            console.log('Submission data prepared:', submissionData);
+            console.log('Making HTTP request to:', this.config.apiEndpoint);
             
             // Make the HTTP request to your API
             const response = await fetch(this.config.apiEndpoint, {
@@ -717,9 +753,12 @@ export class QuestionnaireEngine {
                 body: JSON.stringify(submissionData)
             });
             
+            console.log('HTTP Response status:', response.status);
+            
             // Check if the request was successful
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+                console.error('HTTP Error:', errorData);
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
             
@@ -729,33 +768,110 @@ export class QuestionnaireEngine {
             // Store the submission ID for future reference
             if (result.submission_id) {
                 this.submissionId = result.submission_id;
+                console.log('Submission ID received:', this.submissionId);
             }
             
             // Show success message
-            this.showSuccessMessage();
+            this.showSuccessMessage(result);
             
             return result;
             
         } catch (error) {
             console.error('Submission failed:', error);
+            this.showErrorMessage(error);
+            throw error;
+        } finally {
+            this.isSubmitting = false;
+        }
+    }
+
+    showSuccessMessage(result) {
+        const statusDiv = document.getElementById('submission-status');
+        if (statusDiv) {
+            statusDiv.innerHTML = `
+                <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; padding: 30px; margin-top: 20px;">
+                    <div style="font-size: 2rem; margin-bottom: 15px;">✅</div>
+                    <h4 style="color: #4ade80; margin-bottom: 15px; font-size: 1.4rem;">Successfully Submitted!</h4>
+                    <p style="color: #4ade80; margin-bottom: 20px; font-size: 1.1rem;">
+                        Your questionnaire has been submitted successfully.
+                        ${result.submission_id ? `<br><small>Submission ID: ${result.submission_id}</small>` : ''}
+                    </p>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px;">
+                        We'll be in touch within 24-48 hours with your custom financial model.
+                    </p>
+                    <button onclick="window.questionnaireEngine.closeQuestionnaire()" 
+                            class="btn btn-primary"
+                            style="background: #22c55e; padding: 12px 24px; border-radius: 8px; border: none; color: white; cursor: pointer;">
+                        Close
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Optionally redirect after delay
+        if (result.submission_id) {
+            setTimeout(() => {
+                window.location.href = `/loading.html?submission_id=${result.submission_id}`;
+            }, 3000);
+        }
+    }
+
+    showErrorMessage(error) {
+        const statusDiv = document.getElementById('submission-status');
+        const actionsDiv = document.getElementById('submission-actions');
+        
+        if (statusDiv) {
+            statusDiv.style.display = 'block';
             
-            // Show user-friendly error message
             let errorMessage = 'An unexpected error occurred. Please try again.';
             
-            if (error.message.includes('fetch')) {
+            if (error.message.includes('fetch') || error.message.includes('network')) {
                 errorMessage = 'Network error. Please check your connection and try again.';
             } else if (error.message.includes('400')) {
-                errorMessage = 'There was an issue with your submission data. Please try again.';
+                errorMessage = 'There was an issue with your submission data. Please verify all fields are completed correctly.';
+            } else if (error.message.includes('429')) {
+                errorMessage = 'Too many requests. Please wait a few minutes before trying again.';
             } else if (error.message.includes('500')) {
                 errorMessage = 'Server error. Please try again in a few moments.';
             } else if (error.message) {
                 errorMessage = error.message;
             }
             
-            this.showErrorMessage(errorMessage);
-            
-            throw error;
+            statusDiv.innerHTML = `
+                <div style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px; padding: 30px; margin-top: 20px;">
+                    <div style="font-size: 2rem; margin-bottom: 15px;">❌</div>
+                    <h4 style="color: #fca5a5; margin-bottom: 15px; font-size: 1.4rem;">Submission Failed</h4>
+                    <p style="color: #fca5a5; margin-bottom: 20px; font-size: 1.1rem;">${errorMessage}</p>
+                    <button onclick="window.questionnaireEngine.retrySubmission()" 
+                            class="btn btn-primary"
+                            style="background: #dc2626; padding: 12px 24px; border-radius: 8px; border: none; color: white; cursor: pointer;">
+                        Try Again
+                    </button>
+                </div>
+            `;
         }
+        
+        // Show actions again for retry
+        if (actionsDiv) actionsDiv.style.display = 'block';
+    }
+
+    retrySubmission() {
+        // Reset reCAPTCHA
+        if (typeof grecaptcha !== 'undefined') {
+            grecaptcha.reset();
+        }
+        this.recaptchaToken = null;
+        
+        // Show completion screen again
+        this.showCompletionScreen();
+    }
+
+    closeQuestionnaire() {
+        // Hide the modal and clean up
+        this.hideModal();
+        
+        // Optionally redirect to home page or thank you page
+        // window.location.href = '/thank-you.html';
     }
 
     // Public API methods
@@ -764,7 +880,8 @@ export class QuestionnaireEngine {
             currentModule: this.currentModuleIndex,
             totalModules: this.modules.length,
             responses: { ...this.responses },
-            progress: Math.round(((this.currentModuleIndex + 1) / this.modules.length) * 100)
+            progress: Math.round(((this.currentModuleIndex + 1) / this.modules.length) * 100),
+            submissionId: this.submissionId
         };
     }
 
@@ -774,7 +891,7 @@ export class QuestionnaireEngine {
 
     goToModule(moduleId) {
         const moduleIndex = this.modules.findIndex(module => module.id === moduleId);
-        if (moduleIndex !== -1) {
+        if (moduleIndex !== -1 && this.shouldShowModule(this.modules[moduleIndex])) {
             this.currentModuleIndex = moduleIndex;
             this.showCurrentModule();
         }
@@ -786,9 +903,63 @@ export class QuestionnaireEngine {
         this.userHasInteracted = false;
         this.isProcessingNavigation = false;
         this.submissionId = null;
+        this.recaptchaToken = null;
+        this.isSubmitting = false;
         console.log('Questionnaire reset');
     }
+
+    // Debug methods
+    debugSubmission() {
+        console.log('=== DEBUG SUBMISSION ===');
+        console.log('Engine state:', {
+            isInitialized: this.isInitialized,
+            currentModule: this.currentModuleIndex,
+            totalModules: this.modules.length,
+            hasRecaptchaToken: !!this.recaptchaToken,
+            isSubmitting: this.isSubmitting
+        });
+        console.log('Responses:', this.responses);
+        
+        if (this.modules.length > 0) {
+            const submissionData = this.prepareSubmissionData();
+            console.log('Prepared submission data:', submissionData);
+        }
+        
+        console.log('API endpoint:', this.config.apiEndpoint);
+    }
+
+    // Test submission without reCAPTCHA (for debugging only)
+    async testSubmissionWithoutRecaptcha() {
+        console.warn('Testing submission without reCAPTCHA (debug only)...');
+        
+        const originalToken = this.recaptchaToken;
+        this.recaptchaToken = 'debug-token';
+        
+        try {
+            await this.submitResponses();
+            console.log('Test submission completed');
+        } catch (error) {
+            console.error('Test submission failed:', error);
+        } finally {
+            this.recaptchaToken = originalToken;
+        }
+    }
 }
+
+// Global reCAPTCHA callback functions
+window.onRecaptchaComplete = function(token) {
+    console.log('reCAPTCHA completed globally');
+    if (window.questionnaireEngine) {
+        window.questionnaireEngine.onRecaptchaComplete(token);
+    }
+};
+
+window.onRecaptchaExpired = function() {
+    console.log('reCAPTCHA expired globally');
+    if (window.questionnaireEngine) {
+        window.questionnaireEngine.onRecaptchaExpired();
+    }
+};
 
 // Export as default for flexibility
 export default QuestionnaireEngine;
