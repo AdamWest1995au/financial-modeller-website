@@ -4447,8 +4447,16 @@
         };
 
         window.onSubmissionRecaptchaComplete = function(response) {
-            console.log('Submission reCAPTCHA completed');
-        };
+    console.log('✅ Submission reCAPTCHA completed with token:', response);
+    
+    // Get the current questionnaire engine instance
+    const engine = window.currentQuestionnaireEngine || window.questionnaireEngine;
+    if (engine && engine.proceedWithSubmission) {
+        engine.proceedWithSubmission(response);
+    } else {
+        console.error('Questionnaire engine not found for submission');
+    }
+};0
 
         // Navigation functions for questions
 window.nextQuestion = function() {

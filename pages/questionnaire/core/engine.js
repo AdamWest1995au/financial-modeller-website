@@ -16,6 +16,8 @@ export class QuestionnaireEngine {
         this.isProcessingNavigation = false;
         this.userHasInteracted = false;
         this.submissionId = null;
+        this.submissionRecaptchaToken = null;
+        this.recaptchaToken = null;
         
         // UI Elements
         this.questionModal = null;
@@ -389,32 +391,38 @@ export class QuestionnaireEngine {
         }
     }
 
-    updateProgress() {
-        // Calculate progress based on visible modules only
-        const visibleModules = this.modules.filter((module, index) => {
-            // Temporarily set index to check visibility
-            const originalIndex = this.currentModuleIndex;
-            this.currentModuleIndex = index;
-            const isVisible = this.shouldShowModule(module);
-            this.currentModuleIndex = originalIndex;
-            return isVisible;
-        });
+    updateProgress(progressOverride = null) {
+        let progress;
         
-        // Find current position in visible modules
-        let currentVisibleIndex = 0;
-        for (let i = 0; i <= this.currentModuleIndex && i < this.modules.length; i++) {
-            const originalIndex = this.currentModuleIndex;
-            this.currentModuleIndex = i;
-            const isVisible = this.shouldShowModule(this.modules[i]);
-            this.currentModuleIndex = originalIndex;
+        if (progressOverride !== null) {
+            progress = progressOverride;
+        } else {
+            // Calculate progress based on visible modules only
+            const visibleModules = this.modules.filter((module, index) => {
+                // Temporarily set index to check visibility
+                const originalIndex = this.currentModuleIndex;
+                this.currentModuleIndex = index;
+                const isVisible = this.shouldShowModule(module);
+                this.currentModuleIndex = originalIndex;
+                return isVisible;
+            });
             
-            if (isVisible && i < this.currentModuleIndex) {
-                currentVisibleIndex++;
+            // Find current position in visible modules
+            let currentVisibleIndex = 0;
+            for (let i = 0; i <= this.currentModuleIndex && i < this.modules.length; i++) {
+                const originalIndex = this.currentModuleIndex;
+                this.currentModuleIndex = i;
+                const isVisible = this.shouldShowModule(this.modules[i]);
+                this.currentModuleIndex = originalIndex;
+                
+                if (isVisible && i < this.currentModuleIndex) {
+                    currentVisibleIndex++;
+                }
             }
+            
+            progress = visibleModules.length > 0 ? 
+                            Math.round(((currentVisibleIndex + 1) / visibleModules.length) * 100) : 0;
         }
-        
-        const progress = visibleModules.length > 0 ? 
-                        Math.round(((currentVisibleIndex + 1) / visibleModules.length) * 100) : 0;
         
         if (this.progressFill) {
             this.progressFill.style.width = progress + '%';
@@ -510,14 +518,103 @@ export class QuestionnaireEngine {
     completeQuestionnaire() {
         console.log('Questionnaire completed! Responses:', this.responses);
         
-        // Show completion message
+        // Show completion pane with reCAPTCHA requirement
         if (this.questionContent) {
             this.questionContent.innerHTML = `
                 <div style="text-align: center; padding: 60px 40px;">
                     <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
                     <h3 style="color: #8b5cf6; margin-bottom: 20px; font-size: 1.8rem;">Questionnaire Complete!</h3>
                     <p style="color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 1.1rem; line-height: 1.6;">
-                        Thank you for completing our questionnaire. We're now submitting your responses and our team will create your custom financial model.
+                        Thank you for completing our questionnaire. One final security check is required before we can process your submission.
+                    </p>
+                    <p style="color: rgba(255,255,255,0.6); margin-bottom: 40px; font-size: 0.95rem;">
+                        After verification, our team will create your custom financial model and you'll receive an email within 24-48 hours.
+                    </p>
+                </div>
+            `;
+        }
+        
+        // Update progress to 100%
+        this.updateProgress(100);
+        
+        // Hide back button, update next button for final submission
+        if (this.backBtn) this.backBtn.style.display = 'none';
+        if (this.nextBtn) {
+            this.nextBtn.textContent = 'Complete Security Check';
+            this.nextBtn.disabled = false;
+            this.nextBtn.onclick = () => this.showSubmissionRecaptcha();
+        }
+    }
+
+    showSubmissionRecaptcha() {
+        console.log('🔒 Showing submission reCAPTCHA...');
+        
+        // Store reference to engine for the callback
+        window.currentQuestionnaireEngine = this;
+        
+        // Show the submission reCAPTCHA modal
+        const submissionModal = document.getElementById('submissionRecaptchaModal');
+        if (submissionModal) {
+            submissionModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Reset reCAPTCHA if it exists
+            setTimeout(() => {
+                if (window.grecaptcha) {
+                    try {
+                        const submissionRecaptchaElement = document.getElementById('submissionRecaptcha');
+                        if (submissionRecaptchaElement) {
+                            grecaptcha.reset(submissionRecaptchaElement);
+                        }
+                    } catch (error) {
+                        console.warn('reCAPTCHA reset failed:', error);
+                    }
+                }
+            }, 100);
+        } else {
+            console.error('Submission reCAPTCHA modal not found');
+            // Fallback - proceed without second reCAPTCHA
+            this.proceedWithSubmission(null);
+        }
+    }
+
+    proceedWithSubmission(recaptchaToken) {
+        console.log('📤 Proceeding with submission...');
+        
+        // Store the submission reCAPTCHA token
+        this.submissionRecaptchaToken = recaptchaToken;
+        
+        // Hide the submission reCAPTCHA modal and show loading
+        const submissionModal = document.getElementById('submissionRecaptchaModal');
+        if (submissionModal) {
+            const recaptchaContent = submissionModal.querySelector('.recaptcha-content');
+            const loadingContent = submissionModal.querySelector('.submission-loading');
+            
+            if (recaptchaContent) recaptchaContent.style.display = 'none';
+            if (loadingContent) {
+                loadingContent.style.display = 'block';
+            } else {
+                // Fallback loading display
+                const loadingDiv = document.getElementById('submissionLoading');
+                if (loadingDiv) loadingDiv.style.display = 'block';
+            }
+        }
+        
+        // Update the question modal to show submission status
+        this.showSubmissionStatus();
+        
+        // Submit responses
+        this.submitResponses();
+    }
+
+    showSubmissionStatus() {
+        if (this.questionContent) {
+            this.questionContent.innerHTML = `
+                <div style="text-align: center; padding: 60px 40px;">
+                    <div style="font-size: 3rem; margin-bottom: 20px;">📤</div>
+                    <h3 style="color: #8b5cf6; margin-bottom: 20px; font-size: 1.8rem;">Submitting Your Responses</h3>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 1.1rem; line-height: 1.6;">
+                        We're now submitting your responses and our team will create your custom financial model.
                         You'll receive an email within 24-48 hours with your model and instructions for next steps.
                     </p>
                     <div id="submission-status" style="margin-top: 20px;">
@@ -528,7 +625,7 @@ export class QuestionnaireEngine {
             `;
         }
         
-        // Add CSS for spinner
+        // Add CSS for spinner if not already added
         if (!document.getElementById('spinner-styles')) {
             const style = document.createElement('style');
             style.id = 'spinner-styles';
@@ -547,16 +644,19 @@ export class QuestionnaireEngine {
             this.nextBtn.disabled = true;
             this.nextBtn.textContent = 'Submitting...';
         }
-        
-        // Submit responses
-        this.submitResponses();
     }
 
     // reCAPTCHA verification - now uses token from verification screen
     async verifyRecaptcha() {
-        // Return the token we collected from the reCAPTCHA verification screen
+        // Use the submission reCAPTCHA token if available
+        if (this.submissionRecaptchaToken) {
+            console.log('Using submission reCAPTCHA token');
+            return this.submissionRecaptchaToken;
+        }
+        
+        // Fallback to initial reCAPTCHA token if needed
         if (this.recaptchaToken) {
-            console.log('Using collected reCAPTCHA token');
+            console.log('Using initial reCAPTCHA token as fallback');
             return this.recaptchaToken;
         }
         
@@ -671,19 +771,21 @@ export class QuestionnaireEngine {
 
     // Retry submission
     retrySubmission() {
+        console.log('🔄 Retrying submission...');
+        
         // Reset the status display
         const statusDiv = document.getElementById('submission-status');
         if (statusDiv) {
             statusDiv.innerHTML = `
                 <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #8b5cf6; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                <p style="margin-top: 10px; color: rgba(255,255,255,0.6);">Submitting your responses...</p>
+                <p style="margin-top: 10px; color: rgba(255,255,255,0.6);">Retrying submission...</p>
             `;
         }
         
         // Disable button during retry
         if (this.nextBtn) {
             this.nextBtn.disabled = true;
-            this.nextBtn.textContent = 'Submitting...';
+            this.nextBtn.textContent = 'Retrying...';
         }
         
         // Retry submission
@@ -786,6 +888,8 @@ export class QuestionnaireEngine {
         this.userHasInteracted = false;
         this.isProcessingNavigation = false;
         this.submissionId = null;
+        this.submissionRecaptchaToken = null;
+        this.recaptchaToken = null;
         console.log('Questionnaire reset');
     }
 }
