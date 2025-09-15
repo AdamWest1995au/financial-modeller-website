@@ -334,6 +334,22 @@ class ConditionalLogic {
         if (sourceModuleId === 'customization-preference') {
             affected.push('revenue-structure', 'cogs-codb', 'expenses', 'assets', 'debt', 'equity-financing');
         }
+
+        // Assets module dependencies (NEW)
+        if (sourceModuleId === 'assets' && responseData.selectedAssets) {
+            // Assets might affect depreciation calculations in other modules
+            affected.push('expenses'); // Depreciation expenses
+            
+            // If PPE is selected, might affect related modules
+            if (responseData.selectedAssets.includes('ppe') || 
+                responseData.selectedAssets.some(asset => 
+                    asset.toLowerCase().includes('property') ||
+                    asset.toLowerCase().includes('plant') ||
+                    asset.toLowerCase().includes('equipment')
+                )) {
+                affected.push('cogs-codb'); // Could affect COGS if manufacturing equipment
+            }
+        }
         
         return affected;
     }
@@ -437,6 +453,105 @@ class ConditionalLogic {
             const logic = new ConditionalLogic();
             return logic.getCustomizationPreference(allResponses, section) === preference;
         };
+    }
+
+    // NEW: Assets-specific rule factories
+    static showIfAssetsSelected() {
+        return (allResponses) => {
+            const assetsResponse = ConditionalLogic.prototype.findResponseByType.call(
+                { findResponseByType: ConditionalLogic.prototype.findResponseByType }, 
+                allResponses, 
+                'assets-combined'
+            );
+            return assetsResponse?.selectedAssets?.length > 0 || false;
+        };
+    }
+
+    static showIfPPESelected() {
+        return (allResponses) => {
+            const assetsResponse = ConditionalLogic.prototype.findResponseByType.call(
+                { findResponseByType: ConditionalLogic.prototype.findResponseByType }, 
+                allResponses, 
+                'assets-combined'
+            );
+            
+            if (!assetsResponse?.selectedAssets) return false;
+            
+            return assetsResponse.selectedAssets.includes('ppe') || 
+                   assetsResponse.selectedAssets.some(asset => 
+                       asset.toLowerCase().includes('property') ||
+                       asset.toLowerCase().includes('plant') ||
+                       asset.toLowerCase().includes('equipment')
+                   );
+        };
+    }
+
+    static showIfInvestmentPropertiesSelected() {
+        return (allResponses) => {
+            const assetsResponse = ConditionalLogic.prototype.findResponseByType.call(
+                { findResponseByType: ConditionalLogic.prototype.findResponseByType }, 
+                allResponses, 
+                'assets-combined'
+            );
+            
+            if (!assetsResponse?.selectedAssets) return false;
+            
+            return assetsResponse.selectedAssets.includes('investment_properties') || 
+                   assetsResponse.selectedAssets.some(asset => 
+                       asset.toLowerCase().includes('investment') &&
+                       asset.toLowerCase().includes('properties')
+                   );
+        };
+    }
+
+    static showIfLandSelected() {
+        return (allResponses) => {
+            const assetsResponse = ConditionalLogic.prototype.findResponseByType.call(
+                { findResponseByType: ConditionalLogic.prototype.findResponseByType }, 
+                allResponses, 
+                'assets-combined'
+            );
+            
+            if (!assetsResponse?.selectedAssets) return false;
+            
+            return assetsResponse.selectedAssets.includes('land') || 
+                   assetsResponse.selectedAssets.some(asset => 
+                       asset.toLowerCase().includes('land')
+                   );
+        };
+    }
+
+    static showIfMultipleDepreciationMethodsEnabled() {
+        return (allResponses) => {
+            const assetsResponse = ConditionalLogic.prototype.findResponseByType.call(
+                { findResponseByType: ConditionalLogic.prototype.findResponseByType }, 
+                allResponses, 
+                'assets-combined'
+            );
+            
+            return assetsResponse?.multipleDepreciationMethods === 'yes' || false;
+        };
+    }
+
+    // NEW: Helper methods specifically for Assets module
+    hasUserSelectedAssetType(allResponses, assetType) {
+        const assetsResponse = this.findResponseByType(allResponses, 'assets-combined');
+        if (!assetsResponse?.selectedAssets) return false;
+        
+        return assetsResponse.selectedAssets.includes(assetType) ||
+               assetsResponse.selectedAssets.some(asset => 
+                   asset.toLowerCase().includes(assetType.toLowerCase())
+               );
+    }
+
+    isMultipleDepreciationEnabled(allResponses) {
+        const assetsResponse = this.findResponseByType(allResponses, 'assets-combined');
+        return assetsResponse?.multipleDepreciationMethods === 'yes';
+    }
+
+    getSelectedAssetTypes(allResponses) {
+        const assetsResponse = this.findResponseByType(allResponses, 'assets-combined');
+        return assetsResponse?.selectedAssets || [];
     }
 
     // Debug and development helpers

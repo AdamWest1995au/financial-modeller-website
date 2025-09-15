@@ -26,6 +26,9 @@ class QuestionnaireApp {
             // Register all modules
             await this.registerModules();
             
+            // Register conditional logic rules
+            this.registerConditionalLogic();
+            
             // Setup application-level event handlers
             this.setupEventHandlers();
             
@@ -151,6 +154,87 @@ class QuestionnaireApp {
         this.modules.push(moduleInstance);
         
         console.log(`✅ Module registered: ${name}`);
+    }
+
+    registerConditionalLogic() {
+        if (!this.engine?.conditionalLogic) {
+            console.warn('⚠️ Conditional logic not available');
+            return;
+        }
+
+        console.log('📋 Registering conditional logic rules...');
+
+        const logic = this.engine.conditionalLogic;
+
+        // Revenue module conditional logic
+        logic.registerRule('revenue-structure', {
+            '*': (allResponses) => {
+                // Show revenue module based on customization preferences
+                const customizationResponse = logic.findResponseByType(allResponses, 'customization-preference');
+                if (!customizationResponse) return true;
+                
+                const revenuePreference = customizationResponse.customizationPreferences?.revenue;
+                return revenuePreference !== 'generic';
+            }
+        });
+
+        // Assets module conditional logic
+        logic.registerRule('assets', {
+            '*': (allResponses) => {
+                // Show assets module based on customization preferences
+                const customizationResponse = logic.findResponseByType(allResponses, 'customization-preference');
+                if (!customizationResponse) return true;
+                
+                const assetsPreference = customizationResponse.customizationPreferences?.assets;
+                return assetsPreference !== 'generic';
+            }
+        });
+
+        // COGS/CODB module conditional logic
+        logic.registerRule('cogs-codb', {
+            '*': (allResponses) => {
+                const customizationResponse = logic.findResponseByType(allResponses, 'customization-preference');
+                if (!customizationResponse) return true;
+                
+                const cogsPreference = customizationResponse.customizationPreferences?.cogs;
+                return cogsPreference !== 'generic';
+            }
+        });
+
+        // Expenses module conditional logic
+        logic.registerRule('expenses', {
+            '*': (allResponses) => {
+                const customizationResponse = logic.findResponseByType(allResponses, 'customization-preference');
+                if (!customizationResponse) return true;
+                
+                const expensesPreference = customizationResponse.customizationPreferences?.expenses;
+                return expensesPreference !== 'generic';
+            }
+        });
+
+        // Debt module conditional logic
+        logic.registerRule('debt', {
+            '*': (allResponses) => {
+                const customizationResponse = logic.findResponseByType(allResponses, 'customization-preference');
+                if (!customizationResponse) return true;
+                
+                const debtPreference = customizationResponse.customizationPreferences?.debt;
+                return debtPreference !== 'generic';
+            }
+        });
+
+        // Equity module conditional logic
+        logic.registerRule('equity-financing', {
+            '*': (allResponses) => {
+                const customizationResponse = logic.findResponseByType(allResponses, 'customization-preference');
+                if (!customizationResponse) return true;
+                
+                const equityPreference = customizationResponse.customizationPreferences?.equity;
+                return equityPreference !== 'generic';
+            }
+        });
+
+        console.log('✅ Conditional logic rules registered');
     }
 
     setupEventHandlers() {

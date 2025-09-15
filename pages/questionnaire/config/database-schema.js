@@ -53,9 +53,11 @@ class DatabaseSchemaMapper {
                 // Will be added when Expenses module is implemented
             },
 
-            // Assets (placeholder for future)
+            // Assets - UPDATED WITH NEW FIELDS
             assets: {
-                // Will be added when Assets module is implemented
+                asset_types_selected: 'array|null',
+                asset_types_freetext: 'string|null',
+                multiple_depreciation_methods: 'enum:yes,no'
             },
 
             // Debt (placeholder for future)
@@ -147,6 +149,11 @@ class DatabaseSchemaMapper {
             sales_channels_freetext: null,
             revenue_staff: 'no',
 
+            // Assets defaults - NEW
+            asset_types_selected: null,
+            asset_types_freetext: null,
+            multiple_depreciation_methods: 'no',
+
             // Security defaults
             ip_address: null,
             user_agent: navigator.userAgent || null,
@@ -208,7 +215,7 @@ class DatabaseSchemaMapper {
         }
 
         // Validate arrays are not empty if present
-        ['revenue_generation_selected', 'model_purpose_selected'].forEach(field => {
+        ['revenue_generation_selected', 'model_purpose_selected', 'asset_types_selected'].forEach(field => {
             if (dbData[field] && Array.isArray(dbData[field]) && dbData[field].length === 0) {
                 result.warnings.push(`Field '${field}' is an empty array`);
             }
@@ -318,6 +325,11 @@ class DatabaseSchemaMapper {
             sales_channels_freetext: 'Custom sales channel',
             revenue_staff: 'Whether company has revenue generating staff',
 
+            // Assets - NEW DESCRIPTIONS
+            asset_types_selected: 'Array of selected asset types (PPE, Land, Investment Properties, custom)',
+            asset_types_freetext: 'Custom asset types entered by user',
+            multiple_depreciation_methods: 'Whether to model depreciation using multiple methods',
+
             // Security
             ip_address: 'User IP address (for spam detection)',
             user_agent: 'Browser user agent string',
@@ -355,7 +367,11 @@ class DatabaseSchemaMapper {
             'revenue-structure.chargingModels': 'charging_models',
             'revenue-structure.selectedProcurement': 'product_procurement_selected',
             'revenue-structure.selectedChannels': 'sales_channels_selected',
-            'revenue-structure.revenueStaff': 'revenue_staff'
+            'revenue-structure.revenueStaff': 'revenue_staff',
+
+            // Assets mapping - NEW
+            'assets.selectedAssets': 'asset_types_selected',
+            'assets.multipleDepreciationMethods': 'multiple_depreciation_methods'
         };
     }
 
