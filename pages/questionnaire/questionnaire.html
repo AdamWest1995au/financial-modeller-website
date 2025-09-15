@@ -4485,8 +4485,8 @@ window.previousQuestion = function() {
         };
     </script>
 
-   <!-- NEW: Modular Questionnaire System -->
-    <script type="module">
+<!-- NEW: Modular Questionnaire System -->
+<script type="module">
 import { QuestionnaireEngine } from './core/engine.js';
 import { UserInfoModule } from './modules/user-info.module.js';
 import { CustomizationModule } from './modules/customization.module.js';
@@ -4494,7 +4494,7 @@ import { CombinedParametersModule } from './modules/combined-parameters.module.j
 import { ModelingApproachModule } from './modules/modeling-approach.module.js';
 import { RevenueModule } from './modules/revenue.module.js';
 import { CogsCodbModule } from './modules/cogs-codb.module.js';
-import { Assets } from './modules/assets.module.js';
+import { AssetsModule } from './modules/assets.module.js';  // FIXED: Changed from 'Assets' to 'AssetsModule'
 
 // Initialize the questionnaire engine
 async function initializeQuestionnaire() {
@@ -4512,7 +4512,7 @@ async function initializeQuestionnaire() {
         engine.registerModule(new ModelingApproachModule());
         engine.registerModule(new RevenueModule());
         engine.registerModule(new CogsCodbModule());
-        engine.registerModule(new AssetsModule());
+        engine.registerModule(new AssetsModule()); // FIXED: This now matches the import
 
         await engine.initialize();
         window.questionnaireEngine = engine;
