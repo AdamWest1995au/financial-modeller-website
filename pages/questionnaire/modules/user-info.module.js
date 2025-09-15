@@ -203,23 +203,12 @@ export class UserInfoModule {
         const section = document.createElement('div');
         section.className = 'form-group';
 
-        // Create enhanced searchable country dropdown
-        const countryContainer = document.createElement('div');
-        countryContainer.className = 'country-dropdown-container';
-
         const label = document.createElement('label');
         label.textContent = 'Country';
         label.className = 'form-label required';
-        countryContainer.appendChild(label);
+        section.appendChild(label);
 
-        const searchableDropdown = this.createSearchableCountryDropdown();
-        countryContainer.appendChild(searchableDropdown);
-
-        section.appendChild(countryContainer);
-        return section;
-    }
-
-    createSearchableCountryDropdown() {
+        // Create searchable country dropdown container
         const container = document.createElement('div');
         container.className = 'searchable-dropdown-container';
 
@@ -330,6 +319,7 @@ export class UserInfoModule {
 
         container.appendChild(input);
         container.appendChild(dropdown);
+        section.appendChild(container);
 
         // Store references for validation
         this.countryInput = input;
@@ -338,7 +328,7 @@ export class UserInfoModule {
         // Add styles
         this.addCountryDropdownStyles();
 
-        return container;
+        return section;
     }
 
     highlightItem(items, index) {
@@ -435,11 +425,13 @@ export class UserInfoModule {
                 height: 18px;
                 border-radius: 2px;
                 object-fit: cover;
+                flex-shrink: 0;
             }
 
             .country-name {
                 color: #ffffff;
                 font-size: 0.95rem;
+                flex: 1;
             }
 
             .no-results {
@@ -459,13 +451,13 @@ export class UserInfoModule {
         const section = document.createElement('div');
         section.className = 'form-group';
 
-        const container = document.createElement('div');
-        container.className = 'industry-container';
-
         const label = document.createElement('label');
         label.textContent = 'Industry';
         label.className = 'form-label';
-        container.appendChild(label);
+        section.appendChild(label);
+
+        const container = document.createElement('div');
+        container.className = 'industry-container';
 
         // Create dropdown
         const dropdown = document.createElement('select');
