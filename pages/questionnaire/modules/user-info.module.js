@@ -35,8 +35,7 @@ export class UserInfoModule {
             { value: "hospitality", text: "Hospitality & Tourism" },
             { value: "consulting", text: "Professional Services & Consulting" },
             { value: "media", text: "Media & Entertainment" },
-            { value: "transportation", text: "Transportation & Logistics" },
-            { value: "other", text: "Other (please specify)" }
+            { value: "transportation", text: "Transportation & Logistics" }
         ];
     }
 
@@ -203,366 +202,342 @@ export class UserInfoModule {
         const section = document.createElement('div');
         section.className = 'form-group';
 
-        const label = document.createElement('label');
-        label.textContent = 'Country';
-        label.className = 'form-label required';
-        section.appendChild(label);
+        // Create the exact HTML structure from your original
+        section.innerHTML = `
+            <label class="form-label">
+                Country
+                <span class="required">*</span>
+            </label>
+            <div class="country-dropdown">
+                <img class="country-flag" id="countryFlag" src="https://flagcdn.com/24x18/un.png" alt="Select country" />
+                <input 
+                    type="text" 
+                    class="country-input" 
+                    id="country"
+                    placeholder="Search for your country..."
+                    required
+                    autocomplete="off"
+                >
+                <div class="country-options" id="countryOptions">
+                    ${window.countries ? window.countries.map(country => `
+                        <div class="country-option" data-value="${country.code}" data-name="${country.name}" data-flag="${country.flag}">
+                            <img class="country-option-flag" src="${country.flag}" alt="${country.name}" />
+                            <span class="country-option-name">${country.name}</span>
+                        </div>
+                    `).join('') : ''}
+                </div>
+            </div>
+        `;
 
-        // Create searchable country dropdown container
-        const container = document.createElement('div');
-        container.className = 'searchable-dropdown-container';
-
-        // Create the input field
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'searchable-dropdown-input';
-        input.placeholder = 'Search or select your country...';
-        input.autocomplete = 'off';
-
-        // Create the dropdown list
-        const dropdown = document.createElement('div');
-        dropdown.className = 'searchable-dropdown-list';
-        dropdown.style.display = 'none';
-
-        // Get countries data
-        const countries = window.countries || [];
-        let filteredCountries = [...countries];
-        let selectedCountryIndex = -1;
-
-        // Populate dropdown
-        const updateDropdown = (searchTerm = '') => {
-            dropdown.innerHTML = '';
-            
-            filteredCountries = countries.filter(country => 
-                country.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-
-            if (filteredCountries.length === 0) {
-                const noResults = document.createElement('div');
-                noResults.className = 'dropdown-item no-results';
-                noResults.textContent = 'No countries found';
-                dropdown.appendChild(noResults);
-                return;
-            }
-
-            filteredCountries.slice(0, 10).forEach((country, index) => {
-                const item = document.createElement('div');
-                item.className = 'dropdown-item country-item';
-                item.innerHTML = `
-                    <img src="${country.flag}" alt="${country.name} flag" class="country-flag" />
-                    <span class="country-name">${country.name}</span>
-                `;
-                item.dataset.code = country.code;
-                item.dataset.name = country.name;
-                item.dataset.flag = country.flag;
-                item.dataset.index = index;
-
-                item.addEventListener('click', () => {
-                    this.selectCountry(country, input, dropdown);
-                });
-
-                dropdown.appendChild(item);
-            });
-        };
-
-        // Input event handlers
-        input.addEventListener('input', (e) => {
-            const searchTerm = e.target.value;
-            updateDropdown(searchTerm);
-            dropdown.style.display = 'block';
-            selectedCountryIndex = -1;
-        });
-
-        input.addEventListener('focus', () => {
-            updateDropdown(input.value);
-            dropdown.style.display = 'block';
-        });
-
-        input.addEventListener('blur', (e) => {
-            // Delay hiding to allow clicks on dropdown items
-            setTimeout(() => {
-                dropdown.style.display = 'none';
-            }, 200);
-        });
-
-        // Keyboard navigation
-        input.addEventListener('keydown', (e) => {
-            const items = dropdown.querySelectorAll('.dropdown-item:not(.no-results)');
-            
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                selectedCountryIndex = Math.min(selectedCountryIndex + 1, items.length - 1);
-                this.highlightItem(items, selectedCountryIndex);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                selectedCountryIndex = Math.max(selectedCountryIndex - 1, 0);
-                this.highlightItem(items, selectedCountryIndex);
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (selectedCountryIndex >= 0 && items[selectedCountryIndex]) {
-                    const item = items[selectedCountryIndex];
-                    const country = {
-                        code: item.dataset.code,
-                        name: item.dataset.name,
-                        flag: item.dataset.flag
-                    };
-                    this.selectCountry(country, input, dropdown);
-                }
-            } else if (e.key === 'Escape') {
-                dropdown.style.display = 'none';
-                selectedCountryIndex = -1;
-            }
-        });
-
-        // Initial population
-        updateDropdown();
-
-        container.appendChild(input);
-        container.appendChild(dropdown);
-        section.appendChild(container);
-
-        // Store references for validation
-        this.countryInput = input;
-        this.countryDropdown = dropdown;
-
-        // Add styles
-        this.addCountryDropdownStyles();
+        // Store references and setup event listeners
+        this.setupCountryEvents(section);
 
         return section;
     }
 
-    highlightItem(items, index) {
-        items.forEach((item, i) => {
-            item.classList.toggle('highlighted', i === index);
+    setupCountryEvents(section) {
+        const countryInput = section.querySelector('#country');
+        const countryOptions = section.querySelector('#countryOptions');
+        const countryFlag = section.querySelector('#countryFlag');
+        
+        if (!countryInput || !countryOptions || !countryFlag) return;
+
+        // Store references
+        this.countryInput = countryInput;
+        this.countryOptions = countryOptions;
+        this.countryFlag = countryFlag;
+
+        // Show dropdown on focus and input
+        countryInput.addEventListener('focus', () => {
+            countryOptions.style.display = 'block';
+            this.filterCountries('');
+        });
+
+        countryInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            this.filterCountries(searchTerm);
+            countryOptions.style.display = 'block';
+        });
+
+        // Handle country selection
+        countryOptions.addEventListener('click', (e) => {
+            const option = e.target.closest('.country-option');
+            if (option) {
+                const countryName = option.dataset.name;
+                const countryCode = option.dataset.value;
+                const flagUrl = option.dataset.flag;
+                
+                countryInput.value = countryName;
+                countryInput.dataset.value = countryCode;
+                countryFlag.src = flagUrl;
+                countryFlag.alt = countryName;
+                countryOptions.style.display = 'none';
+                
+                this.responses.country = {
+                    name: countryName,
+                    code: countryCode,
+                    flag: flagUrl
+                };
+                
+                this.onResponseChange();
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!countryInput.contains(e.target) && !countryOptions.contains(e.target)) {
+                countryOptions.style.display = 'none';
+            }
+        });
+
+        // Handle keyboard events
+        countryInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                countryOptions.style.display = 'none';
+            }
+        });
+
+        countryInput.addEventListener('keyup', (e) => {
+            if (countryInput.value === '') {
+                countryFlag.src = 'https://flagcdn.com/24x18/un.png';
+                countryFlag.alt = 'Select country';
+                countryInput.dataset.value = '';
+                this.responses.country = null;
+                this.onResponseChange();
+            }
         });
     }
 
-    selectCountry(country, input, dropdown) {
-        input.value = country.name;
-        dropdown.style.display = 'none';
+    filterCountries(searchTerm) {
+        if (!this.countryOptions) return;
         
-        this.responses.country = {
-            name: country.name,
-            code: country.code,
-            flag: country.flag
-        };
-        
-        this.onResponseChange();
-    }
-
-    addCountryDropdownStyles() {
-        if (document.getElementById('country-dropdown-styles')) return;
-
-        const style = document.createElement('style');
-        style.id = 'country-dropdown-styles';
-        style.textContent = `
-            .searchable-dropdown-container {
-                position: relative;
-                width: 100%;
-            }
-
-            .searchable-dropdown-input {
-                width: 100%;
-                padding: 12px 16px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 8px;
-                background: rgba(255, 255, 255, 0.05);
-                color: #ffffff;
-                font-size: 1rem;
-                transition: all 0.3s ease;
-            }
-
-            .searchable-dropdown-input:focus {
-                outline: none;
-                border-color: #8b5cf6;
-                box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
-                background: rgba(255, 255, 255, 0.08);
-            }
-
-            .searchable-dropdown-input::placeholder {
-                color: rgba(255, 255, 255, 0.5);
-            }
-
-            .searchable-dropdown-list {
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                max-height: 200px;
-                overflow-y: auto;
-                background: rgba(0, 0, 0, 0.9);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 8px;
-                margin-top: 4px;
-                z-index: 1000;
-                backdrop-filter: blur(10px);
-            }
-
-            .dropdown-item {
-                padding: 12px 16px;
-                cursor: pointer;
-                transition: background-color 0.2s ease;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-
-            .dropdown-item:last-child {
-                border-bottom: none;
-            }
-
-            .dropdown-item:hover,
-            .dropdown-item.highlighted {
-                background: rgba(139, 92, 246, 0.2);
-            }
-
-            .country-item {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-
-            .country-flag {
-                width: 24px;
-                height: 18px;
-                border-radius: 2px;
-                object-fit: cover;
-                flex-shrink: 0;
-            }
-
-            .country-name {
-                color: #ffffff;
-                font-size: 0.95rem;
-                flex: 1;
-            }
-
-            .no-results {
-                color: rgba(255, 255, 255, 0.6);
-                font-style: italic;
-                cursor: default;
-            }
-
-            .no-results:hover {
-                background: transparent;
-            }
-        `;
-        document.head.appendChild(style);
+        const options = this.countryOptions.querySelectorAll('.country-option');
+        options.forEach(option => {
+            const countryName = option.dataset.name.toLowerCase();
+            const countryCode = option.dataset.value.toLowerCase();
+            const matches = countryName.includes(searchTerm) || countryCode.includes(searchTerm);
+            option.style.display = matches ? 'flex' : 'none';
+        });
     }
 
     createIndustrySection() {
         const section = document.createElement('div');
         section.className = 'form-group';
 
-        const label = document.createElement('label');
-        label.textContent = 'Industry';
-        label.className = 'form-label';
-        section.appendChild(label);
-
-        const container = document.createElement('div');
-        container.className = 'industry-container';
-
-        // Create dropdown
-        const dropdown = document.createElement('select');
-        dropdown.className = 'industry-dropdown';
-        dropdown.innerHTML = `
-            <option value="">Select your industry...</option>
-            ${this.industryOptions.map(option => 
-                `<option value="${option.value}">${option.text}</option>`
-            ).join('')}
+        // Create the exact HTML structure from your original
+        section.innerHTML = `
+            <label class="form-label">Industry</label>
+            <div class="industry-dropdown">
+                <input 
+                    type="text" 
+                    class="industry-input" 
+                    id="industry"
+                    placeholder="Search or select your industry..."
+                    autocomplete="off"
+                >
+                <div class="industry-options" id="industryOptions">
+                    ${this.industryOptions.map(option => `
+                        <div class="industry-option" data-value="${option.value}">${option.text}</div>
+                    `).join('')}
+                </div>
+                <div class="industry-custom-indicator" id="industryCustomIndicator">
+                    Press Enter to register your custom industry
+                </div>
+            </div>
         `;
 
-        // Create free text input (initially hidden)
-        const freeTextContainer = document.createElement('div');
-        freeTextContainer.className = 'free-text-container';
-        freeTextContainer.style.display = 'none';
-
-        const freeTextInput = document.createElement('input');
-        freeTextInput.type = 'text';
-        freeTextInput.className = 'industry-free-text';
-        freeTextInput.placeholder = 'Please specify your industry...';
-
-        freeTextContainer.appendChild(freeTextInput);
-
-        // Event handlers
-        dropdown.addEventListener('change', (e) => {
-            const value = e.target.value;
-            
-            if (value === 'other') {
-                freeTextContainer.style.display = 'block';
-                freeTextInput.focus();
-                this.responses.industry = { dropdown: value, freeText: '' };
-            } else {
-                freeTextContainer.style.display = 'none';
-                freeTextInput.value = '';
-                this.responses.industry = { dropdown: value, freeText: null };
-            }
-            
-            this.onResponseChange();
-        });
-
-        freeTextInput.addEventListener('input', (e) => {
-            if (this.responses.industry) {
-                this.responses.industry.freeText = e.target.value;
-                this.onResponseChange();
-            }
-        });
-
-        container.appendChild(dropdown);
-        container.appendChild(freeTextContainer);
-        section.appendChild(container);
-
-        // Store references
-        this.industryDropdown = dropdown;
-        this.industryFreeText = freeTextInput;
-
-        // Add styles
-        this.addIndustryStyles();
+        // Store references and setup event listeners
+        this.setupIndustryEvents(section);
 
         return section;
     }
 
-    addIndustryStyles() {
-        if (document.getElementById('industry-styles')) return;
+    setupIndustryEvents(section) {
+        const industryInput = section.querySelector('#industry');
+        const industryOptions = section.querySelector('#industryOptions');
+        const industryCustomIndicator = section.querySelector('#industryCustomIndicator');
+        
+        if (!industryInput || !industryOptions || !industryCustomIndicator) return;
 
-        const style = document.createElement('style');
-        style.id = 'industry-styles';
-        style.textContent = `
-            .industry-container {
-                width: 100%;
-            }
+        // Store references
+        this.industryInput = industryInput;
+        this.industryOptions = industryOptions;
+        this.industryCustomIndicator = industryCustomIndicator;
 
-            .industry-dropdown,
-            .industry-free-text {
-                width: 100%;
-                padding: 12px 16px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 8px;
-                background: rgba(255, 255, 255, 0.05);
-                color: #ffffff;
-                font-size: 1rem;
-                transition: all 0.3s ease;
+        // Show dropdown on focus
+        industryInput.addEventListener('focus', () => {
+            if (!industryInput.dataset.isCustom || industryInput.dataset.isCustom === 'false') {
+                industryOptions.style.display = 'block';
+                this.filterIndustries(industryInput.value.toLowerCase());
             }
+        });
 
-            .industry-dropdown:focus,
-            .industry-free-text:focus {
-                outline: none;
-                border-color: #8b5cf6;
-                box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
-                background: rgba(255, 255, 255, 0.08);
+        // Filter industries and handle custom input as user types
+        industryInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            // Check if the input exactly matches any dropdown option
+            const exactMatch = Array.from(industryOptions.querySelectorAll('.industry-option')).find(option => {
+                return option.textContent.toLowerCase() === searchTerm;
+            });
+            
+            if (exactMatch) {
+                // User typed something that matches a dropdown option exactly
+                industryInput.dataset.value = exactMatch.dataset.value;
+                industryInput.dataset.isCustom = 'false';
+                industryOptions.style.display = 'block';
+                industryCustomIndicator.classList.remove('show');
+                this.filterIndustries(searchTerm);
+            } else if (searchTerm === '') {
+                // Input is empty
+                industryInput.dataset.value = '';
+                industryInput.dataset.isCustom = 'false';
+                industryOptions.style.display = 'block';
+                industryCustomIndicator.classList.remove('show');
+                this.filterIndustries('');
+            } else {
+                // User is typing custom text or partial match
+                const hasPartialMatches = Array.from(industryOptions.querySelectorAll('.industry-option')).some(option => {
+                    return option.textContent.toLowerCase().includes(searchTerm);
+                });
+                
+                if (hasPartialMatches && searchTerm.length < 15) {
+                    // Show dropdown with filtered options
+                    industryInput.dataset.value = '';
+                    industryInput.dataset.isCustom = 'false';
+                    industryOptions.style.display = 'block';
+                    industryCustomIndicator.classList.remove('show');
+                    this.filterIndustries(searchTerm);
+                } else {
+                    // No matches or long text, treat as custom input
+                    industryInput.dataset.value = '';
+                    industryInput.dataset.isCustom = 'true';
+                    industryOptions.style.display = 'none';
+                    industryCustomIndicator.classList.add('show');
+                }
             }
+            
+            this.updateIndustryResponse();
+        });
 
-            .industry-dropdown option {
-                background: #1a1a1a;
-                color: #ffffff;
+        // Handle industry selection from dropdown
+        industryOptions.addEventListener('click', (e) => {
+            const option = e.target.closest('.industry-option');
+            if (option) {
+                const industryText = option.textContent;
+                
+                industryInput.value = industryText;
+                industryInput.dataset.value = option.dataset.value;
+                industryInput.dataset.isCustom = 'false';
+                industryOptions.style.display = 'none';
+                industryCustomIndicator.classList.remove('show');
+                
+                this.updateIndustryResponse();
             }
+        });
 
-            .industry-free-text::placeholder {
-                color: rgba(255, 255, 255, 0.5);
+        // Handle Enter key to accept custom input
+        industryInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                industryOptions.style.display = 'none';
+                
+                const currentValue = industryInput.value.trim();
+                if (currentValue) {
+                    // Check if it matches any dropdown option
+                    const exactMatch = Array.from(industryOptions.querySelectorAll('.industry-option')).find(option => {
+                        return option.textContent.toLowerCase() === currentValue.toLowerCase();
+                    });
+                    
+                    if (exactMatch) {
+                        // It's actually a dropdown option
+                        industryInput.dataset.value = exactMatch.dataset.value;
+                        industryInput.dataset.isCustom = 'false';
+                        industryCustomIndicator.classList.remove('show');
+                    } else {
+                        // It's custom text
+                        industryInput.dataset.value = '';
+                        industryInput.dataset.isCustom = 'true';
+                        industryCustomIndicator.classList.remove('show');
+                    }
+                }
+                
+                this.updateIndustryResponse();
+            } else if (e.key === 'Escape') {
+                industryOptions.style.display = 'none';
             }
+        });
 
-            .free-text-container {
-                margin-top: 8px;
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!industryInput.contains(e.target) && !industryOptions.contains(e.target)) {
+                industryOptions.style.display = 'none';
+                
+                // If there's text and it's not from dropdown, mark as custom
+                const currentValue = industryInput.value.trim();
+                if (currentValue && !industryInput.dataset.value) {
+                    const exactMatch = Array.from(industryOptions.querySelectorAll('.industry-option')).find(option => {
+                        return option.textContent.toLowerCase() === currentValue.toLowerCase();
+                    });
+                    
+                    if (!exactMatch) {
+                        industryInput.dataset.isCustom = 'true';
+                        industryCustomIndicator.classList.remove('show');
+                    }
+                }
+                
+                this.updateIndustryResponse();
             }
-        `;
-        document.head.appendChild(style);
+        });
+
+        // Clear selection when input is manually cleared
+        industryInput.addEventListener('keyup', (e) => {
+            if (industryInput.value === '') {
+                industryInput.dataset.value = '';
+                industryInput.dataset.isCustom = 'false';
+                industryCustomIndicator.classList.remove('show');
+                this.updateIndustryResponse();
+            }
+        });
+    }
+
+    filterIndustries(searchTerm) {
+        if (!this.industryOptions) return;
+        
+        const options = this.industryOptions.querySelectorAll('.industry-option');
+        options.forEach(option => {
+            const industryText = option.textContent.toLowerCase();
+            const matches = industryText.includes(searchTerm);
+            option.style.display = matches ? 'block' : 'none';
+        });
+    }
+
+    updateIndustryResponse() {
+        if (!this.industryInput) return;
+        
+        const input = this.industryInput;
+        const isCustom = input.dataset.isCustom === 'true';
+        const value = input.value.trim();
+        
+        if (value) {
+            if (isCustom) {
+                this.responses.industry = {
+                    dropdown: '',
+                    freeText: value,
+                    value: ''
+                };
+            } else {
+                this.responses.industry = {
+                    dropdown: value,
+                    freeText: '',
+                    value: input.dataset.value || ''
+                };
+            }
+        } else {
+            this.responses.industry = null;
+        }
+        
+        this.onResponseChange();
     }
 
     createParameterToggleSection() {
@@ -643,13 +618,27 @@ export class UserInfoModule {
                 if (component && value !== undefined && value !== null) {
                     if (key === 'country' && typeof value === 'object' && this.countryInput) {
                         this.countryInput.value = value.name || '';
-                    } else if (key === 'industry' && typeof value === 'object') {
-                        if (this.industryDropdown) {
-                            this.industryDropdown.value = value.dropdown || '';
-                            if (value.dropdown === 'other') {
-                                const freeTextContainer = document.querySelector('.free-text-container');
-                                if (freeTextContainer) freeTextContainer.style.display = 'block';
-                                if (this.industryFreeText) this.industryFreeText.value = value.freeText || '';
+                        this.countryInput.dataset.value = value.code || '';
+                        if (this.countryFlag && value.flag) {
+                            this.countryFlag.src = value.flag;
+                            this.countryFlag.alt = value.name || 'Selected country';
+                        }
+                    } else if (key === 'industry' && typeof value === 'object' && this.industryInput) {
+                        if (value.dropdown) {
+                            // It's a dropdown selection
+                            this.industryInput.value = value.dropdown;
+                            this.industryInput.dataset.value = value.value || '';
+                            this.industryInput.dataset.isCustom = 'false';
+                            if (this.industryCustomIndicator) {
+                                this.industryCustomIndicator.classList.remove('show');
+                            }
+                        } else if (value.freeText) {
+                            // It's custom text
+                            this.industryInput.value = value.freeText;
+                            this.industryInput.dataset.value = '';
+                            this.industryInput.dataset.isCustom = 'true';
+                            if (this.industryCustomIndicator) {
+                                this.industryCustomIndicator.classList.remove('show');
                             }
                         }
                     } else if (component.setValue) {
