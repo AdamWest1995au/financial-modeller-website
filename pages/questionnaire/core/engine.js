@@ -1,4 +1,4 @@
-// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH SUBMISSION FUNCTIONALITY AND REDIRECT
+// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH CONDITIONAL LOGIC INTEGRATION
 
 export class QuestionnaireEngine {
     constructor(config = {}) {
@@ -20,6 +20,9 @@ export class QuestionnaireEngine {
         this.recaptchaToken = null;
         this.submissionRecaptchaWidgetId = undefined;
         
+        // ADDED: Initialize conditional logic system
+        this.conditionalLogic = null; // Will be initialized in initialize()
+        
         // UI Elements
         this.questionModal = null;
         this.questionTitle = null;
@@ -38,6 +41,14 @@ export class QuestionnaireEngine {
     async initialize() {
         try {
             console.log('Initializing Questionnaire Engine...');
+            
+            // ADDED: Initialize conditional logic system
+            if (window.ConditionalLogic) {
+                this.conditionalLogic = new window.ConditionalLogic();
+                console.log('Conditional logic system initialized');
+            } else {
+                console.warn('ConditionalLogic not available - modules will use individual shouldShow methods only');
+            }
             
             // Get UI elements
             this.questionModal = document.getElementById('questionModal');
@@ -316,15 +327,33 @@ export class QuestionnaireEngine {
         });
     }
 
-    // Conditional logic methods
+    // UPDATED: Enhanced shouldShowModule method with conditional logic integration
     shouldShowModule(module) {
-        // If module has shouldShow method, use it
-        if (typeof module.shouldShow === 'function') {
+        let shouldShow = true;
+        
+        // First check with conditional logic system if available
+        if (this.conditionalLogic) {
             try {
-                const result = module.shouldShow(this.responses);
-                console.log(`Checking module ${module.id} shouldShow: ${result}`);
+                // Use the conditional logic system to check global rules for this module
+                const moduleRules = this.conditionalLogic.rules.get(module.id);
+                if (moduleRules && moduleRules['*']) {
+                    const ruleResult = this.conditionalLogic.evaluateRule(moduleRules['*'], this.responses, null);
+                    console.log(`Conditional logic for ${module.id}: ${ruleResult}`);
+                    shouldShow = shouldShow && ruleResult;
+                }
+            } catch (error) {
+                console.error(`Error in conditional logic for module ${module.id}:`, error);
+                // Continue with module's own shouldShow method
+            }
+        }
+        
+        // Then check module's own shouldShow method
+        if (typeof module.shouldShow === 'function' && shouldShow) {
+            try {
+                const moduleResult = module.shouldShow(this.responses);
+                console.log(`Module ${module.id} shouldShow: ${moduleResult}`);
                 
-                // Debug: Show what we're checking for combined-parameters
+                // Debug logging for specific modules
                 if (module.id === 'combined-parameters') {
                     console.log('Checking combined-parameters visibility');
                     console.log('Current responses:', this.responses);
@@ -335,16 +364,21 @@ export class QuestionnaireEngine {
                     }
                 }
                 
-                return result;
+                shouldShow = shouldShow && moduleResult;
             } catch (error) {
                 console.error(`Error checking shouldShow for module ${module.id}:`, error);
-                return true; // Default to showing if error
+                // Default to showing if error, but respect conditional logic result
             }
         }
         
-        // Default to showing module if no conditional logic
-        console.log(`Module ${module.id} has no shouldShow method, showing by default`);
-        return true;
+        // Default to showing module if no conditional logic and no module shouldShow method
+        if (!this.conditionalLogic && typeof module.shouldShow !== 'function') {
+            console.log(`Module ${module.id} has no conditional logic - showing by default`);
+            shouldShow = true;
+        }
+        
+        console.log(`Final decision for ${module.id}: ${shouldShow}`);
+        return shouldShow;
     }
 
     findNextVisibleModule() {
@@ -902,6 +936,11 @@ export class QuestionnaireEngine {
             sales_channels_selected: null,
             sales_channels_freetext: null,
             revenue_staff: null,
+            
+            // Assets fields (ADDED)
+            asset_types_selected: null,
+            asset_types_freetext: null,
+            multiple_depreciation_methods: 'no',
             
             // Metadata
             ip_address: null,
