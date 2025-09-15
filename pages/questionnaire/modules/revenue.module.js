@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/revenue.module.js - COMPLETE REWRITTEN VERSION
+// /pages/questionnaire/modules/revenue.module.js - UPDATED VERSION
 import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
 
@@ -19,7 +19,7 @@ export class RevenueModule {
             revenueStaff: 'no'
         };
 
-        // Revenue type to charging model mappings
+        // Revenue type to charging model mappings - UPDATED TO UNIFIED OPTIONS
         this.chargingModelOptions = {
             'products': [
                 { value: 'oneoff', text: 'One off fees' },
@@ -27,20 +27,19 @@ export class RevenueModule {
                 { value: 'royalties', text: 'Royalties' }
             ],
             'services': [
-                { value: 'hourly', text: 'Hourly rates' },
-                { value: 'project', text: 'Project-based' },
-                { value: 'retainer', text: 'Monthly retainer' },
-                { value: 'subscription', text: 'Subscription services' }
+                { value: 'oneoff', text: 'One off fees' },
+                { value: 'subscription', text: 'Subscription services' },
+                { value: 'royalties', text: 'Royalties' }
             ],
             'assets': [
-                { value: 'rental', text: 'Rental fees' },
-                { value: 'lease', text: 'Lease agreements' },
+                { value: 'oneoff', text: 'One off fees' },
+                { value: 'subscription', text: 'Subscription services' },
                 { value: 'royalties', text: 'Royalties' }
             ],
             'other': [
-                { value: 'commission', text: 'Commission-based' },
-                { value: 'licensing', text: 'Licensing fees' },
-                { value: 'advertising', text: 'Advertising revenue' }
+                { value: 'oneoff', text: 'One off fees' },
+                { value: 'subscription', text: 'Subscription services' },
+                { value: 'royalties', text: 'Royalties' }
             ]
         };
     }
@@ -251,11 +250,9 @@ export class RevenueModule {
             id: 'salesChannels',
             placeholder: 'Search or select sales channels...',
             options: [
-                { value: 'online_direct', text: 'Online (Direct to consumer)' },
-                { value: 'online_marketplace', text: 'Online marketplaces (Amazon, eBay, etc.)' },
-                { value: 'retail_stores', text: 'Physical retail stores' },
-                { value: 'wholesalers', text: 'Wholesalers/Distributors' },
-                { value: 'b2b_direct', text: 'B2B Direct sales' }
+                { value: 'physical_shopfront', text: 'Physical shopfront' },
+                { value: 'website', text: 'Website' },
+                { value: 'sales_driven_b2b', text: 'Sales driven (B2B)' }
             ],
             allowCustom: true,
             required: false,
