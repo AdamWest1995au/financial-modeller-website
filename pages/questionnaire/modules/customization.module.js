@@ -1,309 +1,335 @@
-// modules/customization.module.js
-
-import { BaseComponent } from '../components/base-component.js';
-import { Toggle } from '../components/toggle.js';
-
-/**
- * Customization Module - Handles preference selection for model sections
- * Controls whether other modules show as "custom" (full questionnaire) or "generic" (placeholder)
- */
+// /pages/questionnaire/modules/customization.module.js
 export class CustomizationModule {
     constructor() {
-        this.id = 'customization-preference';
+        this.id = 'customization';
         this.title = 'How much customisation would you like';
         this.description = 'There will be a slight time investment to give us the necessary information to build your model, if you would like to reduce time you can opt for some parts to be generic models';
-        this.required = false;
-        
-        // Section configurations with time estimates
-        this.sections = [
-            { key: 'revenue', title: 'Revenue Generation', timeMinutes: 3 },
-            { key: 'cogs', title: 'COGS and CODB', timeMinutes: 3 },
-            { key: 'expenses', title: 'Expenses', timeMinutes: 3 },
-            { key: 'assets', title: 'Assets', timeMinutes: 3 },
-            { key: 'debt', title: 'Debt', timeMinutes: 3 },
-            { key: 'equity', title: 'Equity Financing', timeMinutes: 3 }
-        ];
-        
+        this.required = true;
         this.components = {};
-        this.preferences = {};
         
-        // Initialize default preferences (all generic)
+        // Define all customizable sections
+        this.sections = [
+            {
+                id: 'revenue',
+                title: 'Revenue Generation',
+                timeEstimate: '3 Minutes',
+                key: 'revenueCustomization'
+            },
+            {
+                id: 'cogs',
+                title: 'COGS and CODB',
+                timeEstimate: '3 Minutes', 
+                key: 'cogsCustomization'
+            },
+            {
+                id: 'expenses',
+                title: 'Expenses',
+                timeEstimate: '3 Minutes',
+                key: 'expensesCustomization'
+            },
+            {
+                id: 'assets',
+                title: 'Assets',
+                timeEstimate: '3 Minutes',
+                key: 'assetsCustomization'
+            },
+            {
+                id: 'debt',
+                title: 'Debt',
+                timeEstimate: '3 Minutes',
+                key: 'debtCustomization'
+            },
+            {
+                id: 'equity',
+                title: 'Equity Financing',
+                timeEstimate: '3 Minutes',
+                key: 'equityCustomization'
+            }
+        ];
+
+        // Initialize responses - default to Generic (false = Generic, true = Custom)
+        this.responses = {};
         this.sections.forEach(section => {
-            this.preferences[section.key] = 'generic';
+            this.responses[section.key] = false; // Default to Generic
         });
     }
 
-    /**
-     * Render the customization preference form
-     */
     render() {
         const container = document.createElement('div');
         container.className = 'customization-preference-container';
+
+        // Calculate total estimated time
+        const totalTime = this.calculateTotalTime();
         
+        // Create time box
+        const timeBox = this.createTimeBox(totalTime);
+        container.appendChild(timeBox);
+
         // Create sections container
         const sectionsContainer = document.createElement('div');
         sectionsContainer.className = 'customization-sections';
-        
-        // Create each section
+
+        // Create each customization section
         this.sections.forEach(section => {
-            const sectionElement = this.createSectionElement(section);
+            const sectionElement = this.createCustomizationSection(section);
             sectionsContainer.appendChild(sectionElement);
         });
-        
+
         container.appendChild(sectionsContainer);
-        
-        // Update initial time estimate
-        this.updateTimeEstimate();
-        
         return container;
     }
 
-    /**
-     * Create individual section element with toggle
-     */
-    createSectionElement(section) {
-        const sectionDiv = document.createElement('div');
-        sectionDiv.className = 'customization-section';
-        
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'customization-row';
-        
+    createTimeBox(totalTime) {
+        const timeBox = document.createElement('div');
+        timeBox.className = 'customization-time-box';
+        timeBox.innerHTML = `
+            <div class="customization-time-label">Estimated time to complete</div>
+            <div class="customization-time-value" id="totalTimeEstimate">${totalTime}</div>
+        `;
+        return timeBox;
+    }
+
+    createCustomizationSection(section) {
+        const sectionElement = document.createElement('div');
+        sectionElement.className = 'customization-section';
+        sectionElement.dataset.sectionId = section.id;
+
+        const row = document.createElement('div');
+        row.className = 'customization-row';
+
         // Text content
         const textDiv = document.createElement('div');
         textDiv.className = 'customization-text';
         
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'customization-section-title';
-        titleDiv.textContent = section.title;
-        
-        const subtitleDiv = document.createElement('div');
-        subtitleDiv.className = 'customization-section-subtitle';
-        subtitleDiv.textContent = `Estimated time to complete: ${section.timeMinutes} Minutes`;
-        
-        textDiv.appendChild(titleDiv);
-        textDiv.appendChild(subtitleDiv);
-        
-        // Controls container
+        const title = document.createElement('div');
+        title.className = 'customization-section-title';
+        title.textContent = section.title;
+
+        const subtitle = document.createElement('div');
+        subtitle.className = 'customization-section-subtitle';
+        subtitle.textContent = `Estimated time to complete ${section.timeEstimate}`;
+
+        textDiv.appendChild(title);
+        textDiv.appendChild(subtitle);
+
+        // Controls
         const controlsDiv = document.createElement('div');
         controlsDiv.className = 'customization-controls';
-        
+
         const toggleContainer = document.createElement('div');
         toggleContainer.className = 'customization-toggle-container';
+
+        // Create custom toggle element (not using the Toggle component due to specific styling needs)
+        const toggle = document.createElement('div');
+        toggle.className = 'customization-toggle';
+        toggle.dataset.sectionKey = section.key;
         
-        // Create toggle component
-        const toggleConfig = {
-            id: `${section.key}Toggle`,
-            labels: ['Generic', 'Custom'],
-            defaultValue: 'generic',
-            width: '180px'
-        };
-        
-        const toggle = new Toggle(toggleConfig);
-        this.components[section.key] = toggle;
-        
-        // Add change listener
-        toggle.onChange = (value) => {
-            this.preferences[section.key] = value;
-            this.updateTimeEstimate();
-            this.onPreferenceChange();
-        };
-        
-        // FIXED: Pass container to render method instead of using appendChild
-        toggle.render(toggleContainer);
+        // Add active class if Custom is selected (true)
+        if (this.responses[section.key]) {
+            toggle.classList.add('active');
+        }
+
+        const labelsContainer = document.createElement('div');
+        labelsContainer.className = 'customization-toggle-labels';
+
+        const genericLabel = document.createElement('div');
+        genericLabel.className = 'customization-toggle-label';
+        genericLabel.textContent = 'Generic';
+
+        const customLabel = document.createElement('div');
+        customLabel.className = 'customization-toggle-label';
+        customLabel.textContent = 'Custom';
+
+        labelsContainer.appendChild(genericLabel);
+        labelsContainer.appendChild(customLabel);
+        toggle.appendChild(labelsContainer);
+
+        // Add click handler
+        toggle.addEventListener('click', () => {
+            this.handleToggleClick(section.key, toggle);
+        });
+
+        toggleContainer.appendChild(toggle);
         controlsDiv.appendChild(toggleContainer);
-        
-        // Assemble row
-        rowDiv.appendChild(textDiv);
-        rowDiv.appendChild(controlsDiv);
-        sectionDiv.appendChild(rowDiv);
-        
-        return sectionDiv;
+
+        row.appendChild(textDiv);
+        row.appendChild(controlsDiv);
+        sectionElement.appendChild(row);
+
+        // Store reference to toggle element
+        this.components[section.key] = toggle;
+
+        return sectionElement;
     }
 
-    /**
-     * Update total time estimate based on current preferences
-     */
-    updateTimeEstimate() {
-        let totalMinutes = 3; // Base time for required sections
+    handleToggleClick(sectionKey, toggleElement) {
+        // Toggle the state: false = Generic, true = Custom
+        this.responses[sectionKey] = !this.responses[sectionKey];
         
-        // Add time for each custom section
+        // Update visual state
+        if (this.responses[sectionKey]) {
+            toggleElement.classList.add('active'); // Custom selected
+        } else {
+            toggleElement.classList.remove('active'); // Generic selected
+        }
+
+        // Update total time estimate
+        this.updateTimeEstimate();
+        
+        // Trigger validation
+        this.onResponseChange();
+
+        // Store the customization preferences globally for other modules to access
+        this.updateGlobalCustomizationState();
+    }
+
+    updateTimeEstimate() {
+        const totalTime = this.calculateTotalTime();
+        const timeElement = document.getElementById('totalTimeEstimate');
+        if (timeElement) {
+            timeElement.textContent = totalTime;
+        }
+    }
+
+    calculateTotalTime() {
+        let totalMinutes = 0;
+        
         this.sections.forEach(section => {
-            if (this.preferences[section.key] === 'custom') {
-                totalMinutes += section.timeMinutes;
+            if (this.responses[section.key]) { // If Custom is selected
+                totalMinutes += 3; // 3 minutes per custom section
             }
         });
-        
-        const timeText = `${totalMinutes} minutes`;
-        
-        // Update time displays
-        const timeElement = document.getElementById('totalEstimatedTime');
-        if (timeElement) {
-            timeElement.textContent = timeText;
-        }
-        
-        const topTimeElement = document.getElementById('totalEstimatedTimeTop');
-        if (topTimeElement) {
-            topTimeElement.textContent = timeText;
+
+        if (totalMinutes === 0) {
+            return '< 1 Minute'; // All generic
+        } else if (totalMinutes < 60) {
+            return `${totalMinutes} Minutes`;
+        } else {
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            return minutes > 0 ? `${hours}h ${minutes}m` : `${hours} hour${hours > 1 ? 's' : ''}`;
         }
     }
 
-    /**
-     * Handle preference changes
-     */
-    onPreferenceChange() {
-        // Trigger validation update
+    updateGlobalCustomizationState() {
+        // Store customization preferences in a global state that other modules can access
+        if (typeof window !== 'undefined') {
+            window.customizationPreferences = { ...this.responses };
+            
+            // Emit a custom event for any modules that need to listen
+            const event = new CustomEvent('customizationChanged', {
+                detail: { preferences: this.responses }
+            });
+            document.dispatchEvent(event);
+        }
+    }
+
+    onResponseChange() {
         if (window.questionnaireEngine && window.questionnaireEngine.validator) {
             window.questionnaireEngine.validator.validateCurrentQuestion();
         }
     }
 
-    /**
-     * Get current response data
-     */
     getResponse() {
         return {
-            type: 'customization-preference',
-            customizationPreferences: { ...this.preferences },
+            type: 'customization-preferences',
+            data: { ...this.responses },
+            customizationSummary: this.getCustomizationSummary(),
             timestamp: new Date().toISOString()
         };
     }
 
-    /**
-     * Load previous response
-     */
-    loadResponse(response) {
-        if (!response || !response.customizationPreferences) return;
-        
-        // Update preferences
-        Object.entries(response.customizationPreferences).forEach(([key, value]) => {
-            if (this.preferences.hasOwnProperty(key)) {
-                this.preferences[key] = value;
-                
-                // Update component if it exists
-                if (this.components[key]) {
-                    this.components[key].setValue(value);
-                }
+    getCustomizationSummary() {
+        const summary = {
+            totalCustomSections: 0,
+            totalGenericSections: 0,
+            customSections: [],
+            genericSections: []
+        };
+
+        this.sections.forEach(section => {
+            if (this.responses[section.key]) {
+                summary.totalCustomSections++;
+                summary.customSections.push(section.title);
+            } else {
+                summary.totalGenericSections++;
+                summary.genericSections.push(section.title);
             }
         });
-        
-        // Update time estimate
-        this.updateTimeEstimate();
+
+        return summary;
     }
 
-    /**
-     * Validate the module (always valid - preferences are optional)
-     */
+    loadResponse(response) {
+        if (!response || !response.data) return;
+
+        // Load saved responses
+        this.responses = { ...this.responses, ...response.data };
+
+        // Update UI after a small delay to ensure elements are rendered
+        setTimeout(() => {
+            this.sections.forEach(section => {
+                const toggleElement = this.components[section.key];
+                if (toggleElement) {
+                    if (this.responses[section.key]) {
+                        toggleElement.classList.add('active'); // Custom selected
+                    } else {
+                        toggleElement.classList.remove('active'); // Generic selected
+                    }
+                }
+            });
+            
+            this.updateTimeEstimate();
+            this.updateGlobalCustomizationState();
+        }, 100);
+    }
+
     validate() {
+        // Always valid - user can choose any combination of Generic/Custom
         return {
             isValid: true,
             errors: []
         };
     }
 
-    /**
-     * Check if this module should be shown based on conditional logic
-     */
     shouldShow(responses) {
-        // Customization module is always shown (first business logic question)
-        return true;
+        return true; // Always show customization module
     }
 
-    /**
-     * Get database field mappings
-     */
     getDatabaseFields() {
-        // Customization preferences affect other modules but don't have direct DB fields
-        // The preferences are used by conditional logic to determine which modules to show
-        return {};
+        return {
+            customization_revenue: this.responses.revenueCustomization,
+            customization_cogs: this.responses.cogsCustomization,
+            customization_expenses: this.responses.expensesCustomization,
+            customization_assets: this.responses.assetsCustomization,
+            customization_debt: this.responses.debtCustomization,
+            customization_equity: this.responses.equityCustomization,
+            customization_summary: JSON.stringify(this.getCustomizationSummary())
+        };
     }
 
-    /**
-     * Show special title layout for customization questions
-     */
-    setupSpecialLayout() {
-        const titleRowHeader = document.getElementById('titleRowHeader');
-        const regularTitle = document.getElementById('questionTitle');
-        const regularDescription = document.getElementById('questionDescription');
-        const timeBoxTop = document.getElementById('customizationTimeBoxTop');
-        const totalTimeTop = document.getElementById('totalEstimatedTimeTop');
-        
-        if (titleRowHeader && regularTitle && timeBoxTop && totalTimeTop) {
-            titleRowHeader.style.display = 'flex';
-            regularTitle.style.display = 'none';
-            
-            if (regularDescription) {
-                regularDescription.style.display = 'none';
-            }
-            
-            // Set initial time value
-            setTimeout(() => {
-                const currentTime = document.getElementById('totalEstimatedTime');
-                if (currentTime) {
-                    totalTimeTop.textContent = currentTime.textContent;
-                }
-            }, 100);
-        }
-    }
-
-    /**
-     * Hide special title layout
-     */
-    hideSpecialLayout() {
-        const titleRowHeader = document.getElementById('titleRowHeader');
-        const regularTitle = document.getElementById('questionTitle');
-        const regularDescription = document.getElementById('questionDescription');
-        
-        if (titleRowHeader && regularTitle) {
-            titleRowHeader.style.display = 'none';
-            regularTitle.style.display = 'block';
-            
-            if (regularDescription) {
-                regularDescription.style.display = 'block';
-            }
-        }
-    }
-
-    /**
-     * Get preferences for use by conditional logic
-     */
-    getPreferences() {
-        return { ...this.preferences };
-    }
-
-    /**
-     * Check if a section is set to custom
-     */
-    isCustom(sectionKey) {
-        return this.preferences[sectionKey] === 'custom';
-    }
-
-    /**
-     * Check if a section is set to generic  
-     */
-    isGeneric(sectionKey) {
-        return this.preferences[sectionKey] === 'generic';
-    }
-
-    /**
-     * Cleanup when module is hidden
-     */
     destroy() {
-        // Clean up components
         Object.values(this.components).forEach(component => {
-            if (component.destroy) {
-                component.destroy();
+            if (component && component.remove) {
+                component.remove();
             }
         });
-        
         this.components = {};
-        this.hideSpecialLayout();
+    }
+
+    // Helper method to check if a specific section is set to Custom
+    isSectionCustom(sectionKey) {
+        return this.responses[sectionKey] === true;
+    }
+
+    // Helper method to check if a specific section is set to Generic  
+    isSectionGeneric(sectionKey) {
+        return this.responses[sectionKey] === false;
     }
 }
 
-// Export for ES6 imports
 export default CustomizationModule;
 
-// Also add to window for backward compatibility if needed
 if (typeof window !== 'undefined') {
     window.CustomizationModule = CustomizationModule;
 }

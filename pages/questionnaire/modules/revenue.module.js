@@ -1,6 +1,7 @@
-// /pages/questionnaire/modules/revenue.module.js - UPDATED VERSION
+// /pages/questionnaire/modules/revenue.module.js - UPDATED with Generic/Custom Logic
 import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
+import { GenericPlaceholder } from '../components/generic-placeholder.js';
 
 export class RevenueModule {
     constructor() {
@@ -8,9 +9,10 @@ export class RevenueModule {
         this.title = 'Revenue Structure';
         this.description = 'Help us understand how your business generates revenue and your operational setup.';
         this.required = false;
-        
         this.components = {};
-        this.userHasInteracted = false; // Track user interaction for engine
+        this.userHasInteracted = false;
+        
+        // Default responses
         this.responses = {
             selectedRevenues: [],
             chargingModels: {},
@@ -19,57 +21,138 @@ export class RevenueModule {
             revenueStaff: 'no'
         };
 
-        // Revenue type to charging model mappings - UPDATED TO UNIFIED OPTIONS
+        // Revenue generation options
+        this.revenueOptions = [
+            { value: 'products', text: 'Products' },
+            { value: 'services', text: 'Services' },
+            { value: 'assets', text: 'Leasing' },
+            { value: 'other', text: 'Other' }
+        ];
+
+        // Charging model options for each revenue type
         this.chargingModelOptions = {
             'products': [
-                { value: 'oneoff', text: 'One off fees' },
-                { value: 'subscription', text: 'Subscription services' },
-                { value: 'royalties', text: 'Royalties' }
+                { value: 'oneoff', text: 'One-off' },
+                { value: 'subscription', text: 'Subscription' },
+                { value: 'usage', text: 'Usage-based' },
+                { value: 'freemium', text: 'Freemium' },
+                { value: 'commission', text: 'Commission' },
+                { value: 'advertising', text: 'Advertising' }
             ],
             'services': [
-                { value: 'oneoff', text: 'One off fees' },
-                { value: 'subscription', text: 'Subscription services' },
-                { value: 'royalties', text: 'Royalties' }
+                { value: 'hourly', text: 'Hourly' },
+                { value: 'project', text: 'Project-based' },
+                { value: 'retainer', text: 'Retainer' },
+                { value: 'subscription', text: 'Subscription' },
+                { value: 'performance', text: 'Performance-based' },
+                { value: 'commission', text: 'Commission' }
             ],
             'assets': [
-                { value: 'oneoff', text: 'One off fees' },
-                { value: 'subscription', text: 'Subscription services' },
-                { value: 'royalties', text: 'Royalties' }
+                { value: 'fixed', text: 'Fixed Lease' },
+                { value: 'variable', text: 'Variable Lease' },
+                { value: 'percentage', text: 'Percentage of Revenue' },
+                { value: 'usage', text: 'Usage-based' }
             ],
             'other': [
-                { value: 'oneoff', text: 'One off fees' },
-                { value: 'subscription', text: 'Subscription services' },
-                { value: 'royalties', text: 'Royalties' }
+                { value: 'oneoff', text: 'One-off' },
+                { value: 'subscription', text: 'Subscription' },
+                { value: 'commission', text: 'Commission' },
+                { value: 'custom', text: 'Custom' }
             ]
         };
+
+        // Procurement options
+        this.procurementOptions = [
+            { value: 'manufacturing', text: 'Manufacturing' },
+            { value: 'wholesale', text: 'Wholesale Purchasing' },
+            { value: 'dropshipping', text: 'Drop Shipping' },
+            { value: 'licensing', text: 'Licensing' },
+            { value: 'none', text: 'No Physical Products' }
+        ];
+
+        // Sales channels options
+        this.salesChannelsOptions = [
+            { value: 'direct', text: 'Direct Sales' },
+            { value: 'online', text: 'Online/E-commerce' },
+            { value: 'retail', text: 'Retail Partners' },
+            { value: 'distributors', text: 'Distributors' },
+            { value: 'resellers', text: 'Resellers' },
+            { value: 'marketplace', text: 'Marketplaces (Amazon, eBay, etc.)' },
+            { value: 'subscription', text: 'Subscription Platforms' }
+        ];
     }
 
     render() {
+        // Check if this section should be Generic or Custom
+        const isGeneric = this.isGenericModeSelected();
+        
+        if (isGeneric) {
+            return this.renderGenericMode();
+        } else {
+            return this.renderCustomMode();
+        }
+    }
+
+    isGenericModeSelected() {
+        // Check global customization preferences
+        if (typeof window !== 'undefined' && window.customizationPreferences) {
+            return window.customizationPreferences.revenueCustomization === false;
+        }
+        
+        // Default to custom mode if preferences not set
+        return false;
+    }
+
+    renderGenericMode() {
+        const placeholder = new GenericPlaceholder({
+            sectionName: 'Revenue',
+            description: 'A standard revenue model framework will be included with basic revenue streams, pricing models, and sales channels that you can customize in your final Excel model.',
+            icon: '💰'
+        });
+
+        // Set generic responses for database
+        this.responses = {
+            selectedRevenues: ['generic'],
+            chargingModels: { generic: 'standard' },
+            procurement: ['generic'],
+            salesChannels: ['generic'],
+            revenueStaff: 'generic'
+        };
+
+        return placeholder.render();
+    }
+
+    renderCustomMode() {
         const container = document.createElement('div');
-        container.className = 'combined-parameters-container';
+        container.className = 'revenue-container';
 
         // Revenue Generation Section
-        container.appendChild(this.createRevenueGenerationSection());
+        const revenueSection = this.createRevenueSection();
+        container.appendChild(revenueSection);
 
-        // Dynamic Charging Models Section
+        // Charging Models Section (initially hidden)
         const chargingSection = this.createChargingModelsSection();
         container.appendChild(chargingSection);
 
-        // Products Specific Questions Section
-        const productsSection = this.createProductsSpecificSection();
+        // Products-specific Section (initially hidden)
+        const productsSection = this.createProductsSection();
         container.appendChild(productsSection);
 
-        // Revenue Staff Section
-        container.appendChild(this.createRevenueStaffSection());
+        // Sales Channels Section
+        const salesChannelsSection = this.createSalesChannelsSection();
+        container.appendChild(salesChannelsSection);
 
-        // NOTE: Removed the red validation prompt box - users can proceed without selections
+        // Revenue Staff Section
+        const staffSection = this.createRevenueStaffSection();
+        container.appendChild(staffSection);
 
         return container;
     }
 
-    createRevenueGenerationSection() {
+    createRevenueSection() {
         const section = document.createElement('div');
         section.className = 'parameter-section';
+        section.id = 'revenueGenerationSection';
 
         const row = document.createElement('div');
         row.className = 'parameter-toggle-row';
@@ -83,26 +166,20 @@ export class RevenueModule {
 
         const subtitle = document.createElement('div');
         subtitle.className = 'parameter-toggle-subtitle';
-        subtitle.textContent = 'Select all the ways your business generates revenue. This helps us understand your revenue model and structure the financial projections accordingly.';
+        subtitle.innerHTML = 'Select all that apply. <span class="skip-text">You can skip this if you prefer.</span>';
 
         textDiv.appendChild(title);
         textDiv.appendChild(subtitle);
 
         const dropdownContainer = document.createElement('div');
-        dropdownContainer.className = 'revenue-dropdown-container';
-        dropdownContainer.style.flex = '0 0 375px';
+        dropdownContainer.className = 'dropdown-container';
 
         const revenueComponent = new MultiSelect({
             id: 'revenueGeneration',
-            placeholder: 'Search or select revenue models...',
-            options: [
-                { value: 'products', text: 'Sell Products' },
-                { value: 'services', text: 'Sell Services' },
-                { value: 'assets', text: 'Lease Assets' },
-                { value: 'other', text: 'Other Revenue Model' }
-            ],
+            options: this.revenueOptions,
+            placeholder: 'Search or select revenue types...',
             allowCustom: true,
-            required: false,
+            customIndicatorText: 'Press Enter to add your custom revenue type',
             onChange: (selectedValues) => {
                 this.userHasInteracted = true;
                 this.responses.selectedRevenues = selectedValues;
@@ -124,86 +201,61 @@ export class RevenueModule {
 
     createChargingModelsSection() {
         const section = document.createElement('div');
-        section.className = 'charging-models-section';
+        section.className = 'conditional-section';
         section.id = 'chargingModelsSection';
         section.style.display = 'none';
 
-        const header = document.createElement('div');
-        header.className = 'charging-models-header';
-
         const title = document.createElement('div');
-        title.className = 'charging-models-title';
-        title.textContent = 'Charging Models';
+        title.className = 'parameter-title';
+        title.textContent = 'How do you charge for each revenue type?';
 
-        const description = document.createElement('div');
-        description.className = 'charging-models-description';
-        description.textContent = 'Tell us how you charge customers for each revenue stream.';
-
-        header.appendChild(title);
-        header.appendChild(description);
+        const subtitle = document.createElement('div');
+        subtitle.className = 'parameter-description';
+        subtitle.textContent = 'Understanding your pricing model helps us build accurate revenue projections.';
 
         const container = document.createElement('div');
         container.className = 'charging-models-container';
         container.id = 'chargingModelsContainer';
 
-        section.appendChild(header);
+        section.appendChild(title);
+        section.appendChild(subtitle);
         section.appendChild(container);
 
         return section;
     }
 
-    createProductsSpecificSection() {
+    createProductsSection() {
         const section = document.createElement('div');
-        section.className = 'products-specific-section';
+        section.className = 'conditional-section';
         section.id = 'productsSpecificSection';
         section.style.display = 'none';
 
-        // Product Procurement Component
-        const procurementRow = this.createProcurementRow();
-        section.appendChild(procurementRow);
-
-        // Sales Channels Component
-        const channelsRow = this.createSalesChannelsRow();
-        section.appendChild(channelsRow);
-
-        return section;
-    }
-
-    createProcurementRow() {
         const row = document.createElement('div');
-        row.className = 'parameter-section';
-
-        const headerRow = document.createElement('div');
-        headerRow.className = 'parameter-toggle-row';
+        row.className = 'parameter-toggle-row';
 
         const textDiv = document.createElement('div');
         textDiv.className = 'parameter-toggle-text';
 
         const title = document.createElement('div');
         title.className = 'parameter-toggle-title';
-        title.textContent = 'Product procurement';
+        title.textContent = 'How do you procure/acquire your products?';
 
         const subtitle = document.createElement('div');
         subtitle.className = 'parameter-toggle-subtitle';
-        subtitle.textContent = 'How do you procure/source your products?';
+        subtitle.innerHTML = 'Select all that apply. <span class="skip-text">You can skip this if you prefer.</span>';
 
         textDiv.appendChild(title);
         textDiv.appendChild(subtitle);
 
         const dropdownContainer = document.createElement('div');
-        dropdownContainer.className = 'procurement-dropdown-container';
-        dropdownContainer.style.flex = '0 0 375px';
+        dropdownContainer.className = 'dropdown-container';
 
         const procurementComponent = new MultiSelect({
-            id: 'productProcurement',
+            id: 'procurement',
+            options: this.procurementOptions,
             placeholder: 'Search or select procurement methods...',
-            options: [
-                { value: 'wholesale_own', text: 'Wholesale (manage own logistics)' },
-                { value: 'wholesale_3pl', text: 'Wholesale (Logistics handled by a 3PL/manufacturer)' },
-                { value: 'manufacture', text: 'Manufacture products' }
-            ],
             allowCustom: true,
-            required: false,
+            customIndicatorText: 'Press Enter to add your custom procurement method',
             onChange: (selectedValues) => {
                 this.userHasInteracted = true;
                 this.responses.procurement = selectedValues;
@@ -214,48 +266,43 @@ export class RevenueModule {
         this.components.procurement = procurementComponent;
         procurementComponent.render(dropdownContainer);
 
-        headerRow.appendChild(textDiv);
-        headerRow.appendChild(dropdownContainer);
-        row.appendChild(headerRow);
+        row.appendChild(textDiv);
+        row.appendChild(dropdownContainer);
+        section.appendChild(row);
 
-        return row;
+        return section;
     }
 
-    createSalesChannelsRow() {
-        const row = document.createElement('div');
-        row.className = 'parameter-section';
+    createSalesChannelsSection() {
+        const section = document.createElement('div');
+        section.className = 'parameter-section';
 
-        const headerRow = document.createElement('div');
-        headerRow.className = 'parameter-toggle-row';
+        const row = document.createElement('div');
+        row.className = 'parameter-toggle-row';
 
         const textDiv = document.createElement('div');
         textDiv.className = 'parameter-toggle-text';
 
         const title = document.createElement('div');
         title.className = 'parameter-toggle-title';
-        title.textContent = 'Sales channels';
+        title.textContent = 'What sales channels do you use?';
 
         const subtitle = document.createElement('div');
         subtitle.className = 'parameter-toggle-subtitle';
-        subtitle.textContent = 'What are your main sales channels?';
+        subtitle.innerHTML = 'Select all that apply. <span class="skip-text">You can skip this if you prefer.</span>';
 
         textDiv.appendChild(title);
         textDiv.appendChild(subtitle);
 
         const dropdownContainer = document.createElement('div');
-        dropdownContainer.className = 'channels-dropdown-container';
-        dropdownContainer.style.flex = '0 0 375px';
+        dropdownContainer.className = 'dropdown-container';
 
-        const channelsComponent = new MultiSelect({
+        const salesChannelsComponent = new MultiSelect({
             id: 'salesChannels',
+            options: this.salesChannelsOptions,
             placeholder: 'Search or select sales channels...',
-            options: [
-                { value: 'physical_shopfront', text: 'Physical shopfront' },
-                { value: 'website', text: 'Website' },
-                { value: 'sales_driven_b2b', text: 'Sales driven (B2B)' }
-            ],
             allowCustom: true,
-            required: false,
+            customIndicatorText: 'Press Enter to add your custom sales channel',
             onChange: (selectedValues) => {
                 this.userHasInteracted = true;
                 this.responses.salesChannels = selectedValues;
@@ -263,14 +310,14 @@ export class RevenueModule {
             }
         });
 
-        this.components.salesChannels = channelsComponent;
-        channelsComponent.render(dropdownContainer);
+        this.components.salesChannels = salesChannelsComponent;
+        salesChannelsComponent.render(dropdownContainer);
 
-        headerRow.appendChild(textDiv);
-        headerRow.appendChild(dropdownContainer);
-        row.appendChild(headerRow);
+        row.appendChild(textDiv);
+        row.appendChild(dropdownContainer);
+        section.appendChild(row);
 
-        return row;
+        return section;
     }
 
     createRevenueStaffSection() {
@@ -285,7 +332,7 @@ export class RevenueModule {
 
         const title = document.createElement('div');
         title.className = 'parameter-toggle-title';
-        title.textContent = 'Do you have revenue generating staff?';
+        title.textContent = 'Do your staff generate revenue?';
 
         const subtitle = document.createElement('div');
         subtitle.className = 'parameter-toggle-subtitle';
@@ -381,38 +428,39 @@ export class RevenueModule {
 
         // Create component
         const options = this.chargingModelOptions[revenueType] || this.chargingModelOptions['other'];
-        
-        const chargingComponent = new MultiSelect({
+        const chargingModelComponent = new MultiSelect({
             id: componentId,
-            placeholder: 'Select charging model...',
             options: options,
+            placeholder: `Select ${displayName.toLowerCase()} charging model...`,
             allowCustom: true,
-            required: false,
+            customIndicatorText: 'Press Enter to add your custom charging model',
             onChange: (selectedValues) => {
                 this.userHasInteracted = true;
+                if (!this.responses.chargingModels) {
+                    this.responses.chargingModels = {};
+                }
                 this.responses.chargingModels[revenueType] = selectedValues;
                 this.onResponseChange();
             }
         });
 
-        chargingComponent.render(document.getElementById(componentId));
-        this.components[componentId] = chargingComponent;
+        this.components[componentId] = chargingModelComponent;
+        chargingModelComponent.render(document.getElementById(componentId));
     }
 
     clearChargingModelComponents() {
         const container = document.getElementById('chargingModelsContainer');
         if (container) {
-            // Remove components from our tracking
-            Array.from(this.components).forEach(([key, component]) => {
+            // Remove old components
+            Object.keys(this.components).forEach(key => {
                 if (key.startsWith('chargingModel')) {
-                    if (component.destroy) {
-                        component.destroy();
+                    if (this.components[key] && this.components[key].destroy) {
+                        this.components[key].destroy();
                     }
                     delete this.components[key];
                 }
             });
             
-            // Clear container
             container.innerHTML = '';
         }
     }
@@ -425,7 +473,7 @@ export class RevenueModule {
 
     getResponse() {
         return {
-            type: 'revenue-combined',
+            type: 'revenue-structure',
             selectedRevenues: [...this.responses.selectedRevenues],
             chargingModels: { ...this.responses.chargingModels },
             procurement: [...this.responses.procurement],
@@ -447,34 +495,36 @@ export class RevenueModule {
             revenueStaff: response.revenueStaff || 'no'
         };
 
-        // Update components with loaded data
-        setTimeout(() => {
-            if (this.components.revenueGeneration) {
-                this.components.revenueGeneration.setValue(this.responses.selectedRevenues);
-                this.updateConditionalSections(this.responses.selectedRevenues);
-                this.updateChargingModels(this.responses.selectedRevenues);
-            }
-
-            if (this.components.procurement) {
-                this.components.procurement.setValue(this.responses.procurement);
-            }
-
-            if (this.components.salesChannels) {
-                this.components.salesChannels.setValue(this.responses.salesChannels);
-            }
-
-            if (this.components.revenueStaff) {
-                this.components.revenueStaff.setValue(this.responses.revenueStaff);
-            }
-
-            // Load charging models
-            Object.entries(this.responses.chargingModels).forEach(([revenueType, values]) => {
-                const componentKey = `chargingModel${revenueType}`;
-                if (this.components[componentKey]) {
-                    this.components[componentKey].setValue(values);
+        // Update components with loaded data (only in custom mode)
+        if (!this.isGenericModeSelected()) {
+            setTimeout(() => {
+                if (this.components.revenueGeneration) {
+                    this.components.revenueGeneration.setValue(this.responses.selectedRevenues);
+                    this.updateConditionalSections(this.responses.selectedRevenues);
+                    this.updateChargingModels(this.responses.selectedRevenues);
                 }
-            });
-        }, 100);
+
+                if (this.components.procurement) {
+                    this.components.procurement.setValue(this.responses.procurement);
+                }
+
+                if (this.components.salesChannels) {
+                    this.components.salesChannels.setValue(this.responses.salesChannels);
+                }
+
+                if (this.components.revenueStaff) {
+                    this.components.revenueStaff.setValue(this.responses.revenueStaff);
+                }
+
+                // Load charging models
+                Object.entries(this.responses.chargingModels).forEach(([revenueType, values]) => {
+                    const componentKey = `chargingModel${revenueType}`;
+                    if (this.components[componentKey]) {
+                        this.components[componentKey].setValue(values);
+                    }
+                });
+            }, 100);
+        }
     }
 
     validate() {
@@ -490,12 +540,15 @@ export class RevenueModule {
     }
 
     getDatabaseFields() {
+        const isGeneric = this.isGenericModeSelected();
+        
         return {
             revenue_generation_selected: this.responses.selectedRevenues.length > 0 ? this.responses.selectedRevenues : null,
             charging_models: Object.keys(this.responses.chargingModels).length > 0 ? this.responses.chargingModels : null,
             product_procurement_selected: this.responses.procurement.length > 0 ? this.responses.procurement : null,
             sales_channels_selected: this.responses.salesChannels.length > 0 ? this.responses.salesChannels : null,
-            revenue_staff: this.responses.revenueStaff
+            revenue_staff: this.responses.revenueStaff,
+            is_generic_revenue: isGeneric
         };
     }
 

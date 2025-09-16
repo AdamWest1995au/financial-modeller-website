@@ -1,7 +1,8 @@
-// /pages/questionnaire/modules/assets.module.js
+// /pages/questionnaire/modules/assets.module.js - CORRECTED to retain existing structure
 import { BaseComponent } from '../components/base-component.js';
 import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
+import { GenericPlaceholder } from '../components/generic-placeholder.js';
 
 export class AssetsModule {
     constructor() {
@@ -16,7 +17,7 @@ export class AssetsModule {
             multipleDepreciationMethods: 'no'
         };
 
-        // Asset options
+        // Asset options - KEEPING YOUR EXISTING OPTIONS
         this.assetOptions = [
             { value: "ppe", text: "Property, Plant & Equipment" },
             { value: "land", text: "Land" },
@@ -25,6 +26,44 @@ export class AssetsModule {
     }
 
     render() {
+        // Check if this section should be Generic or Custom
+        const isGeneric = this.isGenericModeSelected();
+        
+        if (isGeneric) {
+            return this.renderGenericMode();
+        } else {
+            return this.renderCustomMode();
+        }
+    }
+
+    isGenericModeSelected() {
+        // Check global customization preferences
+        if (typeof window !== 'undefined' && window.customizationPreferences) {
+            return window.customizationPreferences.assetsCustomization === false;
+        }
+        
+        // Default to custom mode if preferences not set
+        return false;
+    }
+
+    renderGenericMode() {
+        const placeholder = new GenericPlaceholder({
+            sectionName: 'Assets',
+            description: 'A standard asset framework will be included with common asset types and depreciation methods that you can customize in your final Excel model.',
+            icon: '🏢'
+        });
+
+        // Set generic responses for database
+        this.responses = {
+            selectedAssets: ['generic'],
+            multipleDepreciationMethods: 'generic'
+        };
+
+        return placeholder.render();
+    }
+
+    renderCustomMode() {
+        // YOUR EXISTING RENDER LOGIC - UNCHANGED
         const container = document.createElement('div');
         container.className = 'assets-form';
 
@@ -39,6 +78,7 @@ export class AssetsModule {
         return container;
     }
 
+    // YOUR EXISTING METHODS - COMPLETELY UNCHANGED
     createAssetTypesSection() {
         const section = document.createElement('div');
         section.className = 'parameter-section';
@@ -183,17 +223,20 @@ export class AssetsModule {
             multipleDepreciationMethods: response.multipleDepreciationMethods || 'no'
         };
 
-        // Update components with loaded data
-        setTimeout(() => {
-            if (this.components.assetTypes) {
-                this.components.assetTypes.setValue(this.responses.selectedAssets);
-                this.updateConditionalSections(this.responses.selectedAssets);
-            }
+        // IMPORTANT: Only update components in custom mode
+        if (!this.isGenericModeSelected()) {
+            // Update components with loaded data
+            setTimeout(() => {
+                if (this.components.assetTypes) {
+                    this.components.assetTypes.setValue(this.responses.selectedAssets);
+                    this.updateConditionalSections(this.responses.selectedAssets);
+                }
 
-            if (this.components.depreciation) {
-                this.components.depreciation.setValue(this.responses.multipleDepreciationMethods);
-            }
-        }, 100);
+                if (this.components.depreciation) {
+                    this.components.depreciation.setValue(this.responses.multipleDepreciationMethods);
+                }
+            }, 100);
+        }
     }
 
     validate() {
@@ -224,10 +267,13 @@ export class AssetsModule {
     }
 
     getDatabaseFields() {
+        const isGeneric = this.isGenericModeSelected();
+        
         return {
             asset_types_selected: this.responses.selectedAssets.length > 0 ? this.responses.selectedAssets : null,
             asset_types_freetext: null, // Custom assets are included in the selected array
-            multiple_depreciation_methods: this.responses.multipleDepreciationMethods
+            multiple_depreciation_methods: this.responses.multipleDepreciationMethods,
+            is_generic_assets: isGeneric // ADDED: Track if generic mode was used
         };
     }
 
