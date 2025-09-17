@@ -231,13 +231,24 @@ export class CustomizationModule {
     }
 
     getResponse() {
-        return {
-            type: 'customization-preferences',
-            data: { ...this.responses },
-            customizationSummary: this.getCustomizationSummary(),
-            timestamp: new Date().toISOString()
-        };
-    }
+    // Convert internal responses to the format expected by other modules
+    const customizationPreferences = {
+        revenue: this.responses.revenueCustomization ? 'custom' : 'generic',
+        cogs: this.responses.cogsCustomization ? 'custom' : 'generic', 
+        expenses: this.responses.expensesCustomization ? 'custom' : 'generic',
+        assets: this.responses.assetsCustomization ? 'custom' : 'generic',
+        debt: this.responses.debtCustomization ? 'custom' : 'generic',
+        equity: this.responses.equityCustomization ? 'custom' : 'generic'
+    };
+
+    return {
+        type: 'customization-preference',
+        data: { ...this.responses },
+        customizationPreferences: customizationPreferences,
+        customizationSummary: this.getCustomizationSummary(),
+        timestamp: new Date().toISOString()
+    };
+}
 
     getCustomizationSummary() {
         const summary = {
