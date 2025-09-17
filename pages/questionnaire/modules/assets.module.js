@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/assets.module.js - CORRECTED to retain existing structure
+// /pages/questionnaire/modules/assets.module.js - FIXED VERSION
 import { BaseComponent } from '../components/base-component.js';
 import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
@@ -37,55 +37,55 @@ export class AssetsModule {
     }
 
     isGenericModeSelected() {
-        // Check global customization preferences
-        if (typeof window !== 'undefined' && window.customizationPreferences) {
-            return window.customizationPreferences.assetsCustomization === false;
-        }
+        // FIXED: Check customization preference using the same method as other modules
+        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
+        const customizationResponse = responses['customization-preference'];
+        const isGeneric = !customizationResponse?.customizationPreferences?.assets || 
+                         customizationResponse.customizationPreferences.assets === 'generic';
         
-        // Default to custom mode if preferences not set
-        return false;
+        return isGeneric; // FIXED: Now defaults to generic (true) instead of custom (false)
     }
 
     renderGenericMode() {
-    const container = document.createElement('div');
-    container.className = 'placeholder-container';
-    
-    const content = document.createElement('div');
-    content.className = 'placeholder-content';
-    content.innerHTML = `
-        <div class="animated-graphic">
-            <svg viewBox="0 0 120 80">
-                <defs>
-                    <radialGradient id="circleGradientAssets" cx="50%" cy="50%">
-                        <stop offset="0%" style="stop-color:#c084fc;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
-                    </radialGradient>
-                </defs>
-                <g class="circle-group-1">
-                    <circle cx="20" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
-                </g>
-                <g class="circle-group-2">
-                    <circle cx="60" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
-                </g>
-                <g class="circle-group-3">
-                    <circle cx="100" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
-                </g>
-            </svg>
-        </div>
-        <h4 class="placeholder-title">GENERIC MODELLING APPROACH SELECTED</h4>
-        <p class="placeholder-description">
-            You've chosen to use our generic model for this section. 
-            This will save you time during setup while still providing comprehensive financial projections.
-        </p>
-        <p class="placeholder-description" style="margin-top: 10px;">
-            You can customise this section at a later date if needed.
-            You can continue to the next section for now.
-        </p>
-    `;
-    
-    container.appendChild(content);
-    return container;
-}
+        const container = document.createElement('div');
+        container.className = 'placeholder-container';
+        
+        const content = document.createElement('div');
+        content.className = 'placeholder-content';
+        content.innerHTML = `
+            <div class="animated-graphic">
+                <svg viewBox="0 0 120 80">
+                    <defs>
+                        <radialGradient id="circleGradientAssets" cx="50%" cy="50%">
+                            <stop offset="0%" style="stop-color:#c084fc;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                        </radialGradient>
+                    </defs>
+                    <g class="circle-group-1">
+                        <circle cx="20" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
+                    </g>
+                    <g class="circle-group-2">
+                        <circle cx="60" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
+                    </g>
+                    <g class="circle-group-3">
+                        <circle cx="100" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
+                    </g>
+                </svg>
+            </div>
+            <h4 class="placeholder-title">GENERIC MODELLING APPROACH SELECTED</h4>
+            <p class="placeholder-description">
+                You've chosen to use our generic model for this section. 
+                This will save you time during setup while still providing comprehensive financial projections.
+            </p>
+            <p class="placeholder-description" style="margin-top: 10px;">
+                You can customise this section at a later date if needed.
+                You can continue to the next section for now.
+            </p>
+        `;
+        
+        container.appendChild(content);
+        return container;
+    }
 
     renderCustomMode() {
         // YOUR EXISTING RENDER LOGIC - UNCHANGED
@@ -273,22 +273,8 @@ export class AssetsModule {
     }
 
     shouldShow(responses) {
-        // For testing - always show Assets module for now
-        // TODO: Re-enable customization logic once testing is complete
-        console.log('Assets module shouldShow called - always returning true for testing');
+        // Always show Assets module - it will handle showing generic vs custom content internally
         return true;
-        
-        // Original conditional logic (commented out for testing):
-        /*
-        if (window.questionnaireEngine && window.questionnaireEngine.conditionalLogic) {
-            const customizationPreference = window.questionnaireEngine.conditionalLogic
-                .getCustomizationPreference(responses, 'assets');
-            
-            return customizationPreference !== 'generic';
-        }
-        
-        return true;
-        */
     }
 
     getDatabaseFields() {
@@ -298,7 +284,7 @@ export class AssetsModule {
             asset_types_selected: this.responses.selectedAssets.length > 0 ? this.responses.selectedAssets : null,
             asset_types_freetext: null, // Custom assets are included in the selected array
             multiple_depreciation_methods: this.responses.multipleDepreciationMethods,
-            is_generic_assets: isGeneric // ADDED: Track if generic mode was used
+            is_generic_assets: isGeneric // Track if generic mode was used
         };
     }
 
