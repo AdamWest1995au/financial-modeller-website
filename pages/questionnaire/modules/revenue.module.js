@@ -85,18 +85,18 @@ export class RevenueModule {
     }
 
     renderContent() {
-        // Check customization preference using consistent method
-        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
-        const customizationResponse = responses['customization-preference'];
-        const isGeneric = !customizationResponse?.customizationPreferences?.revenue || 
-                         customizationResponse.customizationPreferences.revenue === 'generic';
+    // Check customization preference using consistent method
+    const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
+    const customizationResponse = responses['customization']; // CHANGED: from 'customization-preference' to 'customization'
+    const isGeneric = !customizationResponse?.customizationPreferences?.revenue || 
+                     customizationResponse.customizationPreferences.revenue === 'generic';
 
-        if (isGeneric) {
-            return this.createGenericPlaceholder();
-        } else {
-            return this.createCustomContent();
-        }
+    if (isGeneric) {
+        return this.createGenericPlaceholder();
+    } else {
+        return this.createCustomContent();
     }
+}
 
     createGenericPlaceholder() {
         const container = document.createElement('div');
@@ -530,24 +530,24 @@ export class RevenueModule {
     }
 
     loadResponse(response) {
-        if (!response) return;
+    if (!response) return;
 
-        // Load response data
-        this.responses = {
-            selectedRevenues: response.selectedRevenues || [],
-            chargingModels: response.chargingModels || {},
-            procurement: response.procurement || [],
-            salesChannels: response.salesChannels || [],
-            revenueStaff: response.revenueStaff || 'no'
-        };
+    // Load response data
+    this.responses = {
+        selectedRevenues: response.selectedRevenues || [],
+        chargingModels: response.chargingModels || {},
+        procurement: response.procurement || [],
+        salesChannels: response.salesChannels || [],
+        revenueStaff: response.revenueStaff || 'no'
+    };
 
-        // Only update components in custom mode
-        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
-        const customizationResponse = responses['customization-preference'];
-        const isGeneric = !customizationResponse?.customizationPreferences?.revenue || 
-                         customizationResponse.customizationPreferences.revenue === 'generic';
+    // Only update components in custom mode
+    const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
+    const customizationResponse = responses['customization']; // CHANGED: from 'customization-preference' to 'customization'
+    const isGeneric = !customizationResponse?.customizationPreferences?.revenue || 
+                     customizationResponse.customizationPreferences.revenue === 'generic';
 
-        if (!isGeneric) {
+    if (!isGeneric) {
             // Update components with loaded data
             setTimeout(() => {
                 if (this.components.revenueGeneration) {

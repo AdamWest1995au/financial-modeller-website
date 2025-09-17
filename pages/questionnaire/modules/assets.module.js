@@ -73,14 +73,16 @@ export class AssetsModule {
     }
 
     isGenericModeSelected() {
-        // Check customization preference using the same method as other modules
-        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
-        const customizationResponse = responses['customization-preference'];
-        const isGeneric = !customizationResponse?.customizationPreferences?.assets || 
-                         customizationResponse.customizationPreferences.assets === 'generic';
-        
-        return isGeneric;
-    }
+    // Check customization preference using the correct key
+    const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
+    
+    // The customization module saves under its ID 'customization', not 'customization-preference'
+    const customizationResponse = responses['customization'];
+    const isGeneric = !customizationResponse?.customizationPreferences?.assets || 
+                     customizationResponse.customizationPreferences.assets === 'generic';
+    
+    return isGeneric;
+}
 
     renderGenericMode() {
         const container = document.createElement('div');
