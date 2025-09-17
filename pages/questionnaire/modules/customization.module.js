@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/customization.module.js
+// /pages/questionnaire/modules/customization.module.js - FIXED VERSION
 export class CustomizationModule {
     constructor() {
         this.id = 'customization';
@@ -163,33 +163,56 @@ export class CustomizationModule {
     }
 
     handleToggleClick(sectionKey, toggleElement) {
-    // Toggle the state: false = Generic, true = Custom
-    this.responses[sectionKey] = !this.responses[sectionKey];
-    
-    // Update visual state
-    if (this.responses[sectionKey]) {
-        toggleElement.classList.add('active'); // Custom selected
-    } else {
-        toggleElement.classList.remove('active'); // Generic selected
-    }
+        // Toggle the state: false = Generic, true = Custom
+        this.responses[sectionKey] = !this.responses[sectionKey];
+        
+        // Update visual state
+        if (this.responses[sectionKey]) {
+            toggleElement.classList.add('active'); // Custom selected
+        } else {
+            toggleElement.classList.remove('active'); // Generic selected
+        }
 
-    // Update total time estimate
-    this.updateTimeEstimate();
-    
-    // IMPORTANT: Save the response to state manager
-    if (window.questionnaireEngine && window.questionnaireEngine.stateManager) {
+        // Update total time estimate
+        this.updateTimeEstimate();
+        
+        // DEBUGGING AND SAVING
+        console.log('=== CUSTOMIZATION TOGGLE DEBUG ===');
+        console.log('Section toggled:', sectionKey);
+        console.log('New value:', this.responses[sectionKey]);
+        console.log('All responses:', this.responses);
+        
+        // Create the response object
         const response = this.getResponse();
-        window.questionnaireEngine.stateManager.saveResponse(this.id, 0, response);
-    }
-    
-    // Trigger validation
-    this.onResponseChange();
+        console.log('Response being saved:', response);
+        console.log('customizationPreferences:', response.customizationPreferences);
+        
+        // Save the response to state manager under the key that other modules expect
+        if (window.questionnaireEngine && window.questionnaireEngine.stateManager) {
+            // Save under 'customization-preference' key so other modules can find it
+            window.questionnaireEngine.stateManager.saveResponse('customization-preference', 0, response);
+            
+            // ALSO save under our normal ID for consistency
+            window.questionnaireEngine.stateManager.saveResponse(this.id, 0, response);
+            
+            // Verify what was saved
+            setTimeout(() => {
+                const allResponses = window.questionnaireEngine.stateManager.getAllResponses();
+                console.log('Saved under "customization-preference":', allResponses['customization-preference']);
+                console.log('Saved under "customization":', allResponses['customization']);
+                console.log('All responses after save:', allResponses);
+            }, 50);
+        }
+        console.log('=== END CUSTOMIZATION DEBUG ===');
+        
+        // Trigger validation
+        this.onResponseChange();
 
-    // Store the customization preferences globally for other modules to access
-    this.updateGlobalCustomizationState();
-    
-    console.log('Customization preferences updated:', this.responses);
-}
+        // Store the customization preferences globally for other modules to access
+        this.updateGlobalCustomizationState();
+        
+        console.log('Customization preferences updated:', this.responses);
+    }
 
     updateTimeEstimate() {
         const totalTime = this.calculateTotalTime();
@@ -224,11 +247,29 @@ export class CustomizationModule {
         if (typeof window !== 'undefined') {
             window.customizationPreferences = { ...this.responses };
             
+            // Also create the formatted version for easier access
+            window.customizationPreferencesFormatted = {
+                revenue: this.responses.revenueCustomization ? 'custom' : 'generic',
+                cogs: this.responses.cogsCustomization ? 'custom' : 'generic', 
+                expenses: this.responses.expensesCustomization ? 'custom' : 'generic',
+                assets: this.responses.assetsCustomization ? 'custom' : 'generic',
+                debt: this.responses.debtCustomization ? 'custom' : 'generic',
+                equity: this.responses.equityCustomization ? 'custom' : 'generic'
+            };
+            
             // Emit a custom event for any modules that need to listen
             const event = new CustomEvent('customizationChanged', {
-                detail: { preferences: this.responses }
+                detail: { 
+                    preferences: this.responses,
+                    formatted: window.customizationPreferencesFormatted 
+                }
             });
             document.dispatchEvent(event);
+            
+            console.log('Global customization state updated:', {
+                raw: window.customizationPreferences,
+                formatted: window.customizationPreferencesFormatted
+            });
         }
     }
 
@@ -239,24 +280,24 @@ export class CustomizationModule {
     }
 
     getResponse() {
-    // Convert internal responses to the format expected by other modules
-    const customizationPreferences = {
-        revenue: this.responses.revenueCustomization ? 'custom' : 'generic',
-        cogs: this.responses.cogsCustomization ? 'custom' : 'generic', 
-        expenses: this.responses.expensesCustomization ? 'custom' : 'generic',
-        assets: this.responses.assetsCustomization ? 'custom' : 'generic',
-        debt: this.responses.debtCustomization ? 'custom' : 'generic',
-        equity: this.responses.equityCustomization ? 'custom' : 'generic'
-    };
+        // Convert internal responses to the format expected by other modules
+        const customizationPreferences = {
+            revenue: this.responses.revenueCustomization ? 'custom' : 'generic',
+            cogs: this.responses.cogsCustomization ? 'custom' : 'generic', 
+            expenses: this.responses.expensesCustomization ? 'custom' : 'generic',
+            assets: this.responses.assetsCustomization ? 'custom' : 'generic',
+            debt: this.responses.debtCustomization ? 'custom' : 'generic',
+            equity: this.responses.equityCustomization ? 'custom' : 'generic'
+        };
 
-    return {
-        type: 'customization-preference',
-        data: { ...this.responses },
-        customizationPreferences: customizationPreferences,
-        customizationSummary: this.getCustomizationSummary(),
-        timestamp: new Date().toISOString()
-    };
-}
+        return {
+            type: 'customization-preference',
+            data: { ...this.responses },
+            customizationPreferences: customizationPreferences,
+            customizationSummary: this.getCustomizationSummary(),
+            timestamp: new Date().toISOString()
+        };
+    }
 
     getCustomizationSummary() {
         const summary = {

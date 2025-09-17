@@ -85,59 +85,39 @@ export class RevenueModule {
     }
 
     renderContent() {
+    console.log('=== REVENUE MODULE DEBUG ===');
+    
     // Check customization preference using consistent method
     const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
-    const customizationResponse = responses['customization']; // CHANGED: from 'customization-preference' to 'customization'
+    console.log('All responses:', responses);
+    
+    // Try both possible keys
+    const customizationResponse1 = responses['customization'];
+    const customizationResponse2 = responses['customization-preference'];
+    
+    console.log('Customization response (key: customization):', customizationResponse1);
+    console.log('Customization response (key: customization-preference):', customizationResponse2);
+    
+    // Use whichever one exists
+    const customizationResponse = customizationResponse1 || customizationResponse2;
+    console.log('Final customization response:', customizationResponse);
+    console.log('customizationPreferences field:', customizationResponse?.customizationPreferences);
+    
     const isGeneric = !customizationResponse?.customizationPreferences?.revenue || 
                      customizationResponse.customizationPreferences.revenue === 'generic';
+    
+    console.log('Revenue preference value:', customizationResponse?.customizationPreferences?.revenue);
+    console.log('Final isGeneric result:', isGeneric);
+    console.log('=== END REVENUE MODULE DEBUG ===');
 
     if (isGeneric) {
+        console.log('SHOWING GENERIC PLACEHOLDER');
         return this.createGenericPlaceholder();
     } else {
+        console.log('SHOWING CUSTOM CONTENT');
         return this.createCustomContent();
     }
 }
-
-    createGenericPlaceholder() {
-        const container = document.createElement('div');
-        container.className = 'placeholder-container';
-        
-        const content = document.createElement('div');
-        content.className = 'placeholder-content';
-        content.innerHTML = `
-            <div class="animated-graphic">
-                <svg viewBox="0 0 120 80">
-                    <defs>
-                        <radialGradient id="circleGradientRevenue" cx="50%" cy="50%">
-                            <stop offset="0%" style="stop-color:#c084fc;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
-                        </radialGradient>
-                    </defs>
-                    <g class="circle-group-1">
-                        <circle cx="20" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
-                    </g>
-                    <g class="circle-group-2">
-                        <circle cx="60" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
-                    </g>
-                    <g class="circle-group-3">
-                        <circle cx="100" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
-                    </g>
-                </svg>
-            </div>
-            <h4 class="placeholder-title">GENERIC MODELLING APPROACH SELECTED</h4>
-            <p class="placeholder-description">
-                You've chosen to use our generic model for this section. 
-                This will save you time during setup while still providing comprehensive financial projections.
-            </p>
-            <p class="placeholder-description" style="margin-top: 10px;">
-                You can customise this section at a later date if needed.
-                You can continue to the next section for now.
-            </p>
-        `;
-        
-        container.appendChild(content);
-        return container;
-    }
 
     createCustomContent() {
         const container = document.createElement('div');
