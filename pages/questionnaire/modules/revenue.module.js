@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/revenue.module.js - COMPLETE VERSION WITH CUSTOMIZATION LISTENER
+// /pages/questionnaire/modules/revenue.module.js - COMPLETE FIXED VERSION
 import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
 
@@ -20,7 +20,7 @@ export class RevenueModule {
             revenueStaff: 'no'
         };
 
-        // Revenue type to charging model mappings - UPDATED TO UNIFIED OPTIONS
+        // Revenue type to charging model mappings
         this.chargingModelOptions = {
             'products': [
                 { value: 'oneoff', text: 'One off fees' },
@@ -49,17 +49,17 @@ export class RevenueModule {
     }
 
     setupCustomizationListener() {
-    // Store the bound function so we can remove it later
-    this.customizationChangeHandler = (event) => {
-        console.log('Revenue module received customization change:', event.detail);
-        if (this.currentContainer) {
-            this.reRender();
-        }
-    };
-    
-    // Listen for customization changes and re-render
-    document.addEventListener('customizationChanged', this.customizationChangeHandler);
-}
+        // Store the bound function so we can remove it later
+        this.customizationChangeHandler = (event) => {
+            console.log('Revenue module received customization change:', event.detail);
+            if (this.currentContainer) {
+                this.reRender();
+            }
+        };
+        
+        // Listen for customization changes and re-render
+        document.addEventListener('customizationChanged', this.customizationChangeHandler);
+    }
 
     reRender() {
         if (!this.currentContainer) return;
@@ -85,39 +85,92 @@ export class RevenueModule {
     }
 
     renderContent() {
-    console.log('=== REVENUE MODULE DEBUG ===');
-    
-    // Check customization preference using consistent method
-    const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
-    console.log('All responses:', responses);
-    
-    // Try both possible keys
-    const customizationResponse1 = responses['customization'];
-    const customizationResponse2 = responses['customization-preference'];
-    
-    console.log('Customization response (key: customization):', customizationResponse1);
-    console.log('Customization response (key: customization-preference):', customizationResponse2);
-    
-    // Use whichever one exists
-    const customizationResponse = customizationResponse1 || customizationResponse2;
-    console.log('Final customization response:', customizationResponse);
-    console.log('customizationPreferences field:', customizationResponse?.customizationPreferences);
-    
-    const isGeneric = !customizationResponse?.customizationPreferences?.revenue || 
-                     customizationResponse.customizationPreferences.revenue === 'generic';
-    
-    console.log('Revenue preference value:', customizationResponse?.customizationPreferences?.revenue);
-    console.log('Final isGeneric result:', isGeneric);
-    console.log('=== END REVENUE MODULE DEBUG ===');
+        console.log('=== REVENUE MODULE DEBUG ===');
+        
+        // Try multiple ways to get customization data
+        let isGeneric = true; // Default to generic
+        
+        // Method 1: Check state manager
+        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
+        console.log('State manager responses:', responses);
+        
+        const customizationResponse1 = responses['customization'];
+        const customizationResponse2 = responses['customization-preference'];
+        
+        console.log('From state - customization:', customizationResponse1);
+        console.log('From state - customization-preference:', customizationResponse2);
+        
+        // Method 2: Check global variables
+        console.log('Global customizationPreferences:', window.customizationPreferences);
+        console.log('Global customizationPreferencesFormatted:', window.customizationPreferencesFormatted);
+        
+        // Determine if generic or custom
+        if (customizationResponse1?.customizationPreferences?.revenue) {
+            isGeneric = customizationResponse1.customizationPreferences.revenue === 'generic';
+            console.log('Using customizationResponse1, isGeneric:', isGeneric);
+        } else if (customizationResponse2?.customizationPreferences?.revenue) {
+            isGeneric = customizationResponse2.customizationPreferences.revenue === 'generic';
+            console.log('Using customizationResponse2, isGeneric:', isGeneric);
+        } else if (window.customizationPreferencesFormatted?.revenue) {
+            isGeneric = window.customizationPreferencesFormatted.revenue === 'generic';
+            console.log('Using global formatted, isGeneric:', isGeneric);
+        } else if (window.customizationPreferences?.revenueCustomization !== undefined) {
+            isGeneric = !window.customizationPreferences.revenueCustomization;
+            console.log('Using global raw, isGeneric:', isGeneric);
+        }
+        
+        console.log('Final isGeneric decision:', isGeneric);
+        console.log('=== END REVENUE MODULE DEBUG ===');
 
-    if (isGeneric) {
-        console.log('SHOWING GENERIC PLACEHOLDER');
-        return this.createGenericPlaceholder();
-    } else {
-        console.log('SHOWING CUSTOM CONTENT');
-        return this.createCustomContent();
+        if (isGeneric) {
+            console.log('SHOWING GENERIC PLACEHOLDER');
+            return this.createGenericPlaceholder();
+        } else {
+            console.log('SHOWING CUSTOM CONTENT');
+            return this.createCustomContent();
+        }
     }
-}
+
+    createGenericPlaceholder() {
+        const container = document.createElement('div');
+        container.className = 'placeholder-container';
+        
+        const content = document.createElement('div');
+        content.className = 'placeholder-content';
+        content.innerHTML = `
+            <div class="animated-graphic">
+                <svg viewBox="0 0 120 80">
+                    <defs>
+                        <radialGradient id="circleGradientRevenue" cx="50%" cy="50%">
+                            <stop offset="0%" style="stop-color:#c084fc;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                        </radialGradient>
+                    </defs>
+                    <g class="circle-group-1">
+                        <circle cx="20" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
+                    </g>
+                    <g class="circle-group-2">
+                        <circle cx="60" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
+                    </g>
+                    <g class="circle-group-3">
+                        <circle cx="100" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
+                    </g>
+                </svg>
+            </div>
+            <h4 class="placeholder-title">GENERIC MODELLING APPROACH SELECTED</h4>
+            <p class="placeholder-description">
+                You've chosen to use our generic model for this section. 
+                This will save you time during setup while still providing comprehensive financial projections.
+            </p>
+            <p class="placeholder-description" style="margin-top: 10px;">
+                You can customise this section at a later date if needed.
+                You can continue to the next section for now.
+            </p>
+        `;
+        
+        container.appendChild(content);
+        return container;
+    }
 
     createCustomContent() {
         const container = document.createElement('div');
@@ -510,24 +563,24 @@ export class RevenueModule {
     }
 
     loadResponse(response) {
-    if (!response) return;
+        if (!response) return;
 
-    // Load response data
-    this.responses = {
-        selectedRevenues: response.selectedRevenues || [],
-        chargingModels: response.chargingModels || {},
-        procurement: response.procurement || [],
-        salesChannels: response.salesChannels || [],
-        revenueStaff: response.revenueStaff || 'no'
-    };
+        // Load response data
+        this.responses = {
+            selectedRevenues: response.selectedRevenues || [],
+            chargingModels: response.chargingModels || {},
+            procurement: response.procurement || [],
+            salesChannels: response.salesChannels || [],
+            revenueStaff: response.revenueStaff || 'no'
+        };
 
-    // Only update components in custom mode
-    const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
-    const customizationResponse = responses['customization']; // CHANGED: from 'customization-preference' to 'customization'
-    const isGeneric = !customizationResponse?.customizationPreferences?.revenue || 
-                     customizationResponse.customizationPreferences.revenue === 'generic';
+        // Check if we should update components (only in custom mode)
+        let isCustomMode = false;
+        if (window.customizationPreferences?.revenueCustomization) {
+            isCustomMode = true;
+        }
 
-    if (!isGeneric) {
+        if (isCustomMode) {
             // Update components with loaded data
             setTimeout(() => {
                 if (this.components.revenueGeneration) {
@@ -560,7 +613,6 @@ export class RevenueModule {
     }
 
     validate() {
-        // Always return valid - users can skip this section entirely
         return {
             isValid: true,
             errors: []
@@ -582,19 +634,19 @@ export class RevenueModule {
     }
 
     destroy() {
-    // Clean up event listeners
-    if (this.customizationChangeHandler) {
-        document.removeEventListener('customizationChanged', this.customizationChangeHandler);
-    }
-    
-    Object.values(this.components).forEach(component => {
-        if (component.destroy) {
-            component.destroy();
+        // Clean up event listeners
+        if (this.customizationChangeHandler) {
+            document.removeEventListener('customizationChanged', this.customizationChangeHandler);
         }
-    });
-    this.components = {};
-    this.currentContainer = null;
-}
+        
+        Object.values(this.components).forEach(component => {
+            if (component.destroy) {
+                component.destroy();
+            }
+        });
+        this.components = {};
+        this.currentContainer = null;
+    }
 }
 
 export default RevenueModule;
