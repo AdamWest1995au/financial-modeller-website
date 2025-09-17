@@ -151,13 +151,13 @@ export class AssetsModule {
 
     createCustomContent() {
         const container = document.createElement('div');
-        container.className = 'assets-custom-content';
+        container.className = 'revenue-custom-content'; // Use same class as revenue
         
-        // Create asset types section
+        // Create main asset types section
         const assetTypesSection = this.createAssetTypesSection();
         container.appendChild(assetTypesSection);
         
-        // Create depreciation section (initially hidden)
+        // Create depreciation methods section (initially hidden)
         const depreciationSection = this.createDepreciationSection();
         container.appendChild(depreciationSection);
         
@@ -166,13 +166,29 @@ export class AssetsModule {
 
     createAssetTypesSection() {
         const section = document.createElement('div');
-        section.className = 'assets-section';
+        section.className = 'revenue-generation-section'; // Use same class as revenue module
+
+        // Add section header (like "How does your business generate revenue?")
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'revenue-generation-header';
+        
+        const headerTitle = document.createElement('div');
+        headerTitle.className = 'revenue-generation-title';
+        headerTitle.textContent = 'What types of assets does your business own?';
+        
+        const headerDescription = document.createElement('div');
+        headerDescription.className = 'revenue-generation-description';
+        headerDescription.textContent = 'Select the types of assets your business owns. This helps us model depreciation and asset-related expenses accurately.';
+        
+        headerDiv.appendChild(headerTitle);
+        headerDiv.appendChild(headerDescription);
+        section.appendChild(headerDiv);
 
         const row = document.createElement('div');
-        row.className = 'assets-row';
+        row.className = 'revenue-generation-row';
 
         const textDiv = document.createElement('div');
-        textDiv.className = 'assets-text';
+        textDiv.className = 'revenue-generation-text';
         textDiv.style.flex = '1';
 
         const title = document.createElement('div');
@@ -181,13 +197,13 @@ export class AssetsModule {
 
         const subtitle = document.createElement('div');
         subtitle.className = 'parameter-toggle-subtitle';
-        subtitle.textContent = 'Select the types of assets your business owns. This helps us model depreciation and asset-related expenses accurately.';
+        subtitle.textContent = 'Select all asset types that your business owns or plans to acquire.';
 
         textDiv.appendChild(title);
         textDiv.appendChild(subtitle);
 
         const dropdownContainer = document.createElement('div');
-        dropdownContainer.className = 'assets-dropdown-container';
+        dropdownContainer.className = 'revenue-dropdown-container'; // Use same class as revenue
         dropdownContainer.style.flex = '0 0 375px';
 
         const assetTypesComponent = new MultiSelect({
@@ -215,37 +231,37 @@ export class AssetsModule {
 
     createDepreciationSection() {
         const section = document.createElement('div');
-        section.className = 'depreciation-section';
+        section.className = 'revenue-staff-section'; // Use same class structure as revenue
         section.id = 'depreciationSection';
         section.style.display = 'none';
 
         const row = document.createElement('div');
-        row.className = 'depreciation-row';
+        row.className = 'revenue-staff-row';
 
         const textDiv = document.createElement('div');
-        textDiv.className = 'depreciation-text';
+        textDiv.className = 'revenue-staff-text';
         textDiv.style.flex = '1';
 
         const title = document.createElement('div');
         title.className = 'parameter-toggle-title';
-        title.textContent = 'Multiple Depreciation Methods';
+        title.textContent = 'Do you use different depreciation methods for different asset types?';
 
         const subtitle = document.createElement('div');
         subtitle.className = 'parameter-toggle-subtitle';
-        subtitle.textContent = 'Do you use different depreciation methods for different asset types?';
+        subtitle.textContent = 'Understanding your depreciation approach helps us model your asset expenses and tax implications more accurately.';
 
         textDiv.appendChild(title);
         textDiv.appendChild(subtitle);
 
         const toggleContainer = document.createElement('div');
-        toggleContainer.className = 'depreciation-toggle-container';
+        toggleContainer.className = 'revenue-staff-toggle-container';
         toggleContainer.style.flex = '0 0 375px';
 
         const depreciationComponent = new Toggle({
             id: 'multipleDepreciationMethods',
             options: [
-                { value: 'no', text: 'No - Use same method for all assets' },
-                { value: 'yes', text: 'Yes - Different methods for different assets' }
+                { value: 'no', text: 'No' },
+                { value: 'yes', text: 'Yes' }
             ],
             defaultValue: 'no',
             onChange: (value) => {
