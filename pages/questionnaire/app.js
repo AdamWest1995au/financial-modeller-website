@@ -166,17 +166,13 @@ class QuestionnaireApp {
 
         const logic = this.engine.conditionalLogic;
 
-        // Revenue module conditional logic
-        logic.registerRule('revenue-structure', {
-            '*': (allResponses) => {
-                // Show revenue module based on customization preferences
-                const customizationResponse = logic.findResponseByType(allResponses, 'customization-preference');
-                if (!customizationResponse) return true;
-                
-                const revenuePreference = customizationResponse.customizationPreferences?.revenue;
-                return revenuePreference !== 'generic';
-            }
-        });
+        // Revenue module conditional logic - UPDATED
+logic.registerRule('revenue-structure', {
+    '*': (allResponses) => {
+        // Always show revenue module - it will handle showing generic vs custom content internally
+        return true;
+    }
+});
 
         // Assets module conditional logic
         logic.registerRule('assets', {
