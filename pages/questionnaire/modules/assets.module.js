@@ -30,14 +30,17 @@ export class AssetsModule {
     }
 
     setupCustomizationListener() {
-        // Listen for customization changes and re-render
-        document.addEventListener('customizationChanged', (event) => {
-            console.log('Assets module received customization change:', event.detail);
-            if (this.currentContainer) {
-                this.reRender();
-            }
-        });
-    }
+    // Store the bound function so we can remove it later
+    this.customizationChangeHandler = (event) => {
+        console.log('Assets module received customization change:', event.detail);
+        if (this.currentContainer) {
+            this.reRender();
+        }
+    };
+    
+    // Listen for customization changes and re-render
+    document.addEventListener('customizationChanged', this.customizationChangeHandler);
+}
 
     reRender() {
         if (!this.currentContainer) return;
@@ -320,17 +323,19 @@ export class AssetsModule {
     }
 
     destroy() {
-        // Clean up event listeners
-        document.removeEventListener('customizationChanged', this.setupCustomizationListener);
-        
-        Object.values(this.components).forEach(component => {
-            if (component.destroy) {
-                component.destroy();
-            }
-        });
-        this.components = {};
-        this.currentContainer = null;
+    // Clean up event listeners
+    if (this.customizationChangeHandler) {
+        document.removeEventListener('customizationChanged', this.customizationChangeHandler);
     }
+    
+    Object.values(this.components).forEach(component => {
+        if (component.destroy) {
+            component.destroy();
+        }
+    });
+    this.components = {};
+    this.currentContainer = null;
+}
 }
 
 export default AssetsModule;

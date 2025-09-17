@@ -175,16 +175,12 @@ logic.registerRule('revenue-structure', {
 });
 
         // Assets module conditional logic
-        logic.registerRule('assets', {
-            '*': (allResponses) => {
-                // Show assets module based on customization preferences
-                const customizationResponse = logic.findResponseByType(allResponses, 'customization-preference');
-                if (!customizationResponse) return true;
-                
-                const assetsPreference = customizationResponse.customizationPreferences?.assets;
-                return assetsPreference !== 'generic';
-            }
-        });
+logic.registerRule('assets', {
+    '*': (allResponses) => {
+        // Always show assets module - it will handle showing generic vs custom content internally
+        return true;
+    }
+});
 
         // COGS/CODB module conditional logic
         logic.registerRule('cogs-codb', {
