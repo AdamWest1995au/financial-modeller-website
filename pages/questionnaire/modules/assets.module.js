@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/assets.module.js - FIXED VERSION
+// /pages/questionnaire/modules/assets.module.js - WITH CUSTOMIZATION CHANGE LISTENER
 import { BaseComponent } from '../components/base-component.js';
 import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
@@ -12,6 +12,7 @@ export class AssetsModule {
         this.required = false;
         
         this.components = {};
+        this.currentContainer = null; // Store reference to container for re-rendering
         this.responses = {
             selectedAssets: [],
             multipleDepreciationMethods: 'no'
@@ -23,27 +24,59 @@ export class AssetsModule {
             { value: "land", text: "Land" },
             { value: "investment_properties", text: "Investment Properties" }
         ];
+
+        // Listen for customization changes
+        this.setupCustomizationListener();
+    }
+
+    setupCustomizationListener() {
+        // Listen for customization changes and re-render
+        document.addEventListener('customizationChanged', (event) => {
+            console.log('Assets module received customization change:', event.detail);
+            if (this.currentContainer) {
+                this.reRender();
+            }
+        });
+    }
+
+    reRender() {
+        if (!this.currentContainer) return;
+        
+        // Clear current content
+        this.currentContainer.innerHTML = '';
+        
+        // Re-render with new customization settings
+        const newContent = this.render();
+        this.currentContainer.appendChild(newContent);
     }
 
     render() {
+        // Store container reference for re-rendering
+        const container = document.createElement('div');
+        this.currentContainer = container;
+        
         // Check if this section should be Generic or Custom
         const isGeneric = this.isGenericModeSelected();
         
         if (isGeneric) {
-            return this.renderGenericMode();
+            const genericContent = this.renderGenericMode();
+            container.appendChild(genericContent);
         } else {
-            return this.renderCustomMode();
+            const customContent = this.renderCustomMode();
+            container.appendChild(customContent);
         }
+        
+        return container;
     }
 
     isGenericModeSelected() {
-        // FIXED: Check customization preference using the same method as other modules
+        // Check customization preference using the same method as other modules
         const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
         const customizationResponse = responses['customization-preference'];
         const isGeneric = !customizationResponse?.customizationPreferences?.assets || 
                          customizationResponse.customizationPreferences.assets === 'generic';
         
-        return isGeneric; // FIXED: Now defaults to generic (true) instead of custom (false)
+        return isGeneric;
     }
 
     renderGenericMode() {
@@ -88,7 +121,6 @@ export class AssetsModule {
     }
 
     renderCustomMode() {
-        // YOUR EXISTING RENDER LOGIC - UNCHANGED
         const container = document.createElement('div');
         container.className = 'assets-form';
 
@@ -103,7 +135,6 @@ export class AssetsModule {
         return container;
     }
 
-    // YOUR EXISTING METHODS - COMPLETELY UNCHANGED
     createAssetTypesSection() {
         const section = document.createElement('div');
         section.className = 'parameter-section';
@@ -248,7 +279,7 @@ export class AssetsModule {
             multipleDepreciationMethods: response.multipleDepreciationMethods || 'no'
         };
 
-        // IMPORTANT: Only update components in custom mode
+        // Only update components in custom mode
         if (!this.isGenericModeSelected()) {
             // Update components with loaded data
             setTimeout(() => {
@@ -289,12 +320,16 @@ export class AssetsModule {
     }
 
     destroy() {
+        // Clean up event listeners
+        document.removeEventListener('customizationChanged', this.setupCustomizationListener);
+        
         Object.values(this.components).forEach(component => {
             if (component.destroy) {
                 component.destroy();
             }
         });
         this.components = {};
+        this.currentContainer = null;
     }
 }
 

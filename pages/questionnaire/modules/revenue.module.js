@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/revenue.module.js - UPDATED VERSION
+// /pages/questionnaire/modules/revenue.module.js - COMPLETE VERSION WITH CUSTOMIZATION LISTENER
 import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
 
@@ -10,6 +10,7 @@ export class RevenueModule {
         this.required = false;
         
         this.components = {};
+        this.currentContainer = null; // Store reference to container for re-rendering
         this.userHasInteracted = false; // Track user interaction for engine
         this.responses = {
             selectedRevenues: [],
@@ -42,83 +43,119 @@ export class RevenueModule {
                 { value: 'royalties', text: 'Royalties' }
             ]
         };
+
+        // Listen for customization changes
+        this.setupCustomizationListener();
+    }
+
+    setupCustomizationListener() {
+        // Listen for customization changes and re-render
+        document.addEventListener('customizationChanged', (event) => {
+            console.log('Revenue module received customization change:', event.detail);
+            if (this.currentContainer) {
+                this.reRender();
+            }
+        });
+    }
+
+    reRender() {
+        if (!this.currentContainer) return;
+        
+        // Clear current content
+        this.currentContainer.innerHTML = '';
+        
+        // Re-render with new customization settings
+        const newContent = this.renderContent();
+        this.currentContainer.appendChild(newContent);
     }
 
     render() {
-    // Check customization preference
-    const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
-    const customizationResponse = responses['customization-preference'];
-    const isGeneric = !customizationResponse?.customizationPreferences?.revenue || 
-                     customizationResponse.customizationPreferences.revenue === 'generic';
-
-    if (isGeneric) {
-        return this.createGenericPlaceholder();
-    } else {
-        return this.createCustomContent();
+        // Store container reference for re-rendering
+        const container = document.createElement('div');
+        this.currentContainer = container;
+        
+        // Render the actual content
+        const content = this.renderContent();
+        container.appendChild(content);
+        
+        return container;
     }
-}
 
-createGenericPlaceholder() {
-    const container = document.createElement('div');
-    container.className = 'placeholder-container';
-    
-    const content = document.createElement('div');
-    content.className = 'placeholder-content';
-    content.innerHTML = `
-        <div class="animated-graphic">
-            <svg viewBox="0 0 120 80">
-                <defs>
-                    <radialGradient id="circleGradientRevenue" cx="50%" cy="50%">
-                        <stop offset="0%" style="stop-color:#c084fc;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
-                    </radialGradient>
-                </defs>
-                <g class="circle-group-1">
-                    <circle cx="20" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
-                </g>
-                <g class="circle-group-2">
-                    <circle cx="60" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
-                </g>
-                <g class="circle-group-3">
-                    <circle cx="100" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
-                </g>
-            </svg>
-        </div>
-        <h4 class="placeholder-title">GENERIC MODELLING APPROACH SELECTED</h4>
-        <p class="placeholder-description">
-            You've chosen to use our generic model for this section. 
-            This will save you time during setup while still providing comprehensive financial projections.
-        </p>
-        <p class="placeholder-description" style="margin-top: 10px;">
-            You can customise this section at a later date if needed.
-            You can continue to the next section for now.
-        </p>
-    `;
-    
-    container.appendChild(content);
-    return container;
-}
+    renderContent() {
+        // Check customization preference using consistent method
+        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
+        const customizationResponse = responses['customization-preference'];
+        const isGeneric = !customizationResponse?.customizationPreferences?.revenue || 
+                         customizationResponse.customizationPreferences.revenue === 'generic';
 
-createCustomContent() {
-    const container = document.createElement('div');
-    container.className = 'combined-parameters-container';
+        if (isGeneric) {
+            return this.createGenericPlaceholder();
+        } else {
+            return this.createCustomContent();
+        }
+    }
 
-    // Revenue Generation Section
-    container.appendChild(this.createRevenueGenerationSection());
+    createGenericPlaceholder() {
+        const container = document.createElement('div');
+        container.className = 'placeholder-container';
+        
+        const content = document.createElement('div');
+        content.className = 'placeholder-content';
+        content.innerHTML = `
+            <div class="animated-graphic">
+                <svg viewBox="0 0 120 80">
+                    <defs>
+                        <radialGradient id="circleGradientRevenue" cx="50%" cy="50%">
+                            <stop offset="0%" style="stop-color:#c084fc;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                        </radialGradient>
+                    </defs>
+                    <g class="circle-group-1">
+                        <circle cx="20" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
+                    </g>
+                    <g class="circle-group-2">
+                        <circle cx="60" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
+                    </g>
+                    <g class="circle-group-3">
+                        <circle cx="100" cy="40" r="4" class="circle" fill="url(#circleGradientRevenue)" />
+                    </g>
+                </svg>
+            </div>
+            <h4 class="placeholder-title">GENERIC MODELLING APPROACH SELECTED</h4>
+            <p class="placeholder-description">
+                You've chosen to use our generic model for this section. 
+                This will save you time during setup while still providing comprehensive financial projections.
+            </p>
+            <p class="placeholder-description" style="margin-top: 10px;">
+                You can customise this section at a later date if needed.
+                You can continue to the next section for now.
+            </p>
+        `;
+        
+        container.appendChild(content);
+        return container;
+    }
 
-    // Dynamic Charging Models Section
-    const chargingSection = this.createChargingModelsSection();
-    container.appendChild(chargingSection);
+    createCustomContent() {
+        const container = document.createElement('div');
+        container.className = 'combined-parameters-container';
 
-    // Products Specific Questions Section
-    const productsSection = this.createProductsSpecificSection();
-    container.appendChild(productsSection);
+        // Revenue Generation Section
+        container.appendChild(this.createRevenueGenerationSection());
 
-    // Revenue Staff Section
-    container.appendChild(this.createRevenueStaffSection());
+        // Dynamic Charging Models Section
+        const chargingSection = this.createChargingModelsSection();
+        container.appendChild(chargingSection);
 
-    return container;
-}
+        // Products Specific Questions Section
+        const productsSection = this.createProductsSpecificSection();
+        container.appendChild(productsSection);
+
+        // Revenue Staff Section
+        container.appendChild(this.createRevenueStaffSection());
+
+        return container;
+    }
 
     createRevenueGenerationSection() {
         const section = document.createElement('div');
@@ -456,8 +493,9 @@ createCustomContent() {
         const container = document.getElementById('chargingModelsContainer');
         if (container) {
             // Remove components from our tracking
-            Array.from(this.components).forEach(([key, component]) => {
+            Object.keys(this.components).forEach(key => {
                 if (key.startsWith('chargingModel')) {
+                    const component = this.components[key];
                     if (component.destroy) {
                         component.destroy();
                     }
@@ -500,34 +538,42 @@ createCustomContent() {
             revenueStaff: response.revenueStaff || 'no'
         };
 
-        // Update components with loaded data
-        setTimeout(() => {
-            if (this.components.revenueGeneration) {
-                this.components.revenueGeneration.setValue(this.responses.selectedRevenues);
-                this.updateConditionalSections(this.responses.selectedRevenues);
-                this.updateChargingModels(this.responses.selectedRevenues);
-            }
+        // Only update components in custom mode
+        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
+        const customizationResponse = responses['customization-preference'];
+        const isGeneric = !customizationResponse?.customizationPreferences?.revenue || 
+                         customizationResponse.customizationPreferences.revenue === 'generic';
 
-            if (this.components.procurement) {
-                this.components.procurement.setValue(this.responses.procurement);
-            }
-
-            if (this.components.salesChannels) {
-                this.components.salesChannels.setValue(this.responses.salesChannels);
-            }
-
-            if (this.components.revenueStaff) {
-                this.components.revenueStaff.setValue(this.responses.revenueStaff);
-            }
-
-            // Load charging models
-            Object.entries(this.responses.chargingModels).forEach(([revenueType, values]) => {
-                const componentKey = `chargingModel${revenueType}`;
-                if (this.components[componentKey]) {
-                    this.components[componentKey].setValue(values);
+        if (!isGeneric) {
+            // Update components with loaded data
+            setTimeout(() => {
+                if (this.components.revenueGeneration) {
+                    this.components.revenueGeneration.setValue(this.responses.selectedRevenues);
+                    this.updateConditionalSections(this.responses.selectedRevenues);
+                    this.updateChargingModels(this.responses.selectedRevenues);
                 }
-            });
-        }, 100);
+
+                if (this.components.procurement) {
+                    this.components.procurement.setValue(this.responses.procurement);
+                }
+
+                if (this.components.salesChannels) {
+                    this.components.salesChannels.setValue(this.responses.salesChannels);
+                }
+
+                if (this.components.revenueStaff) {
+                    this.components.revenueStaff.setValue(this.responses.revenueStaff);
+                }
+
+                // Load charging models
+                Object.entries(this.responses.chargingModels).forEach(([revenueType, values]) => {
+                    const componentKey = `chargingModel${revenueType}`;
+                    if (this.components[componentKey]) {
+                        this.components[componentKey].setValue(values);
+                    }
+                });
+            }, 100);
+        }
     }
 
     validate() {
@@ -553,12 +599,16 @@ createCustomContent() {
     }
 
     destroy() {
+        // Clean up event listeners
+        document.removeEventListener('customizationChanged', this.setupCustomizationListener);
+        
         Object.values(this.components).forEach(component => {
             if (component.destroy) {
                 component.destroy();
             }
         });
         this.components = {};
+        this.currentContainer = null;
     }
 }
 

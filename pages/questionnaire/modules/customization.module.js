@@ -163,25 +163,33 @@ export class CustomizationModule {
     }
 
     handleToggleClick(sectionKey, toggleElement) {
-        // Toggle the state: false = Generic, true = Custom
-        this.responses[sectionKey] = !this.responses[sectionKey];
-        
-        // Update visual state
-        if (this.responses[sectionKey]) {
-            toggleElement.classList.add('active'); // Custom selected
-        } else {
-            toggleElement.classList.remove('active'); // Generic selected
-        }
-
-        // Update total time estimate
-        this.updateTimeEstimate();
-        
-        // Trigger validation
-        this.onResponseChange();
-
-        // Store the customization preferences globally for other modules to access
-        this.updateGlobalCustomizationState();
+    // Toggle the state: false = Generic, true = Custom
+    this.responses[sectionKey] = !this.responses[sectionKey];
+    
+    // Update visual state
+    if (this.responses[sectionKey]) {
+        toggleElement.classList.add('active'); // Custom selected
+    } else {
+        toggleElement.classList.remove('active'); // Generic selected
     }
+
+    // Update total time estimate
+    this.updateTimeEstimate();
+    
+    // IMPORTANT: Save the response to state manager
+    if (window.questionnaireEngine && window.questionnaireEngine.stateManager) {
+        const response = this.getResponse();
+        window.questionnaireEngine.stateManager.saveResponse(this.id, 0, response);
+    }
+    
+    // Trigger validation
+    this.onResponseChange();
+
+    // Store the customization preferences globally for other modules to access
+    this.updateGlobalCustomizationState();
+    
+    console.log('Customization preferences updated:', this.responses);
+}
 
     updateTimeEstimate() {
         const totalTime = this.calculateTotalTime();
