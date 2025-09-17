@@ -47,20 +47,45 @@ export class AssetsModule {
     }
 
     renderGenericMode() {
-        const placeholder = new GenericPlaceholder({
-            sectionName: 'Assets',
-            description: 'A standard asset framework will be included with common asset types and depreciation methods that you can customize in your final Excel model.',
-            icon: '🏢'
-        });
-
-        // Set generic responses for database
-        this.responses = {
-            selectedAssets: ['generic'],
-            multipleDepreciationMethods: 'generic'
-        };
-
-        return placeholder.render();
-    }
+    const container = document.createElement('div');
+    container.className = 'placeholder-container';
+    
+    const content = document.createElement('div');
+    content.className = 'placeholder-content';
+    content.innerHTML = `
+        <div class="animated-graphic">
+            <svg viewBox="0 0 120 80">
+                <defs>
+                    <radialGradient id="circleGradientAssets" cx="50%" cy="50%">
+                        <stop offset="0%" style="stop-color:#c084fc;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                    </radialGradient>
+                </defs>
+                <g class="circle-group-1">
+                    <circle cx="20" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
+                </g>
+                <g class="circle-group-2">
+                    <circle cx="60" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
+                </g>
+                <g class="circle-group-3">
+                    <circle cx="100" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
+                </g>
+            </svg>
+        </div>
+        <h4 class="placeholder-title">GENERIC MODELLING APPROACH SELECTED</h4>
+        <p class="placeholder-description">
+            You've chosen to use our generic model for this section. 
+            This will save you time during setup while still providing comprehensive financial projections.
+        </p>
+        <p class="placeholder-description" style="margin-top: 10px;">
+            You can customise this section at a later date if needed.
+            You can continue to the next section for now.
+        </p>
+    `;
+    
+    container.appendChild(content);
+    return container;
+}
 
     renderCustomMode() {
         // YOUR EXISTING RENDER LOGIC - UNCHANGED
