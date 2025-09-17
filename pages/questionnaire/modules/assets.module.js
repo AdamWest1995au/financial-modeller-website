@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/assets.module.js - WITH CUSTOMIZATION CHANGE LISTENER
+// /pages/questionnaire/modules/assets.module.js - FIXED VERSION
 import { BaseComponent } from '../components/base-component.js';
 import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
@@ -18,7 +18,7 @@ export class AssetsModule {
             multipleDepreciationMethods: 'no'
         };
 
-        // Asset options - KEEPING YOUR EXISTING OPTIONS
+        // Asset options
         this.assetOptions = [
             { value: "ppe", text: "Property, Plant & Equipment" },
             { value: "land", text: "Land" },
@@ -30,17 +30,17 @@ export class AssetsModule {
     }
 
     setupCustomizationListener() {
-    // Store the bound function so we can remove it later
-    this.customizationChangeHandler = (event) => {
-        console.log('Assets module received customization change:', event.detail);
-        if (this.currentContainer) {
-            this.reRender();
-        }
-    };
-    
-    // Listen for customization changes and re-render
-    document.addEventListener('customizationChanged', this.customizationChangeHandler);
-}
+        // Store the bound function so we can remove it later
+        this.customizationChangeHandler = (event) => {
+            console.log('Assets module received customization change:', event.detail);
+            if (this.currentContainer) {
+                this.reRender();
+            }
+        };
+        
+        // Listen for customization changes and re-render
+        document.addEventListener('customizationChanged', this.customizationChangeHandler);
+    }
 
     reRender() {
         if (!this.currentContainer) return;
@@ -49,7 +49,7 @@ export class AssetsModule {
         this.currentContainer.innerHTML = '';
         
         // Re-render with new customization settings
-        const newContent = this.render();
+        const newContent = this.renderContent();
         this.currentContainer.appendChild(newContent);
     }
 
@@ -58,33 +58,61 @@ export class AssetsModule {
         const container = document.createElement('div');
         this.currentContainer = container;
         
-        // Check if this section should be Generic or Custom
-        const isGeneric = this.isGenericModeSelected();
-        
-        if (isGeneric) {
-            const genericContent = this.renderGenericMode();
-            container.appendChild(genericContent);
-        } else {
-            const customContent = this.renderCustomMode();
-            container.appendChild(customContent);
-        }
+        // Render the actual content
+        const content = this.renderContent();
+        container.appendChild(content);
         
         return container;
     }
 
-    isGenericModeSelected() {
-    // Check customization preference using the correct key
-    const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
-    
-    // The customization module saves under its ID 'customization', not 'customization-preference'
-    const customizationResponse = responses['customization'];
-    const isGeneric = !customizationResponse?.customizationPreferences?.assets || 
-                     customizationResponse.customizationPreferences.assets === 'generic';
-    
-    return isGeneric;
-}
+    renderContent() {
+        console.log('=== ASSETS MODULE DEBUG ===');
+        
+        // Try multiple ways to get customization data (same as revenue module)
+        let isGeneric = true; // Default to generic
+        
+        // Method 1: Check state manager
+        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
+        console.log('State manager responses:', responses);
+        
+        const customizationResponse1 = responses['customization'];
+        const customizationResponse2 = responses['customization-preference'];
+        
+        console.log('From state - customization:', customizationResponse1);
+        console.log('From state - customization-preference:', customizationResponse2);
+        
+        // Method 2: Check global variables
+        console.log('Global customizationPreferences:', window.customizationPreferences);
+        console.log('Global customizationPreferencesFormatted:', window.customizationPreferencesFormatted);
+        
+        // Determine if generic or custom - checking multiple sources
+        if (customizationResponse1?.customizationPreferences?.assets) {
+            isGeneric = customizationResponse1.customizationPreferences.assets === 'generic';
+            console.log('Using customizationResponse1, isGeneric:', isGeneric);
+        } else if (customizationResponse2?.customizationPreferences?.assets) {
+            isGeneric = customizationResponse2.customizationPreferences.assets === 'generic';
+            console.log('Using customizationResponse2, isGeneric:', isGeneric);
+        } else if (window.customizationPreferencesFormatted?.assets) {
+            isGeneric = window.customizationPreferencesFormatted.assets === 'generic';
+            console.log('Using global formatted, isGeneric:', isGeneric);
+        } else if (window.customizationPreferences?.assetsCustomization !== undefined) {
+            isGeneric = !window.customizationPreferences.assetsCustomization;
+            console.log('Using global raw, isGeneric:', isGeneric);
+        }
+        
+        console.log('Final isGeneric decision:', isGeneric);
+        console.log('=== END ASSETS MODULE DEBUG ===');
 
-    renderGenericMode() {
+        if (isGeneric) {
+            console.log('SHOWING GENERIC PLACEHOLDER');
+            return this.createGenericPlaceholder();
+        } else {
+            console.log('SHOWING CUSTOM CONTENT');
+            return this.createCustomContent();
+        }
+    }
+
+    createGenericPlaceholder() {
         const container = document.createElement('div');
         container.className = 'placeholder-container';
         
@@ -115,58 +143,55 @@ export class AssetsModule {
                 You've chosen to use our generic model for this section. 
                 This will save you time during setup while still providing comprehensive financial projections.
             </p>
-            <p class="placeholder-description" style="margin-top: 10px;">
-                You can customise this section at a later date if needed.
-                You can continue to the next section for now.
-            </p>
         `;
-        
+
         container.appendChild(content);
         return container;
     }
 
-    renderCustomMode() {
+    createCustomContent() {
         const container = document.createElement('div');
-        container.className = 'assets-form';
-
-        // Asset types section
+        container.className = 'assets-custom-content';
+        
+        // Create asset types section
         const assetTypesSection = this.createAssetTypesSection();
         container.appendChild(assetTypesSection);
-
-        // Conditional depreciation section (hidden by default)
+        
+        // Create depreciation section (initially hidden)
         const depreciationSection = this.createDepreciationSection();
         container.appendChild(depreciationSection);
-
+        
         return container;
     }
 
     createAssetTypesSection() {
         const section = document.createElement('div');
-        section.className = 'parameter-section';
+        section.className = 'assets-section';
 
         const row = document.createElement('div');
-        row.className = 'parameter-toggle-row';
+        row.className = 'assets-row';
 
         const textDiv = document.createElement('div');
-        textDiv.className = 'parameter-toggle-text';
+        textDiv.className = 'assets-text';
+        textDiv.style.flex = '1';
 
         const title = document.createElement('div');
         title.className = 'parameter-toggle-title';
-        title.textContent = 'Asset types';
+        title.textContent = 'Asset Types';
 
         const subtitle = document.createElement('div');
         subtitle.className = 'parameter-toggle-subtitle';
-        subtitle.textContent = 'What type of assets do you own?';
+        subtitle.textContent = 'Select the types of assets your business owns. This helps us model depreciation and asset-related expenses accurately.';
 
         textDiv.appendChild(title);
         textDiv.appendChild(subtitle);
 
-        // Asset types dropdown container
         const dropdownContainer = document.createElement('div');
-        dropdownContainer.className = 'parameter-toggle-input';
+        dropdownContainer.className = 'assets-dropdown-container';
+        dropdownContainer.style.flex = '0 0 375px';
 
         const assetTypesComponent = new MultiSelect({
-            id: 'assetTypesInput',
+            id: 'assetTypes',
             placeholder: 'Search or select asset types...',
             options: this.assetOptions,
             allowCustom: true,
@@ -190,44 +215,47 @@ export class AssetsModule {
 
     createDepreciationSection() {
         const section = document.createElement('div');
-        section.className = 'conditional-section';
+        section.className = 'depreciation-section';
         section.id = 'depreciationSection';
         section.style.display = 'none';
 
         const row = document.createElement('div');
-        row.className = 'parameter-toggle-row';
+        row.className = 'depreciation-row';
 
         const textDiv = document.createElement('div');
-        textDiv.className = 'parameter-toggle-text';
+        textDiv.className = 'depreciation-text';
+        textDiv.style.flex = '1';
 
         const title = document.createElement('div');
         title.className = 'parameter-toggle-title';
-        title.textContent = 'Depreciation methods';
+        title.textContent = 'Multiple Depreciation Methods';
 
         const subtitle = document.createElement('div');
         subtitle.className = 'parameter-toggle-subtitle';
-        subtitle.textContent = 'Would you like to model depreciation using multiple methods?';
+        subtitle.textContent = 'Do you use different depreciation methods for different asset types?';
 
         textDiv.appendChild(title);
         textDiv.appendChild(subtitle);
 
-        // Toggle container
         const toggleContainer = document.createElement('div');
-        toggleContainer.className = 'toggle-switch-container';
+        toggleContainer.className = 'depreciation-toggle-container';
+        toggleContainer.style.flex = '0 0 375px';
 
-        const depreciationToggle = new Toggle({
-            id: 'depreciationToggle',
-            labels: ['No', 'Yes'],
+        const depreciationComponent = new Toggle({
+            id: 'multipleDepreciationMethods',
+            options: [
+                { value: 'no', text: 'No - Use same method for all assets' },
+                { value: 'yes', text: 'Yes - Different methods for different assets' }
+            ],
             defaultValue: 'no',
-            width: '300px',
             onChange: (value) => {
                 this.responses.multipleDepreciationMethods = value;
                 this.onResponseChange();
             }
         });
 
-        this.components.depreciation = depreciationToggle;
-        depreciationToggle.render(toggleContainer);
+        this.components.depreciation = depreciationComponent;
+        depreciationComponent.render(toggleContainer);
 
         row.appendChild(textDiv);
         row.appendChild(toggleContainer);
@@ -238,24 +266,20 @@ export class AssetsModule {
 
     updateConditionalSections(selectedAssets) {
         const depreciationSection = document.getElementById('depreciationSection');
+        if (!depreciationSection) return;
+
+        // Show depreciation section if any assets are selected
+        const showDepreciation = selectedAssets && selectedAssets.length > 0;
         
-        if (depreciationSection) {
-            // Show depreciation section only if "Property, Plant & Equipment" is selected
-            const showDepreciation = selectedAssets.includes('ppe') || 
-                                   selectedAssets.some(asset => 
-                                       asset.toLowerCase().includes('property') ||
-                                       asset.toLowerCase().includes('plant') ||
-                                       asset.toLowerCase().includes('equipment')
-                                   );
-            
-            depreciationSection.style.display = showDepreciation ? 'block' : 'none';
+        if (showDepreciation) {
+            depreciationSection.style.display = 'block';
+        } else {
+            depreciationSection.style.display = 'none';
             
             // Reset depreciation response if not showing
-            if (!showDepreciation) {
-                this.responses.multipleDepreciationMethods = 'no';
-                if (this.components.depreciation) {
-                    this.components.depreciation.setValue('no');
-                }
+            this.responses.multipleDepreciationMethods = 'no';
+            if (this.components.depreciation) {
+                this.components.depreciation.setValue('no');
             }
         }
     }
@@ -285,7 +309,8 @@ export class AssetsModule {
         };
 
         // Only update components in custom mode
-        if (!this.isGenericModeSelected()) {
+        const isGeneric = this.isGenericModeSelected();
+        if (!isGeneric) {
             // Update components with loaded data
             setTimeout(() => {
                 if (this.components.assetTypes) {
@@ -298,6 +323,30 @@ export class AssetsModule {
                 }
             }, 100);
         }
+    }
+
+    // This method now mirrors the comprehensive approach used in renderContent()
+    isGenericModeSelected() {
+        // Try multiple ways to get customization data (same as renderContent)
+        let isGeneric = true; // Default to generic
+        
+        // Method 1: Check state manager
+        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
+        const customizationResponse1 = responses['customization'];
+        const customizationResponse2 = responses['customization-preference'];
+        
+        // Determine if generic or custom - checking multiple sources
+        if (customizationResponse1?.customizationPreferences?.assets) {
+            isGeneric = customizationResponse1.customizationPreferences.assets === 'generic';
+        } else if (customizationResponse2?.customizationPreferences?.assets) {
+            isGeneric = customizationResponse2.customizationPreferences.assets === 'generic';
+        } else if (window.customizationPreferencesFormatted?.assets) {
+            isGeneric = window.customizationPreferencesFormatted.assets === 'generic';
+        } else if (window.customizationPreferences?.assetsCustomization !== undefined) {
+            isGeneric = !window.customizationPreferences.assetsCustomization;
+        }
+        
+        return isGeneric;
     }
 
     validate() {
@@ -325,19 +374,19 @@ export class AssetsModule {
     }
 
     destroy() {
-    // Clean up event listeners
-    if (this.customizationChangeHandler) {
-        document.removeEventListener('customizationChanged', this.customizationChangeHandler);
-    }
-    
-    Object.values(this.components).forEach(component => {
-        if (component.destroy) {
-            component.destroy();
+        // Clean up event listeners
+        if (this.customizationChangeHandler) {
+            document.removeEventListener('customizationChanged', this.customizationChangeHandler);
         }
-    });
-    this.components = {};
-    this.currentContainer = null;
-}
+        
+        Object.values(this.components).forEach(component => {
+            if (component.destroy) {
+                component.destroy();
+            }
+        });
+        this.components = {};
+        this.currentContainer = null;
+    }
 }
 
 export default AssetsModule;
