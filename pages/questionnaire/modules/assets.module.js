@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/assets.module.js - FIXED VERSION
+// /pages/questionnaire/modules/assets.module.js - COMPLETE FIXED VERSION
 import { BaseComponent } from '../components/base-component.js';
 import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
@@ -151,7 +151,7 @@ export class AssetsModule {
 
     createCustomContent() {
         const container = document.createElement('div');
-        container.className = 'revenue-custom-content'; // Use same class as revenue
+        container.className = 'combined-parameters-container'; // Same as revenue module
         
         // Create main asset types section
         const assetTypesSection = this.createAssetTypesSection();
@@ -166,38 +166,21 @@ export class AssetsModule {
 
     createAssetTypesSection() {
         const section = document.createElement('div');
-        section.className = 'revenue-generation-section'; // Use same class as revenue module
-
-        // Add section header (like "How does your business generate revenue?")
-        const headerDiv = document.createElement('div');
-        headerDiv.className = 'revenue-generation-header';
-        
-        const headerTitle = document.createElement('div');
-        headerTitle.className = 'revenue-generation-title';
-        headerTitle.textContent = 'What types of assets does your business own?';
-        
-        const headerDescription = document.createElement('div');
-        headerDescription.className = 'revenue-generation-description';
-        headerDescription.textContent = 'Select the types of assets your business owns. This helps us model depreciation and asset-related expenses accurately.';
-        
-        headerDiv.appendChild(headerTitle);
-        headerDiv.appendChild(headerDescription);
-        section.appendChild(headerDiv);
+        section.className = 'parameter-section'; // Same class as revenue
 
         const row = document.createElement('div');
-        row.className = 'revenue-generation-row';
+        row.className = 'parameter-toggle-row'; // Same class as revenue
 
         const textDiv = document.createElement('div');
-        textDiv.className = 'revenue-generation-text';
-        textDiv.style.flex = '1';
+        textDiv.className = 'parameter-toggle-text'; // Same class as revenue
 
         const title = document.createElement('div');
         title.className = 'parameter-toggle-title';
-        title.textContent = 'Asset Types';
+        title.textContent = 'What types of assets does your business own?';
 
         const subtitle = document.createElement('div');
         subtitle.className = 'parameter-toggle-subtitle';
-        subtitle.textContent = 'Select all asset types that your business owns or plans to acquire.';
+        subtitle.textContent = 'Select the types of assets your business owns. This helps us model depreciation and asset-related expenses accurately.';
 
         textDiv.appendChild(title);
         textDiv.appendChild(subtitle);
@@ -230,16 +213,19 @@ export class AssetsModule {
     }
 
     createDepreciationSection() {
+        // FIXED: Use parameter-section instead of revenue-staff-section
         const section = document.createElement('div');
-        section.className = 'revenue-staff-section'; // Use same class structure as revenue
+        section.className = 'parameter-section'; // ✅ FIXED: Same as revenue staff section
         section.id = 'depreciationSection';
         section.style.display = 'none';
 
+        // FIXED: Use parameter-toggle-row instead of revenue-staff-row
         const row = document.createElement('div');
-        row.className = 'revenue-staff-row';
+        row.className = 'parameter-toggle-row'; // ✅ FIXED: Same as revenue staff section
 
+        // FIXED: Use parameter-toggle-text instead of revenue-staff-text
         const textDiv = document.createElement('div');
-        textDiv.className = 'revenue-staff-text';
+        textDiv.className = 'parameter-toggle-text'; // ✅ FIXED: Same as revenue staff section
         textDiv.style.flex = '1';
 
         const title = document.createElement('div');
@@ -253,16 +239,14 @@ export class AssetsModule {
         textDiv.appendChild(title);
         textDiv.appendChild(subtitle);
 
+        // FIXED: Use toggle-switch-container instead of revenue-staff-toggle-container
         const toggleContainer = document.createElement('div');
-        toggleContainer.className = 'revenue-staff-toggle-container';
-        toggleContainer.style.flex = '0 0 375px';
+        toggleContainer.className = 'toggle-switch-container'; // ✅ FIXED: Same as revenue staff section
 
+        // FIXED: Use labels array instead of options array
         const depreciationComponent = new Toggle({
             id: 'multipleDepreciationMethods',
-            options: [
-                { value: 'no', text: 'No' },
-                { value: 'yes', text: 'Yes' }
-            ],
+            labels: ['No', 'Yes'], // ✅ FIXED: Use labels array like revenue staff toggle
             defaultValue: 'no',
             onChange: (value) => {
                 this.responses.multipleDepreciationMethods = value;
