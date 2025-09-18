@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/working-capital.module.js
+// /pages/questionnaire/modules/working-capital.module.js - COMPLETE REWRITE
 import { BaseComponent } from '../components/base-component.js';
 import { Toggle } from '../components/toggle.js';
 import { GenericPlaceholder } from '../components/generic-placeholder.js';
@@ -11,19 +11,18 @@ export class WorkingCapitalModule {
         this.required = false;
         
         this.components = {};
-        this.currentContainer = null; // Store reference to container for re-rendering
+        this.currentContainer = null;
         this.responses = {
             multipleInventoryMethods: 'no',
             inventoryDaysOutstanding: 'no',
             prepaidExpensesDays: 'no'
         };
 
-        // Listen for customization changes
+        // Setup customization listener
         this.setupCustomizationListener();
     }
 
     setupCustomizationListener() {
-        // Store the bound function so we can remove it later
         this.customizationChangeHandler = (event) => {
             console.log('Working Capital module received customization change:', event.detail);
             if (this.currentContainer) {
@@ -31,27 +30,21 @@ export class WorkingCapitalModule {
             }
         };
         
-        // Listen for customization changes and re-render
         document.addEventListener('customizationChanged', this.customizationChangeHandler);
     }
 
     reRender() {
         if (!this.currentContainer) return;
         
-        // Clear current content
         this.currentContainer.innerHTML = '';
-        
-        // Re-render with new customization settings
         const newContent = this.renderContent();
         this.currentContainer.appendChild(newContent);
     }
 
     render() {
-        // Store container reference for re-rendering
         const container = document.createElement('div');
         this.currentContainer = container;
         
-        // Render the actual content
         const content = this.renderContent();
         container.appendChild(content);
         
@@ -61,7 +54,6 @@ export class WorkingCapitalModule {
     renderContent() {
         console.log('=== WORKING CAPITAL MODULE DEBUG ===');
         
-        // Check if generic mode is selected
         const isGeneric = this.isGenericModeSelected();
         console.log('Working Capital isGeneric:', isGeneric);
         console.log('=== END WORKING CAPITAL MODULE DEBUG ===');
@@ -90,7 +82,7 @@ export class WorkingCapitalModule {
         container.className = 'working-capital-content';
 
         // Check if user selected "Sell Products" in revenue module
-        const sellsProducts = this.checkIfUserSellsProducts();
+        const sellsProducts = this.detectProductsSelection();
         console.log('User sells products:', sellsProducts);
 
         // Question 1: Multiple inventory methods (conditional on selling products)
@@ -107,13 +99,108 @@ export class WorkingCapitalModule {
         const prepaidExpensesSection = this.createPrepaidExpensesSection();
         container.appendChild(prepaidExpensesSection);
 
-        // If no questions are shown, show a message
+        // If no inventory questions shown, show informative message
         if (!sellsProducts) {
-            const noQuestionsMessage = this.createNoProductsMessage();
-            container.appendChild(noQuestionsMessage);
+            const noProductsMessage = this.createNoProductsMessage();
+            container.appendChild(noProductsMessage);
         }
 
         return container;
+    }
+
+    /**
+     * Enhanced product detection with multiple fallback methods
+     */
+    detectProductsSelection() {
+        console.log('=== ENHANCED PRODUCTS DETECTION ===');
+        
+        let sellsProducts = false;
+
+        // Method 1: Check engine responses directly
+        if (window.questionnaireEngine?.responses) {
+            const engineResponses = window.questionnaireEngine.responses;
+            console.log('Checking engine responses:', engineResponses);
+            
+            const revenueResponse = engineResponses['revenue-structure'];
+            if (revenueResponse?.selectedRevenues) {
+                sellsProducts = revenueResponse.selectedRevenues.includes('products');
+                console.log('Engine check - selectedRevenues:', revenueResponse.selectedRevenues, 'Products found:', sellsProducts);
+                if (sellsProducts) {
+                    console.log('✅ Products detected via engine responses');
+                    return sellsProducts;
+                }
+            }
+        }
+
+        // Method 2: Check state manager
+        if (!sellsProducts && window.questionnaireEngine?.stateManager) {
+            const allResponses = window.questionnaireEngine.stateManager.getAllResponses();
+            console.log('Checking state manager responses:', allResponses);
+            
+            // Try multiple possible keys
+            const possibleKeys = ['revenue-structure', 'revenue', 'revenue-combined'];
+            
+            for (const key of possibleKeys) {
+                const response = allResponses[key];
+                if (response) {
+                    console.log(`Checking response under key '${key}':`, response);
+                    
+                    // Check selectedRevenues property
+                    if (response.selectedRevenues && Array.isArray(response.selectedRevenues)) {
+                        sellsProducts = response.selectedRevenues.includes('products');
+                        console.log(`State manager check - ${key}.selectedRevenues:`, response.selectedRevenues, 'Products found:', sellsProducts);
+                        if (sellsProducts) {
+                            console.log(`✅ Products detected via state manager - ${key}`);
+                            break;
+                        }
+                    }
+                    
+                    // Check nested data property
+                    if (!sellsProducts && response.data?.selectedRevenues) {
+                        sellsProducts = response.data.selectedRevenues.includes('products');
+                        console.log(`State manager check - ${key}.data.selectedRevenues:`, response.data.selectedRevenues, 'Products found:', sellsProducts);
+                        if (sellsProducts) {
+                            console.log(`✅ Products detected via state manager - ${key}.data`);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Method 3: Check module instances directly
+        if (!sellsProducts && window.questionnaireEngine?.modules) {
+            console.log('Checking module instances...');
+            const modules = window.questionnaireEngine.modules;
+            
+            for (const module of modules) {
+                if (module.id === 'revenue-structure') {
+                    console.log('Found revenue module:', module);
+                    if (module.responses?.selectedRevenues) {
+                        sellsProducts = module.responses.selectedRevenues.includes('products');
+                        console.log('Module check - selectedRevenues:', module.responses.selectedRevenues, 'Products found:', sellsProducts);
+                        if (sellsProducts) {
+                            console.log('✅ Products detected via module instance');
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Method 4: Global variable fallback
+        if (!sellsProducts && window.revenueData) {
+            console.log('Checking global revenue data:', window.revenueData);
+            if (window.revenueData.selectedRevenues?.includes('products')) {
+                sellsProducts = true;
+                console.log('✅ Products detected via global variable');
+            }
+        }
+
+        console.log('Final products detection result:', sellsProducts);
+        console.log('=== END ENHANCED PRODUCTS DETECTION ===');
+        
+        return sellsProducts;
     }
 
     createInventoryMethodsSection() {
@@ -264,76 +351,40 @@ export class WorkingCapitalModule {
         return messageDiv;
     }
 
-    checkIfUserSellsProducts() {
-        // Check if user selected "Sell Products" (products) in the revenue module
-        let sellsProducts = false;
-
-        // Try multiple ways to get the revenue data
-        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
-        
-        // Check for revenue responses
-        const revenueResponse1 = responses['revenue-structure'];
-        const revenueResponse2 = responses['revenue'];
-        
-        // Look for products in selected revenues
-        if (revenueResponse1?.selectedRevenues) {
-            sellsProducts = revenueResponse1.selectedRevenues.includes('products');
-        } else if (revenueResponse1?.revenueGeneration) {
-            sellsProducts = revenueResponse1.revenueGeneration.includes('products');
-        } else if (revenueResponse2?.selectedRevenues) {
-            sellsProducts = revenueResponse2.selectedRevenues.includes('products');
-        } else if (revenueResponse2?.revenueGeneration) {
-            sellsProducts = revenueResponse2.revenueGeneration.includes('products');
-        }
-
-        console.log('Revenue responses check:', {
-            revenueResponse1,
-            revenueResponse2,
-            sellsProducts
-        });
-
-        return sellsProducts;
-    }
-
     isGenericModeSelected() {
-        // Try multiple ways to get customization data (same pattern as other modules)
         let isGeneric = true; // Default to generic
         
-        // Method 1: Check state manager
-        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
-        const customizationResponse1 = responses['customization'];
-        const customizationResponse2 = responses['customization-preference'];
-        
-        console.log('Checking customization - working capital:');
-        console.log('From state - customization:', customizationResponse1);
-        console.log('From state - customization-preference:', customizationResponse2);
-        
-        // Method 2: Check global variables
-        console.log('Global customizationPreferences:', window.customizationPreferences);
-        console.log('Global customizationPreferencesFormatted:', window.customizationPreferencesFormatted);
-        
-        // Determine if generic or custom
-        if (customizationResponse1?.customizationPreferences?.workingCapital) {
-            isGeneric = customizationResponse1.customizationPreferences.workingCapital === 'generic';
-            console.log('Using customizationResponse1, isGeneric:', isGeneric);
-        } else if (customizationResponse2?.customizationPreferences?.workingCapital) {
-            isGeneric = customizationResponse2.customizationPreferences.workingCapital === 'generic';
-            console.log('Using customizationResponse2, isGeneric:', isGeneric);
-        } else if (window.customizationPreferencesFormatted?.workingCapital) {
-            isGeneric = window.customizationPreferencesFormatted.workingCapital === 'generic';
-            console.log('Using global formatted, isGeneric:', isGeneric);
-        } else if (window.customizationPreferences?.workingCapitalCustomization !== undefined) {
-            isGeneric = !window.customizationPreferences.workingCapitalCustomization;
-            console.log('Using global raw, isGeneric:', isGeneric);
+        // Method 1: Check state manager responses
+        if (window.questionnaireEngine?.stateManager) {
+            const responses = window.questionnaireEngine.stateManager.getAllResponses();
+            const customizationResponse = responses['customization'] || responses['customization-preference'];
+            
+            if (customizationResponse?.customizationPreferences?.workingCapital) {
+                isGeneric = customizationResponse.customizationPreferences.workingCapital === 'generic';
+                console.log('Customization check - using state manager:', isGeneric);
+                return isGeneric;
+            }
         }
         
-        console.log('Final isGeneric decision:', isGeneric);
+        // Method 2: Check global customization variables
+        if (window.customizationPreferencesFormatted?.workingCapital) {
+            isGeneric = window.customizationPreferencesFormatted.workingCapital === 'generic';
+            console.log('Customization check - using global formatted:', isGeneric);
+            return isGeneric;
+        }
         
+        if (window.customizationPreferences?.workingCapitalCustomization !== undefined) {
+            isGeneric = !window.customizationPreferences.workingCapitalCustomization;
+            console.log('Customization check - using global raw:', isGeneric);
+            return isGeneric;
+        }
+        
+        console.log('Customization check - using default:', isGeneric);
         return isGeneric;
     }
 
     onResponseChange() {
-        if (window.questionnaireEngine && window.questionnaireEngine.validator) {
+        if (window.questionnaireEngine?.validator) {
             window.questionnaireEngine.validator.validateCurrentQuestion();
         }
     }
@@ -351,7 +402,6 @@ export class WorkingCapitalModule {
     loadResponse(response) {
         if (!response) return;
 
-        // Load response data
         this.responses = {
             multipleInventoryMethods: response.multipleInventoryMethods || 'no',
             inventoryDaysOutstanding: response.inventoryDaysOutstanding || 'no',
@@ -361,7 +411,6 @@ export class WorkingCapitalModule {
         // Only update components in custom mode
         const isGeneric = this.isGenericModeSelected();
         if (!isGeneric) {
-            // Update components with loaded data
             setTimeout(() => {
                 if (this.components.multipleInventoryMethods) {
                     this.components.multipleInventoryMethods.setValue(this.responses.multipleInventoryMethods);
@@ -379,7 +428,6 @@ export class WorkingCapitalModule {
     }
 
     validate() {
-        // Always return valid - users can skip this section entirely
         return {
             isValid: true,
             errors: []
@@ -387,8 +435,7 @@ export class WorkingCapitalModule {
     }
 
     shouldShow(responses) {
-        // Always show Working Capital module - it will handle showing generic vs custom content internally
-        return true;
+        return true; // Always show Working Capital module
     }
 
     getDatabaseFields() {
@@ -398,7 +445,7 @@ export class WorkingCapitalModule {
             multiple_inventory_methods: this.responses.multipleInventoryMethods,
             inventory_days_outstanding_method: this.responses.inventoryDaysOutstanding,
             prepaid_expenses_days_method: this.responses.prepaidExpensesDays,
-            is_generic_working_capital: isGeneric // Track if generic mode was used
+            is_generic_working_capital: isGeneric
         };
     }
 
@@ -413,6 +460,7 @@ export class WorkingCapitalModule {
                 component.destroy();
             }
         });
+        
         this.components = {};
         this.currentContainer = null;
     }
