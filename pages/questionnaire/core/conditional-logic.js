@@ -1,4 +1,4 @@
-// /pages/questionnaire/core/conditional-logic.js
+// /pages/questionnaire/core/conditional-logic.js - COMPLETE VERSION
 class ConditionalLogic {
     constructor() {
         this.rules = new Map(); // moduleId -> rules
@@ -118,12 +118,13 @@ class ConditionalLogic {
     }
 
     checkCustomizationPreferences(moduleId, allResponses) {
-        // Map module IDs to customization sections
+        // Map module IDs to customization sections - INCLUDES WORKING CAPITAL
         const customizationMap = {
             'revenue-structure': 'revenue',
             'cogs-codb': 'cogs',
             'expenses': 'expenses',
             'assets': 'assets',
+            'working-capital': 'workingCapital',
             'debt': 'debt',
             'equity-financing': 'equity'
         };
@@ -251,7 +252,7 @@ class ConditionalLogic {
     findResponseByType(allResponses, responseType) {
         for (const [moduleId, moduleResponses] of Object.entries(allResponses)) {
             for (const [questionIndex, response] of Object.entries(moduleResponses)) {
-                if (response.type === responseType) {
+                if (response && response.type === responseType) {
                     return response;
                 }
             }
@@ -263,7 +264,7 @@ class ConditionalLogic {
         const results = [];
         for (const [moduleId, moduleResponses] of Object.entries(allResponses)) {
             for (const [questionIndex, response] of Object.entries(moduleResponses)) {
-                if (response.type === responseType) {
+                if (response && response.type === responseType) {
                     results.push({
                         moduleId,
                         questionIndex: parseInt(questionIndex),
@@ -322,6 +323,7 @@ class ConditionalLogic {
         if (sourceModuleId === 'revenue-structure' && responseData.revenueGeneration) {
             if (responseData.revenueGeneration.includes('products')) {
                 affected.push('products-specific');
+                affected.push('working-capital'); // Working capital affected by products selection
             }
         }
         
@@ -332,10 +334,10 @@ class ConditionalLogic {
         
         // Customization affects all other modules
         if (sourceModuleId === 'customization-preference') {
-            affected.push('revenue-structure', 'cogs-codb', 'expenses', 'assets', 'debt', 'equity-financing');
+            affected.push('revenue-structure', 'cogs-codb', 'expenses', 'assets', 'working-capital', 'debt', 'equity-financing');
         }
 
-        // Assets module dependencies (NEW)
+        // Assets module dependencies
         if (sourceModuleId === 'assets' && responseData.selectedAssets) {
             // Assets might affect depreciation calculations in other modules
             affected.push('expenses'); // Depreciation expenses
@@ -348,6 +350,24 @@ class ConditionalLogic {
                     asset.toLowerCase().includes('equipment')
                 )) {
                 affected.push('cogs-codb'); // Could affect COGS if manufacturing equipment
+            }
+        }
+        
+        // Working Capital module dependencies - NEW
+        if (sourceModuleId === 'working-capital') {
+            // Working capital affects cash flow calculations
+            affected.push('cash-flow');
+            
+            // If inventory methods are enabled, might affect COGS calculations
+            if (responseData.multipleInventoryMethods === 'yes') {
+                affected.push('cogs-codb');
+            }
+        }
+        
+        // Revenue module affects Working Capital - NEW
+        if (sourceModuleId === 'revenue-structure' && responseData.selectedRevenues) {
+            if (responseData.selectedRevenues.includes('products')) {
+                affected.push('working-capital'); // Show inventory-related questions
             }
         }
         
@@ -455,7 +475,7 @@ class ConditionalLogic {
         };
     }
 
-    // NEW: Assets-specific rule factories
+    // Assets-specific rule factories
     static showIfAssetsSelected() {
         return (allResponses) => {
             const assetsResponse = ConditionalLogic.prototype.findResponseByType.call(
@@ -533,7 +553,29 @@ class ConditionalLogic {
         };
     }
 
-    // NEW: Helper methods specifically for Assets module
+    // Helper methods for Revenue module
+    hasUserSelectedRevenueType(allResponses, revenueType) {
+        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
+                              this.findResponseByType(allResponses, 'revenue-combined');
+        if (!revenueResponse) return false;
+        
+        const selectedRevenues = revenueResponse.selectedRevenues || revenueResponse.revenueGeneration || [];
+        return selectedRevenues.includes(revenueType);
+    }
+
+    getSelectedRevenueTypes(allResponses) {
+        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
+                              this.findResponseByType(allResponses, 'revenue-combined');
+        return revenueResponse?.selectedRevenues || revenueResponse?.revenueGeneration || [];
+    }
+
+    isRevenueStaffSelected(allResponses) {
+        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
+                              this.findResponseByType(allResponses, 'revenue-combined');
+        return revenueResponse?.revenueStaff === 'yes';
+    }
+
+    // Helper methods for Assets module
     hasUserSelectedAssetType(allResponses, assetType) {
         const assetsResponse = this.findResponseByType(allResponses, 'assets-combined');
         if (!assetsResponse?.selectedAssets) return false;
@@ -552,6 +594,69 @@ class ConditionalLogic {
     getSelectedAssetTypes(allResponses) {
         const assetsResponse = this.findResponseByType(allResponses, 'assets-combined');
         return assetsResponse?.selectedAssets || [];
+    }
+
+    // Helper methods for Working Capital module - NEW
+    doesUserSellProducts(allResponses) {
+        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
+                              this.findResponseByType(allResponses, 'revenue');
+        
+        if (!revenueResponse) return false;
+        
+        // Check for products in selected revenues
+        const selectedRevenues = revenueResponse.selectedRevenues || revenueResponse.revenueGeneration || [];
+        return selectedRevenues.includes('products');
+    }
+
+    getWorkingCapitalPreferences(allResponses) {
+        const workingCapitalResponse = this.findResponseByType(allResponses, 'working-capital');
+        if (!workingCapitalResponse) return {};
+        
+        return {
+            multipleInventoryMethods: workingCapitalResponse.multipleInventoryMethods === 'yes',
+            inventoryDaysOutstanding: workingCapitalResponse.inventoryDaysOutstanding === 'yes',
+            prepaidExpensesDays: workingCapitalResponse.prepaidExpensesDays === 'yes'
+        };
+    }
+
+    isWorkingCapitalCustomModeSelected(allResponses) {
+        const customizationResponse = this.findResponseByType(allResponses, 'customization-preference');
+        if (!customizationResponse?.customizationPreferences) return false;
+        
+        return customizationResponse.customizationPreferences.workingCapital === 'custom';
+    }
+
+    // Helper methods for User Info module
+    getUserPreferences(allResponses) {
+        const userResponse = this.findResponseByType(allResponses, 'user-info');
+        if (!userResponse) return {};
+        
+        return {
+            parameterToggle: userResponse.parameterToggle,
+            userEmail: userResponse.userEmail,
+            userName: userResponse.userName
+        };
+    }
+
+    isParameterToggleEnabled(allResponses) {
+        const userResponse = this.findResponseByType(allResponses, 'user-info');
+        return userResponse?.parameterToggle === 'yes';
+    }
+
+    // Helper methods for Customization module
+    getCustomizationPreferences(allResponses) {
+        const customizationResponse = this.findResponseByType(allResponses, 'customization-preference');
+        return customizationResponse?.customizationPreferences || {};
+    }
+
+    isCustomizationSectionCustom(allResponses, sectionKey) {
+        const preferences = this.getCustomizationPreferences(allResponses);
+        return preferences[sectionKey] === 'custom';
+    }
+
+    isCustomizationSectionGeneric(allResponses, sectionKey) {
+        const preferences = this.getCustomizationPreferences(allResponses);
+        return preferences[sectionKey] === 'generic';
     }
 
     // Debug and development helpers

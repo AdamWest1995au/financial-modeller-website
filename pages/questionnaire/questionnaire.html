@@ -901,6 +901,70 @@
 
 /* Generic Placeholder Styles - Add to questionnaire.html CSS section */
 
+/* Working Capital Module Styles - Add this to your existing CSS */
+
+/* Working Capital Content Container */
+.working-capital-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* No Products Message */
+.working-capital-no-products-message {
+    margin-top: 20px;
+}
+
+.info-message {
+    display: flex;
+    align-items: flex-start;
+    padding: 16px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    gap: 12px;
+}
+
+.info-icon {
+    font-size: 20px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.info-content h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.info-content p {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #6c757d;
+}
+
+.info-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Dark mode support for Working Capital (if your app supports it) */
+@media (prefers-color-scheme: dark) {
+    .info-message {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    
+    .info-content h4 {
+        color: #f9fafb;
+    }
+    
+    .info-content p {
+        color: #d1d5db;
+    }
+}
+
 /* Generic Placeholder Container */
 .generic-placeholder-container {
     display: flex;

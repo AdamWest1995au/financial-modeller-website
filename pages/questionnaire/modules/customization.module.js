@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/customization.module.js - FIXED VERSION
+// /pages/questionnaire/modules/customization.module.js - COMPLETE UPDATED VERSION
 export class CustomizationModule {
     constructor() {
         this.id = 'customization';
@@ -7,7 +7,7 @@ export class CustomizationModule {
         this.required = true;
         this.components = {};
         
-        // Define all customizable sections
+        // Define all customizable sections - UPDATED WITH WORKING CAPITAL
         this.sections = [
             {
                 id: 'revenue',
@@ -34,6 +34,12 @@ export class CustomizationModule {
                 key: 'assetsCustomization'
             },
             {
+                id: 'workingCapital',
+                title: 'Working Capital',
+                timeEstimate: '2-3 Minutes',
+                key: 'workingCapitalCustomization'
+            },
+            {
                 id: 'debt',
                 title: 'Debt',
                 timeEstimate: '3 Minutes',
@@ -48,10 +54,16 @@ export class CustomizationModule {
         ];
 
         // Initialize responses - default to Generic (false = Generic, true = Custom)
-        this.responses = {};
-        this.sections.forEach(section => {
-            this.responses[section.key] = false; // Default to Generic
-        });
+        // UPDATED WITH WORKING CAPITAL
+        this.responses = {
+            revenueCustomization: false,
+            cogsCustomization: false,
+            expensesCustomization: false,
+            assetsCustomization: false,
+            workingCapitalCustomization: false,
+            debtCustomization: false,
+            equityCustomization: false
+        };
     }
 
     render() {
@@ -192,34 +204,37 @@ export class CustomizationModule {
             // Save under 'customization-preference' key so other modules can find it
             window.questionnaireEngine.stateManager.saveResponse('customization-preference', 0, response);
             
-            // ALSO save under our normal ID for consistency
-            window.questionnaireEngine.stateManager.saveResponse(this.id, 0, response);
+            // Also save under 'customization' for backward compatibility
+            window.questionnaireEngine.stateManager.saveResponse('customization', 0, response);
             
-            // Verify what was saved
-            setTimeout(() => {
-                const allResponses = window.questionnaireEngine.stateManager.getAllResponses();
-                console.log('Saved under "customization-preference":', allResponses['customization-preference']);
-                console.log('Saved under "customization":', allResponses['customization']);
-                console.log('All responses after save:', allResponses);
-            }, 50);
+            console.log('Response saved to state manager');
         }
-        console.log('=== END CUSTOMIZATION DEBUG ===');
         
-        // Trigger validation
-        this.onResponseChange();
-
-        // Store the customization preferences globally for other modules to access
+        // Update global customization state for backward compatibility
         this.updateGlobalCustomizationState();
         
-        console.log('Customization preferences updated:', this.responses);
+        // Dispatch event to notify other modules of the change
+        const customizationEvent = new CustomEvent('customizationChanged', {
+            detail: {
+                section: sectionKey,
+                value: this.responses[sectionKey],
+                allPreferences: this.getCustomizationPreferences()
+            }
+        });
+        document.dispatchEvent(customizationEvent);
+        
+        console.log('=== END CUSTOMIZATION TOGGLE DEBUG ===');
     }
 
-    updateTimeEstimate() {
-        const totalTime = this.calculateTotalTime();
-        const timeElement = document.getElementById('totalTimeEstimate');
-        if (timeElement) {
-            timeElement.textContent = totalTime;
-        }
+    updateGlobalCustomizationState() {
+        // Update global variables for backward compatibility
+        window.customizationPreferences = { ...this.responses };
+        window.customizationPreferencesFormatted = this.getCustomizationPreferences();
+        
+        console.log('Updated global customization state:', {
+            raw: window.customizationPreferences,
+            formatted: window.customizationPreferencesFormatted
+        });
     }
 
     calculateTotalTime() {
@@ -227,68 +242,45 @@ export class CustomizationModule {
         
         this.sections.forEach(section => {
             if (this.responses[section.key]) { // If Custom is selected
-                totalMinutes += 3; // 3 minutes per custom section
+                // Extract number from time estimate (e.g. "3 Minutes" -> 3)
+                const timeMatch = section.timeEstimate.match(/(\d+)/);
+                if (timeMatch) {
+                    totalMinutes += parseInt(timeMatch[1]);
+                }
             }
         });
-
+        
         if (totalMinutes === 0) {
-            return '< 1 Minute'; // All generic
-        } else if (totalMinutes < 60) {
-            return `${totalMinutes} Minutes`;
+            return "0 minutes";
+        } else if (totalMinutes === 1) {
+            return "1 minute";
         } else {
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            return minutes > 0 ? `${hours}h ${minutes}m` : `${hours} hour${hours > 1 ? 's' : ''}`;
+            return `${totalMinutes} minutes`;
         }
     }
 
-    updateGlobalCustomizationState() {
-        // Store customization preferences in a global state that other modules can access
-        if (typeof window !== 'undefined') {
-            window.customizationPreferences = { ...this.responses };
-            
-            // Also create the formatted version for easier access
-            window.customizationPreferencesFormatted = {
-                revenue: this.responses.revenueCustomization ? 'custom' : 'generic',
-                cogs: this.responses.cogsCustomization ? 'custom' : 'generic', 
-                expenses: this.responses.expensesCustomization ? 'custom' : 'generic',
-                assets: this.responses.assetsCustomization ? 'custom' : 'generic',
-                debt: this.responses.debtCustomization ? 'custom' : 'generic',
-                equity: this.responses.equityCustomization ? 'custom' : 'generic'
-            };
-            
-            // Emit a custom event for any modules that need to listen
-            const event = new CustomEvent('customizationChanged', {
-                detail: { 
-                    preferences: this.responses,
-                    formatted: window.customizationPreferencesFormatted 
-                }
-            });
-            document.dispatchEvent(event);
-            
-            console.log('Global customization state updated:', {
-                raw: window.customizationPreferences,
-                formatted: window.customizationPreferencesFormatted
-            });
+    updateTimeEstimate() {
+        const timeElement = document.getElementById('totalTimeEstimate');
+        if (timeElement) {
+            timeElement.textContent = this.calculateTotalTime();
         }
     }
 
-    onResponseChange() {
-        if (window.questionnaireEngine && window.questionnaireEngine.validator) {
-            window.questionnaireEngine.validator.validateCurrentQuestion();
-        }
-    }
-
-    getResponse() {
-        // Convert internal responses to the format expected by other modules
-        const customizationPreferences = {
+    getCustomizationPreferences() {
+        // UPDATED WITH WORKING CAPITAL
+        return {
             revenue: this.responses.revenueCustomization ? 'custom' : 'generic',
             cogs: this.responses.cogsCustomization ? 'custom' : 'generic', 
             expenses: this.responses.expensesCustomization ? 'custom' : 'generic',
             assets: this.responses.assetsCustomization ? 'custom' : 'generic',
+            workingCapital: this.responses.workingCapitalCustomization ? 'custom' : 'generic',
             debt: this.responses.debtCustomization ? 'custom' : 'generic',
             equity: this.responses.equityCustomization ? 'custom' : 'generic'
         };
+    }
+
+    getResponse() {
+        const customizationPreferences = this.getCustomizationPreferences();
 
         return {
             type: 'customization-preference',
@@ -317,7 +309,17 @@ export class CustomizationModule {
             }
         });
 
-        return summary;
+        // UPDATED WITH WORKING CAPITAL
+        return {
+            ...summary,
+            revenue: this.responses.revenueCustomization ? 'Custom' : 'Generic',
+            cogs: this.responses.cogsCustomization ? 'Custom' : 'Generic',
+            expenses: this.responses.expensesCustomization ? 'Custom' : 'Generic',
+            assets: this.responses.assetsCustomization ? 'Custom' : 'Generic',
+            workingCapital: this.responses.workingCapitalCustomization ? 'Custom' : 'Generic',
+            debt: this.responses.debtCustomization ? 'Custom' : 'Generic',
+            equity: this.responses.equityCustomization ? 'Custom' : 'Generic'
+        };
     }
 
     loadResponse(response) {
@@ -357,11 +359,13 @@ export class CustomizationModule {
     }
 
     getDatabaseFields() {
+        // UPDATED WITH WORKING CAPITAL
         return {
             customization_revenue: this.responses.revenueCustomization,
             customization_cogs: this.responses.cogsCustomization,
             customization_expenses: this.responses.expensesCustomization,
             customization_assets: this.responses.assetsCustomization,
+            customization_working_capital: this.responses.workingCapitalCustomization,
             customization_debt: this.responses.debtCustomization,
             customization_equity: this.responses.equityCustomization,
             customization_summary: JSON.stringify(this.getCustomizationSummary())
