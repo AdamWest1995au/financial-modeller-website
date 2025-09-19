@@ -1,4 +1,4 @@
-// /pages/questionnaire/app.js
+// /pages/questionnaire/app.js - COMPLETE UPDATED VERSION WITH WORKING CAPITAL AND TAXES
 class QuestionnaireApp {
     constructor() {
         this.engine = null;
@@ -71,7 +71,7 @@ class QuestionnaireApp {
     async registerModules() {
         console.log('📦 Registering modules...');
         
-        // Define module loading order
+        // Define module loading order - UPDATED WITH WORKING CAPITAL AND TAXES
         const moduleConfigs = [
             { 
                 name: 'CustomizationModule', 
@@ -112,6 +112,16 @@ class QuestionnaireApp {
                 name: 'AssetsModule', 
                 file: 'assets.module.js',
                 className: 'AssetsModule' 
+            },
+            { 
+                name: 'WorkingCapitalModule', 
+                file: 'working-capital.module.js',
+                className: 'WorkingCapitalModule' 
+            },
+            { 
+                name: 'TaxesModule', 
+                file: 'taxes.module.js',
+                className: 'TaxesModule' 
             },
             { 
                 name: 'DebtModule', 
@@ -166,21 +176,37 @@ class QuestionnaireApp {
 
         const logic = this.engine.conditionalLogic;
 
-        // Revenue module conditional logic - UPDATED
-logic.registerRule('revenue-structure', {
-    '*': (allResponses) => {
-        // Always show revenue module - it will handle showing generic vs custom content internally
-        return true;
-    }
-});
+        // Revenue module conditional logic
+        logic.registerRule('revenue-structure', {
+            '*': (allResponses) => {
+                // Always show revenue module - it will handle showing generic vs custom content internally
+                return true;
+            }
+        });
 
         // Assets module conditional logic
-logic.registerRule('assets', {
-    '*': (allResponses) => {
-        // Always show assets module - it will handle showing generic vs custom content internally
-        return true;
-    }
-});
+        logic.registerRule('assets', {
+            '*': (allResponses) => {
+                // Always show assets module - it will handle showing generic vs custom content internally
+                return true;
+            }
+        });
+
+        // Working Capital module conditional logic
+        logic.registerRule('working-capital', {
+            '*': (allResponses) => {
+                // Always show working capital module - it will handle showing generic vs custom content internally
+                return true;
+            }
+        });
+
+        // Taxes module conditional logic
+        logic.registerRule('taxes', {
+            '*': (allResponses) => {
+                // Always show taxes module - it will handle showing generic vs custom content internally
+                return true;
+            }
+        });
 
         // COGS/CODB module conditional logic
         logic.registerRule('cogs-codb', {
@@ -257,6 +283,15 @@ logic.registerRule('assets', {
                 history.pushState(null, '', window.location.pathname);
             }
         });
+
+        // Prevent accidental page close during questionnaire
+        window.addEventListener('beforeunload', (event) => {
+            if (this.engine && this.engine.hasUnsavedChanges && this.engine.hasUnsavedChanges()) {
+                event.preventDefault();
+                event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                return event.returnValue;
+            }
+        });
     }
 
     setupSecurityCallbacks() {
@@ -273,9 +308,17 @@ logic.registerRule('assets', {
             console.log('🔐 Submission reCAPTCHA completed, proceeding with submission...');
             // The engine will handle the actual submission
         });
+
+        // Security event handler
+        this.engine.security.onSecurityEvent = (event) => {
+            console.warn('🔒 Security event:', event);
+            // Handle security events as needed
+        };
     }
 
     handleInitializationError(error) {
+        console.error('🚨 Initialization error:', error);
+        
         const errorMessage = error.message || 'Unknown initialization error';
         
         // Show user-friendly error
@@ -305,10 +348,48 @@ logic.registerRule('assets', {
             return;
         }
 
+        // Don't show error dialogs for minor errors
+        if (error.name === 'ValidationError' || error.name === 'NetworkError') {
+            return;
+        }
+
         // Show user-friendly error for production
         if (this.engine && this.engine.ui) {
             this.engine.ui.showError('An unexpected error occurred. Please try again.');
+        } else {
+            this.showError('Application Error', 'Something went wrong. Please try again or contact support if the problem persists.');
         }
+    }
+
+    showError(title, message) {
+        // Simple error notification that doesn't block the UI
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(220, 38, 38, 0.9);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        `;
+        
+        notification.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 5px;">${title}</div>
+            <div style="font-size: 0.9rem;">${message}</div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
     }
 
     createErrorDisplay(title, message, actions = []) {
@@ -443,6 +524,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (window.startLegacyQuestionnaire) {
             console.log('🔄 Falling back to legacy questionnaire system...');
             window.startLegacyQuestionnaire();
+        } else {
+            // Show error message to user
+            alert('There was an error loading the questionnaire. Please refresh the page or contact support if the problem persists.');
         }
     }
 });

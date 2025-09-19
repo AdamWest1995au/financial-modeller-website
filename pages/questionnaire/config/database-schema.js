@@ -1,4 +1,4 @@
-// /pages/questionnaire/config/database-schema.js
+// /pages/questionnaire/config/database-schema.js - COMPLETE VERSION WITH TAXES
 class DatabaseSchemaMapper {
     constructor() {
         // Database field mappings - MUST NOT CHANGE to maintain compatibility
@@ -43,34 +43,44 @@ class DatabaseSchemaMapper {
                 revenue_staff: 'enum:yes,no'
             },
 
-            // COGS and CODB (placeholder for future)
-            cogs: {
-                // Will be added when COGS module is implemented
-            },
-
-            // Expenses (placeholder for future)
-            expenses: {
-                // Will be added when Expenses module is implemented
-            },
-
-            // Assets - UPDATED WITH NEW FIELDS
+            // Assets Questions
             assets: {
                 asset_types_selected: 'array|null',
                 asset_types_freetext: 'string|null',
                 multiple_depreciation_methods: 'enum:yes,no'
             },
 
-            // Debt (placeholder for future)
-            debt: {
-                // Will be added when Debt module is implemented
+            // Working Capital Questions
+            workingCapital: {
+                multiple_inventory_methods: 'enum:yes,no',
+                inventory_days_outstanding: 'enum:yes,no',
+                prepaid_expenses_days: 'enum:yes,no'
             },
 
-            // Equity (placeholder for future)
-            equity: {
-                // Will be added when Equity module is implemented
+            // Taxes Questions - NEW
+            taxes: {
+                corporate_tax_enabled: 'boolean',
+                value_tax_enabled: 'boolean',
+                corporate_tax_model: 'string|null',
+                corporate_tax_model_custom: 'string|null',
+                value_tax_model: 'string|null',
+                value_tax_model_custom: 'string|null'
             },
 
-            // Security and Metadata
+            // Customization Preferences - UPDATED WITH TAXES
+            customization: {
+                customization_revenue: 'boolean',
+                customization_cogs: 'boolean',
+                customization_expenses: 'boolean',
+                customization_assets: 'boolean',
+                customization_working_capital: 'boolean',
+                customization_taxes: 'boolean',
+                customization_debt: 'boolean',
+                customization_equity: 'boolean',
+                customization_summary: 'json|null'
+            },
+
+            // Security and tracking
             security: {
                 ip_address: 'string|null',
                 user_agent: 'string|null',
@@ -80,13 +90,16 @@ class DatabaseSchemaMapper {
             }
         };
 
-        // Validation rules for each field type
-        this.validationRules = {
-            string: (value) => typeof value === 'string',
+        // Type validators
+        this.validators = {
+            'string': (value) => typeof value === 'string',
+            'integer': (value) => Number.isInteger(value),
+            'boolean': (value) => typeof value === 'boolean',
+            'array': (value) => Array.isArray(value),
+            'json': (value) => typeof value === 'object' && value !== null,
             'string|null': (value) => value === null || typeof value === 'string',
-            integer: (value) => Number.isInteger(value),
             'integer|null': (value) => value === null || Number.isInteger(value),
-            array: (value) => Array.isArray(value),
+            'boolean|null': (value) => value === null || typeof value === 'boolean',
             'array|null': (value) => value === null || Array.isArray(value),
             'json|null': (value) => value === null || typeof value === 'object',
             'enum:yes,no': (value) => ['yes', 'no'].includes(value)
@@ -149,25 +162,51 @@ class DatabaseSchemaMapper {
             sales_channels_freetext: null,
             revenue_staff: 'no',
 
-            // Assets defaults - NEW
+            // Assets defaults
             asset_types_selected: null,
             asset_types_freetext: null,
             multiple_depreciation_methods: 'no',
 
+            // Working Capital defaults
+            multiple_inventory_methods: 'no',
+            inventory_days_outstanding: 'no',
+            prepaid_expenses_days: 'no',
+
+            // Taxes defaults - NEW
+            corporate_tax_enabled: false,
+            value_tax_enabled: false,
+            corporate_tax_model: null,
+            corporate_tax_model_custom: null,
+            value_tax_model: null,
+            value_tax_model_custom: null,
+
+            // Customization defaults - UPDATED WITH TAXES
+            customization_revenue: false,
+            customization_cogs: false,
+            customization_expenses: false,
+            customization_assets: false,
+            customization_working_capital: false,
+            customization_taxes: false,
+            customization_debt: false,
+            customization_equity: false,
+            customization_summary: null,
+
             // Security defaults
             ip_address: null,
-            user_agent: navigator.userAgent || null,
+            user_agent: null,
             submission_count: 1,
             honeypot_website: null,
             honeypot_phone: null
         };
 
-        // Apply defaults for missing fields
+        // Apply defaults for any missing fields
         Object.entries(defaults).forEach(([field, defaultValue]) => {
-            if (dbData[field] === undefined) {
+            if (!(field in dbData)) {
                 dbData[field] = defaultValue;
             }
         });
+
+        return dbData;
     }
 
     validateDatabaseData(dbData) {
@@ -177,36 +216,32 @@ class DatabaseSchemaMapper {
             warnings: []
         };
 
-        // Get all field definitions
-        const allFields = {};
-        Object.values(this.fieldMappings).forEach(section => {
-            Object.assign(allFields, section);
-        });
-
-        // Validate each field
-        Object.entries(allFields).forEach(([fieldName, fieldType]) => {
-            const value = dbData[fieldName];
-            
-            if (value !== undefined) {
-                const validator = this.validationRules[fieldType];
-                if (validator && !validator(value)) {
-                    result.isValid = false;
-                    result.errors.push(`Field '${fieldName}' has invalid type. Expected: ${fieldType}, Got: ${typeof value}`);
+        // Validate each field against its type
+        Object.entries(this.fieldMappings).forEach(([section, fields]) => {
+            Object.entries(fields).forEach(([fieldName, expectedType]) => {
+                if (fieldName in dbData) {
+                    const value = dbData[fieldName];
+                    const validator = this.validators[expectedType];
+                    
+                    if (validator && !validator(value)) {
+                        result.isValid = false;
+                        result.errors.push(`Field '${fieldName}' has invalid type. Expected: ${expectedType}, Got: ${typeof value}`);
+                    }
                 }
-            }
+            });
         });
 
-        // Check for required fields
-        const requiredFields = ['full_name', 'company_name', 'email', 'phone', 'country_name'];
+        // Validate required fields
+        const requiredFields = ['full_name', 'company_name', 'email', 'phone'];
         requiredFields.forEach(field => {
-            if (!dbData[field] || dbData[field].toString().trim() === '') {
+            if (!dbData[field] || (typeof dbData[field] === 'string' && dbData[field].trim() === '')) {
                 result.isValid = false;
                 result.errors.push(`Required field '${field}' is missing or empty`);
             }
         });
 
         // Validate email format
-        if (dbData.email && typeof dbData.email === 'string') {
+        if (dbData.email) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(dbData.email)) {
                 result.isValid = false;
@@ -259,7 +294,7 @@ class DatabaseSchemaMapper {
     getSchemaDocumentation() {
         const docs = {
             description: 'Database schema for questionnaire submissions',
-            version: '2.0.0',
+            version: '2.1.0',
             tables: {
                 questionnaire_submissions: {
                     description: 'Main table for storing questionnaire responses',
@@ -325,10 +360,34 @@ class DatabaseSchemaMapper {
             sales_channels_freetext: 'Custom sales channel',
             revenue_staff: 'Whether company has revenue generating staff',
 
-            // Assets - NEW DESCRIPTIONS
+            // Assets
             asset_types_selected: 'Array of selected asset types (PPE, Land, Investment Properties, custom)',
             asset_types_freetext: 'Custom asset types entered by user',
             multiple_depreciation_methods: 'Whether to model depreciation using multiple methods',
+
+            // Working Capital
+            multiple_inventory_methods: 'Whether to use multiple inventory methods',
+            inventory_days_outstanding: 'Whether to model inventory days outstanding',
+            prepaid_expenses_days: 'Whether to model prepaid expenses days',
+
+            // Taxes - NEW DESCRIPTIONS
+            corporate_tax_enabled: 'Whether entity pays corporate tax',
+            value_tax_enabled: 'Whether entity pays value added tax (VAT/GST)',
+            corporate_tax_model: 'Selected corporate tax modeling approach',
+            corporate_tax_model_custom: 'Custom corporate tax modeling details',
+            value_tax_model: 'Selected VAT/GST modeling approach',
+            value_tax_model_custom: 'Custom VAT/GST modeling details',
+
+            // Customization - UPDATED WITH TAXES
+            customization_revenue: 'Whether revenue section is customized',
+            customization_cogs: 'Whether COGS section is customized',
+            customization_expenses: 'Whether expenses section is customized',
+            customization_assets: 'Whether assets section is customized',
+            customization_working_capital: 'Whether working capital section is customized',
+            customization_taxes: 'Whether taxes section is customized',
+            customization_debt: 'Whether debt section is customized',
+            customization_equity: 'Whether equity section is customized',
+            customization_summary: 'JSON summary of all customization choices',
 
             // Security
             ip_address: 'User IP address (for spam detection)',
@@ -369,9 +428,32 @@ class DatabaseSchemaMapper {
             'revenue-structure.selectedChannels': 'sales_channels_selected',
             'revenue-structure.revenueStaff': 'revenue_staff',
 
-            // Assets mapping - NEW
+            // Assets mapping
             'assets.selectedAssets': 'asset_types_selected',
-            'assets.multipleDepreciationMethods': 'multiple_depreciation_methods'
+            'assets.multipleDepreciationMethods': 'multiple_depreciation_methods',
+
+            // Working Capital mapping
+            'working-capital.multipleInventoryMethods': 'multiple_inventory_methods',
+            'working-capital.inventoryDaysOutstanding': 'inventory_days_outstanding',
+            'working-capital.prepaidExpensesDays': 'prepaid_expenses_days',
+
+            // Taxes mapping - NEW
+            'taxes.corporateTax': 'corporate_tax_enabled',
+            'taxes.valueTax': 'value_tax_enabled',
+            'taxes.corporateTaxModel': 'corporate_tax_model',
+            'taxes.corporateTaxModelFreeText': 'corporate_tax_model_custom',
+            'taxes.valueTaxModel': 'value_tax_model',
+            'taxes.valueTaxModelFreeText': 'value_tax_model_custom',
+
+            // Customization mapping - UPDATED WITH TAXES
+            'customization.revenueCustomization': 'customization_revenue',
+            'customization.cogsCustomization': 'customization_cogs',
+            'customization.expensesCustomization': 'customization_expenses',
+            'customization.assetsCustomization': 'customization_assets',
+            'customization.workingCapitalCustomization': 'customization_working_capital',
+            'customization.taxesCustomization': 'customization_taxes',
+            'customization.debtCustomization': 'customization_debt',
+            'customization.equityCustomization': 'customization_equity'
         };
     }
 

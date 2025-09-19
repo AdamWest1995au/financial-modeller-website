@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/customization.module.js - COMPLETE UPDATED VERSION
+// /pages/questionnaire/modules/customization.module.js - COMPLETE UPDATED VERSION WITH TAXES
 export class CustomizationModule {
     constructor() {
         this.id = 'customization';
@@ -7,7 +7,7 @@ export class CustomizationModule {
         this.required = true;
         this.components = {};
         
-        // Define all customizable sections - UPDATED WITH WORKING CAPITAL
+        // Define all customizable sections - UPDATED WITH TAXES
         this.sections = [
             {
                 id: 'revenue',
@@ -40,6 +40,12 @@ export class CustomizationModule {
                 key: 'workingCapitalCustomization'
             },
             {
+                id: 'taxes',
+                title: 'Taxes',
+                timeEstimate: '2-3 Minutes',
+                key: 'taxesCustomization'
+            },
+            {
                 id: 'debt',
                 title: 'Debt',
                 timeEstimate: '3 Minutes',
@@ -54,13 +60,14 @@ export class CustomizationModule {
         ];
 
         // Initialize responses - default to Generic (false = Generic, true = Custom)
-        // UPDATED WITH WORKING CAPITAL
+        // UPDATED WITH TAXES
         this.responses = {
             revenueCustomization: false,
             cogsCustomization: false,
             expensesCustomization: false,
             assetsCustomization: false,
             workingCapitalCustomization: false,
+            taxesCustomization: false,
             debtCustomization: false,
             equityCustomization: false
         };
@@ -163,20 +170,25 @@ export class CustomizationModule {
 
         toggleContainer.appendChild(toggle);
         controlsDiv.appendChild(toggleContainer);
-
         row.appendChild(textDiv);
         row.appendChild(controlsDiv);
         sectionElement.appendChild(row);
 
-        // Store reference to toggle element
+        // Store reference to toggle for later updates
         this.components[section.key] = toggle;
 
         return sectionElement;
     }
 
     handleToggleClick(sectionKey, toggleElement) {
-        // Toggle the state: false = Generic, true = Custom
+        console.log('=== CUSTOMIZATION TOGGLE DEBUG ===');
+        console.log('Toggle clicked for section:', sectionKey);
+        console.log('Current state before toggle:', this.responses[sectionKey]);
+        
+        // Toggle the state
         this.responses[sectionKey] = !this.responses[sectionKey];
+        
+        console.log('New state after toggle:', this.responses[sectionKey]);
         
         // Update visual state
         if (this.responses[sectionKey]) {
@@ -184,22 +196,15 @@ export class CustomizationModule {
         } else {
             toggleElement.classList.remove('active'); // Generic selected
         }
-
-        // Update total time estimate
+        
+        // Update time estimate
         this.updateTimeEstimate();
         
-        // DEBUGGING AND SAVING
-        console.log('=== CUSTOMIZATION TOGGLE DEBUG ===');
-        console.log('Section toggled:', sectionKey);
-        console.log('New value:', this.responses[sectionKey]);
-        console.log('All responses:', this.responses);
-        
-        // Create the response object
+        // Save response to state manager
         const response = this.getResponse();
-        console.log('Response being saved:', response);
-        console.log('customizationPreferences:', response.customizationPreferences);
+        console.log('Saving response:', response);
         
-        // Save the response to state manager under the key that other modules expect
+        // Save to the state manager with the key other modules expect
         if (window.questionnaireEngine && window.questionnaireEngine.stateManager) {
             // Save under 'customization-preference' key so other modules can find it
             window.questionnaireEngine.stateManager.saveResponse('customization-preference', 0, response);
@@ -267,13 +272,14 @@ export class CustomizationModule {
     }
 
     getCustomizationPreferences() {
-        // UPDATED WITH WORKING CAPITAL
+        // UPDATED WITH TAXES
         return {
             revenue: this.responses.revenueCustomization ? 'custom' : 'generic',
             cogs: this.responses.cogsCustomization ? 'custom' : 'generic', 
             expenses: this.responses.expensesCustomization ? 'custom' : 'generic',
             assets: this.responses.assetsCustomization ? 'custom' : 'generic',
             workingCapital: this.responses.workingCapitalCustomization ? 'custom' : 'generic',
+            taxes: this.responses.taxesCustomization ? 'custom' : 'generic',
             debt: this.responses.debtCustomization ? 'custom' : 'generic',
             equity: this.responses.equityCustomization ? 'custom' : 'generic'
         };
@@ -309,7 +315,7 @@ export class CustomizationModule {
             }
         });
 
-        // UPDATED WITH WORKING CAPITAL
+        // UPDATED WITH TAXES
         return {
             ...summary,
             revenue: this.responses.revenueCustomization ? 'Custom' : 'Generic',
@@ -317,6 +323,7 @@ export class CustomizationModule {
             expenses: this.responses.expensesCustomization ? 'Custom' : 'Generic',
             assets: this.responses.assetsCustomization ? 'Custom' : 'Generic',
             workingCapital: this.responses.workingCapitalCustomization ? 'Custom' : 'Generic',
+            taxes: this.responses.taxesCustomization ? 'Custom' : 'Generic',
             debt: this.responses.debtCustomization ? 'Custom' : 'Generic',
             equity: this.responses.equityCustomization ? 'Custom' : 'Generic'
         };
@@ -359,13 +366,14 @@ export class CustomizationModule {
     }
 
     getDatabaseFields() {
-        // UPDATED WITH WORKING CAPITAL
+        // UPDATED WITH TAXES
         return {
             customization_revenue: this.responses.revenueCustomization,
             customization_cogs: this.responses.cogsCustomization,
             customization_expenses: this.responses.expensesCustomization,
             customization_assets: this.responses.assetsCustomization,
             customization_working_capital: this.responses.workingCapitalCustomization,
+            customization_taxes: this.responses.taxesCustomization,
             customization_debt: this.responses.debtCustomization,
             customization_equity: this.responses.equityCustomization,
             customization_summary: JSON.stringify(this.getCustomizationSummary())

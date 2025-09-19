@@ -1,4 +1,4 @@
-// /pages/questionnaire/core/conditional-logic.js - COMPLETE VERSION
+// /pages/questionnaire/core/conditional-logic.js - COMPLETE VERSION WITH TAXES
 class ConditionalLogic {
     constructor() {
         this.rules = new Map(); // moduleId -> rules
@@ -118,13 +118,14 @@ class ConditionalLogic {
     }
 
     checkCustomizationPreferences(moduleId, allResponses) {
-        // Map module IDs to customization sections - INCLUDES WORKING CAPITAL
+        // Map module IDs to customization sections - UPDATED WITH TAXES
         const customizationMap = {
             'revenue-structure': 'revenue',
             'cogs-codb': 'cogs',
             'expenses': 'expenses',
             'assets': 'assets',
             'working-capital': 'workingCapital',
+            'taxes': 'taxes',
             'debt': 'debt',
             'equity-financing': 'equity'
         };
@@ -332,9 +333,9 @@ class ConditionalLogic {
             affected.push('combined-parameters');
         }
         
-        // Customization affects all other modules
+        // Customization affects all other modules - UPDATED WITH TAXES
         if (sourceModuleId === 'customization-preference') {
-            affected.push('revenue-structure', 'cogs-codb', 'expenses', 'assets', 'working-capital', 'debt', 'equity-financing');
+            affected.push('revenue-structure', 'cogs-codb', 'expenses', 'assets', 'working-capital', 'taxes', 'debt', 'equity-financing');
         }
 
         // Assets module dependencies
@@ -353,7 +354,7 @@ class ConditionalLogic {
             }
         }
         
-        // Working Capital module dependencies - NEW
+        // Working Capital module dependencies
         if (sourceModuleId === 'working-capital') {
             // Working capital affects cash flow calculations
             affected.push('cash-flow');
@@ -363,8 +364,15 @@ class ConditionalLogic {
                 affected.push('cogs-codb');
             }
         }
+
+        // Taxes module dependencies - NEW
+        if (sourceModuleId === 'taxes') {
+            // Taxes might affect expenses (tax provisions) and cash flow (tax payments)
+            affected.push('expenses'); // Tax provisions and payments
+            affected.push('cash-flow'); // Tax payment timing
+        }
         
-        // Revenue module affects Working Capital - NEW
+        // Revenue module affects Working Capital
         if (sourceModuleId === 'revenue-structure' && responseData.selectedRevenues) {
             if (responseData.selectedRevenues.includes('products')) {
                 affected.push('working-capital'); // Show inventory-related questions
@@ -417,6 +425,152 @@ class ConditionalLogic {
         if (!customizationResponse) return null;
         
         return customizationResponse.customizationPreferences?.[section];
+    }
+
+    // Helper methods for Revenue module
+    hasUserSelectedRevenueType(allResponses, revenueType) {
+        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
+                              this.findResponseByType(allResponses, 'revenue-combined');
+        if (!revenueResponse) return false;
+        
+        const selectedRevenues = revenueResponse.selectedRevenues || revenueResponse.revenueGeneration || [];
+        return selectedRevenues.includes(revenueType);
+    }
+
+    getSelectedRevenueTypes(allResponses) {
+        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
+                              this.findResponseByType(allResponses, 'revenue-combined');
+        return revenueResponse?.selectedRevenues || revenueResponse?.revenueGeneration || [];
+    }
+
+    isRevenueStaffSelected(allResponses) {
+        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
+                              this.findResponseByType(allResponses, 'revenue-combined');
+        return revenueResponse?.revenueStaff === 'yes';
+    }
+
+    // Helper methods for Assets module
+    hasUserSelectedAssetType(allResponses, assetType) {
+        const assetsResponse = this.findResponseByType(allResponses, 'assets-combined');
+        if (!assetsResponse?.selectedAssets) return false;
+        
+        return assetsResponse.selectedAssets.includes(assetType) ||
+               assetsResponse.selectedAssets.some(asset => 
+                   asset.toLowerCase().includes(assetType.toLowerCase())
+               );
+    }
+
+    isMultipleDepreciationEnabled(allResponses) {
+        const assetsResponse = this.findResponseByType(allResponses, 'assets-combined');
+        return assetsResponse?.multipleDepreciationMethods === 'yes';
+    }
+
+    getSelectedAssetTypes(allResponses) {
+        const assetsResponse = this.findResponseByType(allResponses, 'assets-combined');
+        return assetsResponse?.selectedAssets || [];
+    }
+
+    // Helper methods for Working Capital module
+    doesUserSellProducts(allResponses) {
+        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
+                              this.findResponseByType(allResponses, 'revenue');
+        
+        if (!revenueResponse) return false;
+        
+        // Check for products in selected revenues
+        const selectedRevenues = revenueResponse.selectedRevenues || revenueResponse.revenueGeneration || [];
+        return selectedRevenues.includes('products');
+    }
+
+    getWorkingCapitalPreferences(allResponses) {
+        const workingCapitalResponse = this.findResponseByType(allResponses, 'working-capital');
+        if (!workingCapitalResponse) return {};
+        
+        return {
+            multipleInventoryMethods: workingCapitalResponse.multipleInventoryMethods === 'yes',
+            inventoryDaysOutstanding: workingCapitalResponse.inventoryDaysOutstanding === 'yes',
+            prepaidExpensesDays: workingCapitalResponse.prepaidExpensesDays === 'yes'
+        };
+    }
+
+    isWorkingCapitalCustomModeSelected(allResponses) {
+        const customizationResponse = this.findResponseByType(allResponses, 'customization-preference');
+        if (!customizationResponse?.customizationPreferences) return false;
+        
+        return customizationResponse.customizationPreferences.workingCapital === 'custom';
+    }
+
+    // Helper methods for Taxes module - NEW
+    isTaxesCustomModeSelected(allResponses) {
+        const customizationResponse = this.findResponseByType(allResponses, 'customization-preference');
+        if (!customizationResponse?.customizationPreferences) return false;
+        
+        return customizationResponse.customizationPreferences.taxes === 'custom';
+    }
+
+    getTaxPreferences(allResponses) {
+        const taxesResponse = this.findResponseByType(allResponses, 'taxes');
+        if (!taxesResponse) return {};
+        
+        return {
+            corporateTax: taxesResponse.corporateTax === 'yes',
+            valueTax: taxesResponse.valueTax === 'yes',
+            corporateTaxModel: taxesResponse.corporateTaxModel,
+            valueTaxModel: taxesResponse.valueTaxModel
+        };
+    }
+
+    isCorporateTaxEnabled(allResponses) {
+        const taxesResponse = this.findResponseByType(allResponses, 'taxes');
+        return taxesResponse?.corporateTax === 'yes';
+    }
+
+    isValueTaxEnabled(allResponses) {
+        const taxesResponse = this.findResponseByType(allResponses, 'taxes');
+        return taxesResponse?.valueTax === 'yes';
+    }
+
+    getCorporateTaxModel(allResponses) {
+        const taxesResponse = this.findResponseByType(allResponses, 'taxes');
+        return taxesResponse?.corporateTaxModel || '';
+    }
+
+    getValueTaxModel(allResponses) {
+        const taxesResponse = this.findResponseByType(allResponses, 'taxes');
+        return taxesResponse?.valueTaxModel || '';
+    }
+
+    // Helper methods for User Info module
+    getUserPreferences(allResponses) {
+        const userResponse = this.findResponseByType(allResponses, 'user-info');
+        if (!userResponse) return {};
+        
+        return {
+            parameterToggle: userResponse.parameterToggle,
+            userEmail: userResponse.userEmail,
+            userName: userResponse.userName
+        };
+    }
+
+    isParameterToggleEnabled(allResponses) {
+        const userResponse = this.findResponseByType(allResponses, 'user-info');
+        return userResponse?.parameterToggle === 'yes';
+    }
+
+    // Helper methods for Customization module
+    getCustomizationPreferences(allResponses) {
+        const customizationResponse = this.findResponseByType(allResponses, 'customization-preference');
+        return customizationResponse?.customizationPreferences || {};
+    }
+
+    isCustomizationSectionCustom(allResponses, sectionKey) {
+        const preferences = this.getCustomizationPreferences(allResponses);
+        return preferences[sectionKey] === 'custom';
+    }
+
+    isCustomizationSectionGeneric(allResponses, sectionKey) {
+        const preferences = this.getCustomizationPreferences(allResponses);
+        return preferences[sectionKey] === 'generic';
     }
 
     // Rule builder helpers for easier rule creation
@@ -553,110 +707,40 @@ class ConditionalLogic {
         };
     }
 
-    // Helper methods for Revenue module
-    hasUserSelectedRevenueType(allResponses, revenueType) {
-        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
-                              this.findResponseByType(allResponses, 'revenue-combined');
-        if (!revenueResponse) return false;
-        
-        const selectedRevenues = revenueResponse.selectedRevenues || revenueResponse.revenueGeneration || [];
-        return selectedRevenues.includes(revenueType);
-    }
-
-    getSelectedRevenueTypes(allResponses) {
-        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
-                              this.findResponseByType(allResponses, 'revenue-combined');
-        return revenueResponse?.selectedRevenues || revenueResponse?.revenueGeneration || [];
-    }
-
-    isRevenueStaffSelected(allResponses) {
-        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
-                              this.findResponseByType(allResponses, 'revenue-combined');
-        return revenueResponse?.revenueStaff === 'yes';
-    }
-
-    // Helper methods for Assets module
-    hasUserSelectedAssetType(allResponses, assetType) {
-        const assetsResponse = this.findResponseByType(allResponses, 'assets-combined');
-        if (!assetsResponse?.selectedAssets) return false;
-        
-        return assetsResponse.selectedAssets.includes(assetType) ||
-               assetsResponse.selectedAssets.some(asset => 
-                   asset.toLowerCase().includes(assetType.toLowerCase())
-               );
-    }
-
-    isMultipleDepreciationEnabled(allResponses) {
-        const assetsResponse = this.findResponseByType(allResponses, 'assets-combined');
-        return assetsResponse?.multipleDepreciationMethods === 'yes';
-    }
-
-    getSelectedAssetTypes(allResponses) {
-        const assetsResponse = this.findResponseByType(allResponses, 'assets-combined');
-        return assetsResponse?.selectedAssets || [];
-    }
-
-    // Helper methods for Working Capital module - NEW
-    doesUserSellProducts(allResponses) {
-        const revenueResponse = this.findResponseByType(allResponses, 'revenue-structure') ||
-                              this.findResponseByType(allResponses, 'revenue');
-        
-        if (!revenueResponse) return false;
-        
-        // Check for products in selected revenues
-        const selectedRevenues = revenueResponse.selectedRevenues || revenueResponse.revenueGeneration || [];
-        return selectedRevenues.includes('products');
-    }
-
-    getWorkingCapitalPreferences(allResponses) {
-        const workingCapitalResponse = this.findResponseByType(allResponses, 'working-capital');
-        if (!workingCapitalResponse) return {};
-        
-        return {
-            multipleInventoryMethods: workingCapitalResponse.multipleInventoryMethods === 'yes',
-            inventoryDaysOutstanding: workingCapitalResponse.inventoryDaysOutstanding === 'yes',
-            prepaidExpensesDays: workingCapitalResponse.prepaidExpensesDays === 'yes'
+    // Taxes-specific rule factories - NEW
+    static showIfCorporateTaxEnabled() {
+        return (allResponses) => {
+            const taxesResponse = ConditionalLogic.prototype.findResponseByType.call(
+                { findResponseByType: ConditionalLogic.prototype.findResponseByType }, 
+                allResponses, 
+                'taxes'
+            );
+            return taxesResponse?.corporateTax === 'yes';
         };
     }
 
-    isWorkingCapitalCustomModeSelected(allResponses) {
-        const customizationResponse = this.findResponseByType(allResponses, 'customization-preference');
-        if (!customizationResponse?.customizationPreferences) return false;
-        
-        return customizationResponse.customizationPreferences.workingCapital === 'custom';
-    }
-
-    // Helper methods for User Info module
-    getUserPreferences(allResponses) {
-        const userResponse = this.findResponseByType(allResponses, 'user-info');
-        if (!userResponse) return {};
-        
-        return {
-            parameterToggle: userResponse.parameterToggle,
-            userEmail: userResponse.userEmail,
-            userName: userResponse.userName
+    static showIfValueTaxEnabled() {
+        return (allResponses) => {
+            const taxesResponse = ConditionalLogic.prototype.findResponseByType.call(
+                { findResponseByType: ConditionalLogic.prototype.findResponseByType }, 
+                allResponses, 
+                'taxes'
+            );
+            return taxesResponse?.valueTax === 'yes';
         };
     }
 
-    isParameterToggleEnabled(allResponses) {
-        const userResponse = this.findResponseByType(allResponses, 'user-info');
-        return userResponse?.parameterToggle === 'yes';
-    }
-
-    // Helper methods for Customization module
-    getCustomizationPreferences(allResponses) {
-        const customizationResponse = this.findResponseByType(allResponses, 'customization-preference');
-        return customizationResponse?.customizationPreferences || {};
-    }
-
-    isCustomizationSectionCustom(allResponses, sectionKey) {
-        const preferences = this.getCustomizationPreferences(allResponses);
-        return preferences[sectionKey] === 'custom';
-    }
-
-    isCustomizationSectionGeneric(allResponses, sectionKey) {
-        const preferences = this.getCustomizationPreferences(allResponses);
-        return preferences[sectionKey] === 'generic';
+    static showIfTaxesCustomizationSelected() {
+        return (allResponses) => {
+            const customizationResponse = ConditionalLogic.prototype.findResponseByType.call(
+                { findResponseByType: ConditionalLogic.prototype.findResponseByType }, 
+                allResponses, 
+                'customization-preference'
+            );
+            if (!customizationResponse?.customizationPreferences) return false;
+            
+            return customizationResponse.customizationPreferences.taxes === 'custom';
+        };
     }
 
     // Debug and development helpers
