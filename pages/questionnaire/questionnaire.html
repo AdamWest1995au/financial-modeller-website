@@ -4822,7 +4822,7 @@ import { ModelingApproachModule } from './modules/modeling-approach.module.js';
 import { RevenueModule } from './modules/revenue.module.js';
 import { CogsCodbModule } from './modules/cogs-codb.module.js';
 import { WorkingCapitalModule } from './modules/working-capital.module.js';
-// REMOVED: import { DateUtils } from './modules/taxes.module.js'; 
+import { TaxesModule } from './modules/taxes.module.js'; 
 import { AssetsModule } from './modules/assets.module.js';
 
 // Initialize the questionnaire engine
@@ -4842,7 +4842,7 @@ async function initializeQuestionnaire() {
         engine.registerModule(new RevenueModule());
         engine.registerModule(new CogsCodbModule());
         engine.registerModule(new WorkingCapitalModule());
-        // REMOVED: engine.registerModule(new TaxesModule());
+        engine.registerModule(new TaxesModule());
         engine.registerModule(new AssetsModule());
 
         await engine.initialize();
