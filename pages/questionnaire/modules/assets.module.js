@@ -1,46 +1,64 @@
-// modules/cogs-codb.module.js - COMPLETE REWRITE
+// /pages/questionnaire/modules/assets.module.js - COMPLETE FIXED VERSION
+import { BaseComponent } from '../components/base-component.js';
+import { MultiSelect } from '../components/multi-select.js';
 import { Toggle } from '../components/toggle.js';
+import { GenericPlaceholder } from '../components/generic-placeholder.js';
 
-export class CogsCodbModule {
+export class AssetsModule {
     constructor() {
-        this.id = 'cogs-codb';
-        this.title = 'COGS and CODB';
-        this.description = 'Cost of Goods Sold and Cost of Doing Business configuration.';
+        this.id = 'assets';
+        this.title = 'Assets';
+        this.description = 'Help us understand the types of assets your business owns and how you would like to model them.';
         this.required = false;
         
         this.components = {};
-        this.currentContainer = null;
+        this.currentContainer = null; // Store reference to container for re-rendering
         this.responses = {
-            manufacturesProducts: 'no'
+            selectedAssets: [],
+            multipleDepreciationMethods: 'no'
         };
 
-        // Setup customization listener
+        // Asset options
+        this.assetOptions = [
+            { value: "ppe", text: "Property, Plant & Equipment" },
+            { value: "land", text: "Land" },
+            { value: "investment_properties", text: "Investment Properties" }
+        ];
+
+        // Listen for customization changes
         this.setupCustomizationListener();
     }
 
     setupCustomizationListener() {
+        // Store the bound function so we can remove it later
         this.customizationChangeHandler = (event) => {
-            console.log('COGS-CODB module received customization change:', event.detail);
+            console.log('Assets module received customization change:', event.detail);
             if (this.currentContainer) {
                 this.reRender();
             }
         };
         
+        // Listen for customization changes and re-render
         document.addEventListener('customizationChanged', this.customizationChangeHandler);
     }
 
     reRender() {
         if (!this.currentContainer) return;
         
+        // Clear current content
         this.currentContainer.innerHTML = '';
+        
+        // Re-render with new customization settings
         const newContent = this.renderContent();
         this.currentContainer.appendChild(newContent);
     }
 
     render() {
+        // Store container reference for re-rendering
         const container = document.createElement('div');
         this.currentContainer = container;
         
+        // Render the actual content
         const content = this.renderContent();
         container.appendChild(content);
         
@@ -48,19 +66,50 @@ export class CogsCodbModule {
     }
 
     renderContent() {
-        console.log('=== COGS-CODB MODULE DEBUG ===');
+        console.log('=== ASSETS MODULE DEBUG ===');
         
-        const isGeneric = this.isGenericModeSelected();
-        console.log('COGS-CODB isGeneric:', isGeneric);
-        console.log('=== END COGS-CODB MODULE DEBUG ===');
+        // Try multiple ways to get customization data (same as revenue module)
+        let isGeneric = true; // Default to generic
+        
+        // Method 1: Check state manager
+        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
+        console.log('State manager responses:', responses);
+        
+        const customizationResponse1 = responses['customization'];
+        const customizationResponse2 = responses['customization-preference'];
+        
+        console.log('From state - customization:', customizationResponse1);
+        console.log('From state - customization-preference:', customizationResponse2);
+        
+        // Method 2: Check global variables
+        console.log('Global customizationPreferences:', window.customizationPreferences);
+        console.log('Global customizationPreferencesFormatted:', window.customizationPreferencesFormatted);
+        
+        // Determine if generic or custom - checking multiple sources
+        if (customizationResponse1?.customizationPreferences?.assets) {
+            isGeneric = customizationResponse1.customizationPreferences.assets === 'generic';
+            console.log('Using customizationResponse1, isGeneric:', isGeneric);
+        } else if (customizationResponse2?.customizationPreferences?.assets) {
+            isGeneric = customizationResponse2.customizationPreferences.assets === 'generic';
+            console.log('Using customizationResponse2, isGeneric:', isGeneric);
+        } else if (window.customizationPreferencesFormatted?.assets) {
+            isGeneric = window.customizationPreferencesFormatted.assets === 'generic';
+            console.log('Using global formatted, isGeneric:', isGeneric);
+        } else if (window.customizationPreferences?.assetsCustomization !== undefined) {
+            isGeneric = !window.customizationPreferences.assetsCustomization;
+            console.log('Using global raw, isGeneric:', isGeneric);
+        }
+        
+        console.log('Final isGeneric decision:', isGeneric);
+        console.log('=== END ASSETS MODULE DEBUG ===');
 
         if (isGeneric) {
-            console.log('SHOWING GENERIC PLACEHOLDER FOR COGS-CODB');
+            console.log('SHOWING GENERIC PLACEHOLDER');
             return this.createGenericPlaceholder();
+        } else {
+            console.log('SHOWING CUSTOM CONTENT');
+            return this.createCustomContent();
         }
-
-        console.log('SHOWING CUSTOM COGS-CODB CONTENT');
-        return this.createCustomContent();
     }
 
     createGenericPlaceholder() {
@@ -73,19 +122,19 @@ export class CogsCodbModule {
             <div class="animated-graphic">
                 <svg viewBox="0 0 120 80">
                     <defs>
-                        <radialGradient id="circleGradientCogs" cx="50%" cy="50%">
+                        <radialGradient id="circleGradientAssets" cx="50%" cy="50%">
                             <stop offset="0%" style="stop-color:#c084fc;stop-opacity:1" />
                             <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
                         </radialGradient>
                     </defs>
                     <g class="circle-group-1">
-                        <circle cx="20" cy="40" r="4" class="circle" fill="url(#circleGradientCogs)" />
+                        <circle cx="20" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
                     </g>
                     <g class="circle-group-2">
-                        <circle cx="60" cy="40" r="4" class="circle" fill="url(#circleGradientCogs)" />
+                        <circle cx="60" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
                     </g>
                     <g class="circle-group-3">
-                        <circle cx="100" cy="40" r="4" class="circle" fill="url(#circleGradientCogs)" />
+                        <circle cx="100" cy="40" r="4" class="circle" fill="url(#circleGradientAssets)" />
                     </g>
                 </svg>
             </div>
@@ -94,169 +143,119 @@ export class CogsCodbModule {
                 You've chosen to use our generic model for this section. 
                 This will save you time during setup while still providing comprehensive financial projections.
             </p>
-            <p class="placeholder-description" style="margin-top: 10px;">
-                You can customise this section at a later date if needed.
-                You can continue to the next section for now.
-            </p>
         `;
-        
+
         container.appendChild(content);
         return container;
     }
 
     createCustomContent() {
         const container = document.createElement('div');
-        container.className = 'cogs-codb-content';
-
-        // Check if user selected "Sell Products" in revenue module
-        const sellsProducts = this.detectProductsSelection();
-        console.log('User sells products:', sellsProducts);
-
-        // Manufacturing question (conditional on selling products)
-        if (sellsProducts) {
-            const manufacturingSection = this.createManufacturingSection();
-            container.appendChild(manufacturingSection);
-        } else {
-            // If no products selected, show informative message
-            const noProductsMessage = this.createNoProductsMessage();
-            container.appendChild(noProductsMessage);
-        }
-
+        container.className = 'combined-parameters-container'; // Same as revenue module
+        
+        // Create main asset types section
+        const assetTypesSection = this.createAssetTypesSection();
+        container.appendChild(assetTypesSection);
+        
+        // Create depreciation methods section (initially hidden)
+        const depreciationSection = this.createDepreciationSection();
+        container.appendChild(depreciationSection);
+        
         return container;
     }
 
-    /**
-     * Enhanced product detection with multiple fallback methods
-     * (Same logic as working capital module)
-     */
-    detectProductsSelection() {
-        console.log('=== ENHANCED PRODUCTS DETECTION ===');
-        
-        let sellsProducts = false;
-
-        // Method 1: Check engine responses directly
-        if (window.questionnaireEngine?.responses) {
-            const engineResponses = window.questionnaireEngine.responses;
-            console.log('Checking engine responses:', engineResponses);
-            
-            const revenueResponse = engineResponses['revenue-structure'];
-            if (revenueResponse?.selectedRevenues) {
-                sellsProducts = revenueResponse.selectedRevenues.includes('products');
-                console.log('Engine check - selectedRevenues:', revenueResponse.selectedRevenues, 'Products found:', sellsProducts);
-                if (sellsProducts) {
-                    console.log('✅ Products detected via engine responses');
-                    return sellsProducts;
-                }
-            }
-        }
-
-        // Method 2: Check state manager
-        if (!sellsProducts && window.questionnaireEngine?.stateManager) {
-            const allResponses = window.questionnaireEngine.stateManager.getAllResponses();
-            console.log('Checking state manager responses:', allResponses);
-            
-            // Try multiple possible keys
-            const possibleKeys = ['revenue-structure', 'revenue', 'revenue-combined'];
-            
-            for (const key of possibleKeys) {
-                const response = allResponses[key];
-                if (response) {
-                    console.log(`Checking response under key '${key}':`, response);
-                    
-                    // Check selectedRevenues property
-                    if (response.selectedRevenues && Array.isArray(response.selectedRevenues)) {
-                        sellsProducts = response.selectedRevenues.includes('products');
-                        console.log(`State manager check - ${key}.selectedRevenues:`, response.selectedRevenues, 'Products found:', sellsProducts);
-                        if (sellsProducts) {
-                            console.log(`✅ Products detected via state manager - ${key}`);
-                            break;
-                        }
-                    }
-                    
-                    // Check nested data property
-                    if (!sellsProducts && response.data?.selectedRevenues) {
-                        sellsProducts = response.data.selectedRevenues.includes('products');
-                        console.log(`State manager check - ${key}.data.selectedRevenues:`, response.data.selectedRevenues, 'Products found:', sellsProducts);
-                        if (sellsProducts) {
-                            console.log(`✅ Products detected via state manager - ${key}.data`);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Method 3: Check module instances directly
-        if (!sellsProducts && window.questionnaireEngine?.modules) {
-            console.log('Checking module instances...');
-            const modules = window.questionnaireEngine.modules;
-            
-            for (const module of modules) {
-                if (module.id === 'revenue-structure') {
-                    console.log('Found revenue module:', module);
-                    if (module.responses?.selectedRevenues) {
-                        sellsProducts = module.responses.selectedRevenues.includes('products');
-                        console.log('Module check - selectedRevenues:', module.responses.selectedRevenues, 'Products found:', sellsProducts);
-                        if (sellsProducts) {
-                            console.log('✅ Products detected via module instance');
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Method 4: Global variable fallback
-        if (!sellsProducts && window.revenueData) {
-            console.log('Checking global revenue data:', window.revenueData);
-            if (window.revenueData.selectedRevenues?.includes('products')) {
-                sellsProducts = true;
-                console.log('✅ Products detected via global variable');
-            }
-        }
-
-        console.log('Final products detection result:', sellsProducts);
-        console.log('=== END ENHANCED PRODUCTS DETECTION ===');
-        
-        return sellsProducts;
-    }
-
-    createManufacturingSection() {
+    createAssetTypesSection() {
         const section = document.createElement('div');
-        section.className = 'parameter-section';
+        section.className = 'parameter-section'; // Same class as revenue
 
         const row = document.createElement('div');
-        row.className = 'parameter-toggle-row';
+        row.className = 'parameter-toggle-row'; // Same class as revenue
 
         const textDiv = document.createElement('div');
-        textDiv.className = 'parameter-toggle-text';
+        textDiv.className = 'parameter-toggle-text'; // Same class as revenue
 
         const title = document.createElement('div');
         title.className = 'parameter-toggle-title';
-        title.textContent = 'Does your company manufacture products?';
+        title.textContent = 'What types of assets does your business own?';
 
         const subtitle = document.createElement('div');
         subtitle.className = 'parameter-toggle-subtitle';
-        subtitle.textContent = 'This helps us understand whether to model manufacturing costs or procurement costs in your COGS structure.';
+        subtitle.textContent = 'Select the types of assets your business owns. This helps us model depreciation and asset-related expenses accurately.';
 
         textDiv.appendChild(title);
         textDiv.appendChild(subtitle);
 
-        const toggleContainer = document.createElement('div');
-        toggleContainer.className = 'toggle-switch-container';
+        const dropdownContainer = document.createElement('div');
+        dropdownContainer.className = 'revenue-dropdown-container'; // Use same class as revenue
+        dropdownContainer.style.flex = '0 0 375px';
 
-        const manufacturingComponent = new Toggle({
-            id: 'manufacturesProducts',
-            labels: ['No', 'Yes'],
-            defaultValue: this.responses.manufacturesProducts,
-            onChange: (value) => {
-                this.responses.manufacturesProducts = value;
+        const assetTypesComponent = new MultiSelect({
+            id: 'assetTypes',
+            placeholder: 'Search or select asset types...',
+            options: this.assetOptions,
+            allowCustom: true,
+            required: false,
+            onChange: (selectedValues) => {
+                this.responses.selectedAssets = selectedValues;
+                this.updateConditionalSections(selectedValues);
                 this.onResponseChange();
             }
         });
 
-        this.components.manufacturesProducts = manufacturingComponent;
-        manufacturingComponent.render(toggleContainer);
+        this.components.assetTypes = assetTypesComponent;
+        assetTypesComponent.render(dropdownContainer);
+
+        row.appendChild(textDiv);
+        row.appendChild(dropdownContainer);
+        section.appendChild(row);
+
+        return section;
+    }
+
+    createDepreciationSection() {
+        // FIXED: Use parameter-section instead of revenue-staff-section
+        const section = document.createElement('div');
+        section.className = 'parameter-section'; // ✅ FIXED: Same as revenue staff section
+        section.id = 'depreciationSection';
+        section.style.display = 'none';
+
+        // FIXED: Use parameter-toggle-row instead of revenue-staff-row
+        const row = document.createElement('div');
+        row.className = 'parameter-toggle-row'; // ✅ FIXED: Same as revenue staff section
+
+        // FIXED: Use parameter-toggle-text instead of revenue-staff-text
+        const textDiv = document.createElement('div');
+        textDiv.className = 'parameter-toggle-text'; // ✅ FIXED: Same as revenue staff section
+        textDiv.style.flex = '1';
+
+        const title = document.createElement('div');
+        title.className = 'parameter-toggle-title';
+        title.textContent = 'Do you use different depreciation methods for different asset types?';
+
+        const subtitle = document.createElement('div');
+        subtitle.className = 'parameter-toggle-subtitle';
+        subtitle.textContent = 'Understanding your depreciation approach helps us model your asset expenses and tax implications more accurately.';
+
+        textDiv.appendChild(title);
+        textDiv.appendChild(subtitle);
+
+        // FIXED: Use toggle-switch-container instead of revenue-staff-toggle-container
+        const toggleContainer = document.createElement('div');
+        toggleContainer.className = 'toggle-switch-container'; // ✅ FIXED: Same as revenue staff section
+
+        // FIXED: Use labels array instead of options array
+        const depreciationComponent = new Toggle({
+            id: 'multipleDepreciationMethods',
+            labels: ['No', 'Yes'], // ✅ FIXED: Use labels array like revenue staff toggle
+            defaultValue: 'no',
+            onChange: (value) => {
+                this.responses.multipleDepreciationMethods = value;
+                this.onResponseChange();
+            }
+        });
+
+        this.components.depreciation = depreciationComponent;
+        depreciationComponent.render(toggleContainer);
 
         row.appendChild(textDiv);
         row.appendChild(toggleContainer);
@@ -265,208 +264,37 @@ export class CogsCodbModule {
         return section;
     }
 
-    /**
-     * Detect if manufacturing was selected in COGS module
-     */
-    detectManufacturingSelection() {
-        console.log('=== MANUFACTURING DETECTION ===');
-        
-        let manufactures = false;
+    updateConditionalSections(selectedAssets) {
+        const depreciationSection = document.getElementById('depreciationSection');
+        if (!depreciationSection) return;
 
-        // Method 1: Check engine responses directly
-        if (window.questionnaireEngine?.responses) {
-            const engineResponses = window.questionnaireEngine.responses;
-            console.log('Checking engine responses:', engineResponses);
+        // Show depreciation section if any assets are selected
+        const showDepreciation = selectedAssets && selectedAssets.length > 0;
+        
+        if (showDepreciation) {
+            depreciationSection.style.display = 'block';
+        } else {
+            depreciationSection.style.display = 'none';
             
-            const cogsResponse = engineResponses['cogs-codb'];
-            if (cogsResponse?.manufacturesProducts) {
-                manufactures = cogsResponse.manufacturesProducts === 'yes';
-                console.log('Engine check - manufacturesProducts:', cogsResponse.manufacturesProducts, 'Manufacturing found:', manufactures);
-                if (manufactures) {
-                    console.log('✅ Manufacturing detected via engine responses');
-                    return manufactures;
-                }
+            // Reset depreciation response if not showing
+            this.responses.multipleDepreciationMethods = 'no';
+            if (this.components.depreciation) {
+                this.components.depreciation.setValue('no');
             }
         }
-
-        // Method 2: Check state manager
-        if (!manufactures && window.questionnaireEngine?.stateManager) {
-            const allResponses = window.questionnaireEngine.stateManager.getAllResponses();
-            console.log('Checking state manager responses:', allResponses);
-            
-            // Try multiple possible keys
-            const possibleKeys = ['cogs-codb', 'cogs', 'codb'];
-            
-            for (const key of possibleKeys) {
-                const response = allResponses[key];
-                if (response) {
-                    console.log(`Checking response under key '${key}':`, response);
-                    
-                    // Check manufacturesProducts property
-                    if (response.manufacturesProducts) {
-                        manufactures = response.manufacturesProducts === 'yes';
-                        console.log(`State manager check - ${key}.manufacturesProducts:`, response.manufacturesProducts, 'Manufacturing found:', manufactures);
-                        if (manufactures) {
-                            console.log(`✅ Manufacturing detected via state manager - ${key}`);
-                            break;
-                        }
-                    }
-                    
-                    // Check nested data property
-                    if (!manufactures && response.data?.manufacturesProducts) {
-                        manufactures = response.data.manufacturesProducts === 'yes';
-                        console.log(`State manager check - ${key}.data.manufacturesProducts:`, response.data.manufacturesProducts, 'Manufacturing found:', manufactures);
-                        if (manufactures) {
-                            console.log(`✅ Manufacturing detected via state manager - ${key}.data`);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Method 3: Check module instances directly
-        if (!manufactures && window.questionnaireEngine?.modules) {
-            console.log('Checking module instances...');
-            const modules = window.questionnaireEngine.modules;
-            
-            for (const module of modules) {
-                if (module.id === 'cogs-codb') {
-                    console.log('Found COGS module:', module);
-                    if (module.responses?.manufacturesProducts) {
-                        manufactures = module.responses.manufacturesProducts === 'yes';
-                        console.log('Module check - manufacturesProducts:', module.responses.manufacturesProducts, 'Manufacturing found:', manufactures);
-                        if (manufactures) {
-                            console.log('✅ Manufacturing detected via module instance');
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Method 4: Global variable fallback
-        if (!manufactures && window.cogsData) {
-            console.log('Checking global COGS data:', window.cogsData);
-            if (window.cogsData.manufacturesProducts === 'yes') {
-                manufactures = true;
-                console.log('✅ Manufacturing detected via global variable');
-            }
-        }
-
-        console.log('Final manufacturing detection result:', manufactures);
-        console.log('=== END MANUFACTURING DETECTION ===');
-        
-        return manufactures;
-    }
-
-    createUnitsOfProductionSection() {
-        const section = document.createElement('div');
-        section.className = 'parameter-section';
-        section.id = 'unitsOfProductionSection';
-        section.style.display = 'none';
-
-        const row = document.createElement('div');
-        row.className = 'parameter-toggle-row';
-
-        const textDiv = document.createElement('div');
-        textDiv.className = 'parameter-toggle-text';
-
-        const title = document.createElement('div');
-        title.className = 'parameter-toggle-title';
-        title.textContent = 'You manufacture your own products, do you depreciate your assets using units of production?';
-
-        const subtitle = document.createElement('div');
-        subtitle.className = 'parameter-toggle-subtitle';
-        subtitle.textContent = 'Units of production depreciation allocates asset costs based on actual usage/output, which can be more accurate for manufacturing equipment.';
-
-        textDiv.appendChild(title);
-        textDiv.appendChild(subtitle);
-
-        const toggleContainer = document.createElement('div');
-        toggleContainer.className = 'toggle-switch-container';
-
-        const unitsOfProductionComponent = new Toggle({
-            id: 'unitsOfProductionDepreciation',
-            labels: ['No', 'Yes'],
-            defaultValue: this.responses.unitsOfProductionDepreciation,
-            onChange: (value) => {
-                this.responses.unitsOfProductionDepreciation = value;
-                this.onResponseChange();
-            }
-        });
-
-        this.components.unitsOfProduction = unitsOfProductionComponent;
-        unitsOfProductionComponent.render(toggleContainer);
-
-        row.appendChild(textDiv);
-        row.appendChild(toggleContainer);
-        section.appendChild(row);
-    }
-
-    createNoProductsMessage() {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'cogs-codb-no-products-message';
-        messageDiv.innerHTML = `
-            <div class="info-message">
-                <div class="info-icon">ℹ️</div>
-                <div class="info-content">
-                    <h4>Limited COGS Questions</h4>
-                    <p>Since you haven't selected "Sell Products" in the Revenue section, specific Cost of Goods Sold questions are not applicable to your business model.</p>
-                    <p>Your model will use our standard cost structure approach for service-based businesses.</p>
-                </div>
-            </div>
-        `;
-        return messageDiv;
-    }
-
-    isGenericModeSelected() {
-        let isGeneric = true; // Default to generic
-        
-        // Method 1: Check state manager responses
-        if (window.questionnaireEngine?.stateManager) {
-            const responses = window.questionnaireEngine.stateManager.getAllResponses();
-            const customizationResponse = responses['customization'] || responses['customization-preference'];
-            
-            if (customizationResponse?.customizationPreferences?.cogs) {
-                isGeneric = customizationResponse.customizationPreferences.cogs === 'generic';
-                console.log('Customization check - using state manager:', isGeneric);
-                return isGeneric;
-            }
-        }
-        
-        // Method 2: Check global customization variables
-        if (window.customizationPreferencesFormatted?.cogs) {
-            isGeneric = window.customizationPreferencesFormatted.cogs === 'generic';
-            console.log('Customization check - using global formatted:', isGeneric);
-            return isGeneric;
-        }
-        
-        if (window.customizationPreferences?.cogsCustomization !== undefined) {
-            isGeneric = !window.customizationPreferences.cogsCustomization;
-            console.log('Customization check - using global raw:', isGeneric);
-            return isGeneric;
-        }
-        
-        console.log('Customization check - using default:', isGeneric);
-        return isGeneric;
     }
 
     onResponseChange() {
-        if (window.questionnaireEngine?.validator) {
+        if (window.questionnaireEngine && window.questionnaireEngine.validator) {
             window.questionnaireEngine.validator.validateCurrentQuestion();
         }
     }
 
     getResponse() {
-        const isGeneric = this.isGenericModeSelected();
-        
         return {
-            type: isGeneric ? 'generic-placeholder' : 'cogs-codb',
-            originalType: 'cogs-codb',
-            originalTitle: this.title,
-            genericSelected: isGeneric,
-            manufacturesProducts: this.responses.manufacturesProducts,
+            type: 'assets-combined',
+            selectedAssets: [...this.responses.selectedAssets],
+            multipleDepreciationMethods: this.responses.multipleDepreciationMethods,
             timestamp: new Date().toISOString()
         };
     }
@@ -474,23 +302,55 @@ export class CogsCodbModule {
     loadResponse(response) {
         if (!response) return;
 
-        // Load manufacturing response if available
-        if (response.manufacturesProducts) {
-            this.responses.manufacturesProducts = response.manufacturesProducts;
-        }
+        // Load response data
+        this.responses = {
+            selectedAssets: response.selectedAssets || [],
+            multipleDepreciationMethods: response.multipleDepreciationMethods || 'no'
+        };
 
         // Only update components in custom mode
         const isGeneric = this.isGenericModeSelected();
         if (!isGeneric) {
+            // Update components with loaded data
             setTimeout(() => {
-                if (this.components.manufacturesProducts) {
-                    this.components.manufacturesProducts.setValue(this.responses.manufacturesProducts);
+                if (this.components.assetTypes) {
+                    this.components.assetTypes.setValue(this.responses.selectedAssets);
+                    this.updateConditionalSections(this.responses.selectedAssets);
+                }
+
+                if (this.components.depreciation) {
+                    this.components.depreciation.setValue(this.responses.multipleDepreciationMethods);
                 }
             }, 100);
         }
     }
 
+    // This method now mirrors the comprehensive approach used in renderContent()
+    isGenericModeSelected() {
+        // Try multiple ways to get customization data (same as renderContent)
+        let isGeneric = true; // Default to generic
+        
+        // Method 1: Check state manager
+        const responses = window.questionnaireEngine?.stateManager?.getAllResponses() || {};
+        const customizationResponse1 = responses['customization'];
+        const customizationResponse2 = responses['customization-preference'];
+        
+        // Determine if generic or custom - checking multiple sources
+        if (customizationResponse1?.customizationPreferences?.assets) {
+            isGeneric = customizationResponse1.customizationPreferences.assets === 'generic';
+        } else if (customizationResponse2?.customizationPreferences?.assets) {
+            isGeneric = customizationResponse2.customizationPreferences.assets === 'generic';
+        } else if (window.customizationPreferencesFormatted?.assets) {
+            isGeneric = window.customizationPreferencesFormatted.assets === 'generic';
+        } else if (window.customizationPreferences?.assetsCustomization !== undefined) {
+            isGeneric = !window.customizationPreferences.assetsCustomization;
+        }
+        
+        return isGeneric;
+    }
+
     validate() {
+        // Always return valid - users can skip this section entirely
         return {
             isValid: true,
             errors: []
@@ -498,15 +358,18 @@ export class CogsCodbModule {
     }
 
     shouldShow(responses) {
-        return true; // Always show COGS-CODB module
+        // Always show Assets module - it will handle showing generic vs custom content internally
+        return true;
     }
 
     getDatabaseFields() {
         const isGeneric = this.isGenericModeSelected();
         
         return {
-            manufactures_products: this.responses.manufacturesProducts,
-            is_generic_cogs_codb: isGeneric
+            asset_types_selected: this.responses.selectedAssets.length > 0 ? this.responses.selectedAssets : null,
+            asset_types_freetext: null, // Custom assets are included in the selected array
+            multiple_depreciation_methods: this.responses.multipleDepreciationMethods,
+            is_generic_assets: isGeneric // Track if generic mode was used
         };
     }
 
@@ -521,14 +384,13 @@ export class CogsCodbModule {
                 component.destroy();
             }
         });
-        
         this.components = {};
         this.currentContainer = null;
     }
 }
 
-export default CogsCodbModule;
+export default AssetsModule;
 
 if (typeof window !== 'undefined') {
-    window.CogsCodbModule = CogsCodbModule;
+    window.AssetsModule = AssetsModule;
 }
