@@ -15,7 +15,8 @@ export class AssetsModule {
         this.currentContainer = null; // Store reference to container for re-rendering
         this.responses = {
             selectedAssets: [],
-            multipleDepreciationMethods: 'no'
+            multipleDepreciationMethods: 'no',
+            unitsOfProductionDepreciation: 'no'
         };
 
         // Asset options
@@ -161,6 +162,10 @@ export class AssetsModule {
         const depreciationSection = this.createDepreciationSection();
         container.appendChild(depreciationSection);
         
+        // Create units of production section (initially hidden)
+        const unitsOfProductionSection = this.createUnitsOfProductionSection();
+        container.appendChild(unitsOfProductionSection);
+        
         return container;
     }
 
@@ -213,19 +218,16 @@ export class AssetsModule {
     }
 
     createDepreciationSection() {
-        // FIXED: Use parameter-section instead of revenue-staff-section
         const section = document.createElement('div');
-        section.className = 'parameter-section'; // ✅ FIXED: Same as revenue staff section
+        section.className = 'parameter-section';
         section.id = 'depreciationSection';
         section.style.display = 'none';
 
-        // FIXED: Use parameter-toggle-row instead of revenue-staff-row
         const row = document.createElement('div');
-        row.className = 'parameter-toggle-row'; // ✅ FIXED: Same as revenue staff section
+        row.className = 'parameter-toggle-row';
 
-        // FIXED: Use parameter-toggle-text instead of revenue-staff-text
         const textDiv = document.createElement('div');
-        textDiv.className = 'parameter-toggle-text'; // ✅ FIXED: Same as revenue staff section
+        textDiv.className = 'parameter-toggle-text';
         textDiv.style.flex = '1';
 
         const title = document.createElement('div');
@@ -239,14 +241,12 @@ export class AssetsModule {
         textDiv.appendChild(title);
         textDiv.appendChild(subtitle);
 
-        // FIXED: Use toggle-switch-container instead of revenue-staff-toggle-container
         const toggleContainer = document.createElement('div');
-        toggleContainer.className = 'toggle-switch-container'; // ✅ FIXED: Same as revenue staff section
+        toggleContainer.className = 'toggle-switch-container';
 
-        // FIXED: Use labels array instead of options array
         const depreciationComponent = new Toggle({
             id: 'multipleDepreciationMethods',
-            labels: ['No', 'Yes'], // ✅ FIXED: Use labels array like revenue staff toggle
+            labels: ['No', 'Yes'],
             defaultValue: 'no',
             onChange: (value) => {
                 this.responses.multipleDepreciationMethods = value;
@@ -264,8 +264,151 @@ export class AssetsModule {
         return section;
     }
 
+    /**
+     * Detect if manufacturing was selected in COGS module
+     */
+    detectManufacturingSelection() {
+        console.log('=== MANUFACTURING DETECTION ===');
+        
+        let manufactures = false;
+
+        // Method 1: Check engine responses directly
+        if (window.questionnaireEngine?.responses) {
+            const engineResponses = window.questionnaireEngine.responses;
+            console.log('Checking engine responses:', engineResponses);
+            
+            const cogsResponse = engineResponses['cogs-codb'];
+            if (cogsResponse?.manufacturesProducts) {
+                manufactures = cogsResponse.manufacturesProducts === 'yes';
+                console.log('Engine check - manufacturesProducts:', cogsResponse.manufacturesProducts, 'Manufacturing found:', manufactures);
+                if (manufactures) {
+                    console.log('✅ Manufacturing detected via engine responses');
+                    return manufactures;
+                }
+            }
+        }
+
+        // Method 2: Check state manager
+        if (!manufactures && window.questionnaireEngine?.stateManager) {
+            const allResponses = window.questionnaireEngine.stateManager.getAllResponses();
+            console.log('Checking state manager responses:', allResponses);
+            
+            // Try multiple possible keys
+            const possibleKeys = ['cogs-codb', 'cogs', 'codb'];
+            
+            for (const key of possibleKeys) {
+                const response = allResponses[key];
+                if (response) {
+                    console.log(`Checking response under key '${key}':`, response);
+                    
+                    // Check manufacturesProducts property
+                    if (response.manufacturesProducts) {
+                        manufactures = response.manufacturesProducts === 'yes';
+                        console.log(`State manager check - ${key}.manufacturesProducts:`, response.manufacturesProducts, 'Manufacturing found:', manufactures);
+                        if (manufactures) {
+                            console.log(`✅ Manufacturing detected via state manager - ${key}`);
+                            break;
+                        }
+                    }
+                    
+                    // Check nested data property
+                    if (!manufactures && response.data?.manufacturesProducts) {
+                        manufactures = response.data.manufacturesProducts === 'yes';
+                        console.log(`State manager check - ${key}.data.manufacturesProducts:`, response.data.manufacturesProducts, 'Manufacturing found:', manufactures);
+                        if (manufactures) {
+                            console.log(`✅ Manufacturing detected via state manager - ${key}.data`);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Method 3: Check module instances directly
+        if (!manufactures && window.questionnaireEngine?.modules) {
+            console.log('Checking module instances...');
+            const modules = window.questionnaireEngine.modules;
+            
+            for (const module of modules) {
+                if (module.id === 'cogs-codb') {
+                    console.log('Found COGS module:', module);
+                    if (module.responses?.manufacturesProducts) {
+                        manufactures = module.responses.manufacturesProducts === 'yes';
+                        console.log('Module check - manufacturesProducts:', module.responses.manufacturesProducts, 'Manufacturing found:', manufactures);
+                        if (manufactures) {
+                            console.log('✅ Manufacturing detected via module instance');
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Method 4: Global variable fallback
+        if (!manufactures && window.cogsData) {
+            console.log('Checking global COGS data:', window.cogsData);
+            if (window.cogsData.manufacturesProducts === 'yes') {
+                manufactures = true;
+                console.log('✅ Manufacturing detected via global variable');
+            }
+        }
+
+        console.log('Final manufacturing detection result:', manufactures);
+        console.log('=== END MANUFACTURING DETECTION ===');
+        
+        return manufactures;
+    }
+
+    createUnitsOfProductionSection() {
+        const section = document.createElement('div');
+        section.className = 'parameter-section';
+        section.id = 'unitsOfProductionSection';
+        section.style.display = 'none';
+
+        const row = document.createElement('div');
+        row.className = 'parameter-toggle-row';
+
+        const textDiv = document.createElement('div');
+        textDiv.className = 'parameter-toggle-text';
+
+        const title = document.createElement('div');
+        title.className = 'parameter-toggle-title';
+        title.textContent = 'You manufacture your own products, do you depreciate your assets using units of production?';
+
+        const subtitle = document.createElement('div');
+        subtitle.className = 'parameter-toggle-subtitle';
+        subtitle.textContent = 'Units of production depreciation allocates asset costs based on actual usage/output, which can be more accurate for manufacturing equipment.';
+
+        textDiv.appendChild(title);
+        textDiv.appendChild(subtitle);
+
+        const toggleContainer = document.createElement('div');
+        toggleContainer.className = 'toggle-switch-container';
+
+        const unitsOfProductionComponent = new Toggle({
+            id: 'unitsOfProductionDepreciation',
+            labels: ['No', 'Yes'],
+            defaultValue: this.responses.unitsOfProductionDepreciation,
+            onChange: (value) => {
+                this.responses.unitsOfProductionDepreciation = value;
+                this.onResponseChange();
+            }
+        });
+
+        this.components.unitsOfProduction = unitsOfProductionComponent;
+        unitsOfProductionComponent.render(toggleContainer);
+
+        row.appendChild(textDiv);
+        row.appendChild(toggleContainer);
+        section.appendChild(row);
+
+        return section;
+    }
+
     updateConditionalSections(selectedAssets) {
         const depreciationSection = document.getElementById('depreciationSection');
+        const unitsOfProductionSection = document.getElementById('unitsOfProductionSection');
+        
         if (!depreciationSection) return;
 
         // Show depreciation section if any assets are selected
@@ -282,6 +425,31 @@ export class AssetsModule {
                 this.components.depreciation.setValue('no');
             }
         }
+
+        // Show units of production section if assets are selected AND manufacturing is detected
+        if (unitsOfProductionSection) {
+            const hasAssets = selectedAssets && selectedAssets.length > 0;
+            const manufactures = this.detectManufacturingSelection();
+            const showUnitsOfProduction = hasAssets && manufactures;
+            
+            console.log('Units of Production visibility check:', {
+                hasAssets,
+                manufactures,
+                showUnitsOfProduction
+            });
+            
+            if (showUnitsOfProduction) {
+                unitsOfProductionSection.style.display = 'block';
+            } else {
+                unitsOfProductionSection.style.display = 'none';
+                
+                // Reset units of production response if not showing
+                this.responses.unitsOfProductionDepreciation = 'no';
+                if (this.components.unitsOfProduction) {
+                    this.components.unitsOfProduction.setValue('no');
+                }
+            }
+        }
     }
 
     onResponseChange() {
@@ -295,6 +463,7 @@ export class AssetsModule {
             type: 'assets-combined',
             selectedAssets: [...this.responses.selectedAssets],
             multipleDepreciationMethods: this.responses.multipleDepreciationMethods,
+            unitsOfProductionDepreciation: this.responses.unitsOfProductionDepreciation,
             timestamp: new Date().toISOString()
         };
     }
@@ -305,7 +474,8 @@ export class AssetsModule {
         // Load response data
         this.responses = {
             selectedAssets: response.selectedAssets || [],
-            multipleDepreciationMethods: response.multipleDepreciationMethods || 'no'
+            multipleDepreciationMethods: response.multipleDepreciationMethods || 'no',
+            unitsOfProductionDepreciation: response.unitsOfProductionDepreciation || 'no'
         };
 
         // Only update components in custom mode
@@ -320,6 +490,10 @@ export class AssetsModule {
 
                 if (this.components.depreciation) {
                     this.components.depreciation.setValue(this.responses.multipleDepreciationMethods);
+                }
+
+                if (this.components.unitsOfProduction) {
+                    this.components.unitsOfProduction.setValue(this.responses.unitsOfProductionDepreciation);
                 }
             }, 100);
         }
@@ -369,6 +543,7 @@ export class AssetsModule {
             asset_types_selected: this.responses.selectedAssets.length > 0 ? this.responses.selectedAssets : null,
             asset_types_freetext: null, // Custom assets are included in the selected array
             multiple_depreciation_methods: this.responses.multipleDepreciationMethods,
+            units_of_production_depreciation: this.responses.unitsOfProductionDepreciation,
             is_generic_assets: isGeneric // Track if generic mode was used
         };
     }
