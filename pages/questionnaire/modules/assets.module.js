@@ -279,7 +279,7 @@ export class AssetsModule {
             
             const cogsResponse = engineResponses['cogs-codb'];
             if (cogsResponse?.manufacturesProducts) {
-                manufactures = cogsResponse.manufacturesProducts === 'yes';
+                manufactures = cogsResponse.manufacturesProducts === 'yes' || cogsResponse.manufacturesProducts === 'active';
                 console.log('Engine check - manufacturesProducts:', cogsResponse.manufacturesProducts, 'Manufacturing found:', manufactures);
                 if (manufactures) {
                     console.log('✅ Manufacturing detected via engine responses');
@@ -301,9 +301,9 @@ export class AssetsModule {
                 if (response) {
                     console.log(`Checking response under key '${key}':`, response);
                     
-                    // Check manufacturesProducts property
+                    // Check manufacturesProducts property - handle both 'yes' and 'active'
                     if (response.manufacturesProducts) {
-                        manufactures = response.manufacturesProducts === 'yes';
+                        manufactures = response.manufacturesProducts === 'yes' || response.manufacturesProducts === 'active';
                         console.log(`State manager check - ${key}.manufacturesProducts:`, response.manufacturesProducts, 'Manufacturing found:', manufactures);
                         if (manufactures) {
                             console.log(`✅ Manufacturing detected via state manager - ${key}`);
@@ -311,9 +311,9 @@ export class AssetsModule {
                         }
                     }
                     
-                    // Check nested data property
+                    // Check nested data property - handle both 'yes' and 'active'
                     if (!manufactures && response.data?.manufacturesProducts) {
-                        manufactures = response.data.manufacturesProducts === 'yes';
+                        manufactures = response.data.manufacturesProducts === 'yes' || response.data.manufacturesProducts === 'active';
                         console.log(`State manager check - ${key}.data.manufacturesProducts:`, response.data.manufacturesProducts, 'Manufacturing found:', manufactures);
                         if (manufactures) {
                             console.log(`✅ Manufacturing detected via state manager - ${key}.data`);
@@ -333,7 +333,7 @@ export class AssetsModule {
                 if (module.id === 'cogs-codb') {
                     console.log('Found COGS module:', module);
                     if (module.responses?.manufacturesProducts) {
-                        manufactures = module.responses.manufacturesProducts === 'yes';
+                        manufactures = module.responses.manufacturesProducts === 'yes' || module.responses.manufacturesProducts === 'active';
                         console.log('Module check - manufacturesProducts:', module.responses.manufacturesProducts, 'Manufacturing found:', manufactures);
                         if (manufactures) {
                             console.log('✅ Manufacturing detected via module instance');
@@ -347,7 +347,7 @@ export class AssetsModule {
         // Method 4: Global variable fallback
         if (!manufactures && window.cogsData) {
             console.log('Checking global COGS data:', window.cogsData);
-            if (window.cogsData.manufacturesProducts === 'yes') {
+            if (window.cogsData.manufacturesProducts === 'yes' || window.cogsData.manufacturesProducts === 'active') {
                 manufactures = true;
                 console.log('✅ Manufacturing detected via global variable');
             }
