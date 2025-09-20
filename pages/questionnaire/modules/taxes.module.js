@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/taxes.module.js - COMPLETE IMPLEMENTATION
+// /pages/questionnaire/modules/taxes.module.js - UPDATED TO MATCH REVENUE MODULE STYLE
 import { BaseComponent } from '../components/base-component.js';
 import { Toggle } from '../components/toggle.js';
 import { Dropdown } from '../components/dropdown.js';
@@ -13,6 +13,7 @@ export class TaxesModule {
         
         this.components = {};
         this.currentContainer = null; // Store reference for re-rendering
+        this.userHasInteracted = false; // Track user interaction for engine
         this.responses = {
             corporateTax: 'no',
             valueTax: 'no',
@@ -155,7 +156,7 @@ export class TaxesModule {
 
     createCustomContent() {
         const container = document.createElement('div');
-        container.className = 'taxes-form';
+        container.className = 'combined-parameters-container';
 
         // Question 1: Corporate Tax
         const corporateTaxQuestion = this.createCorporateTaxQuestion();
@@ -177,95 +178,123 @@ export class TaxesModule {
     }
 
     createCorporateTaxQuestion() {
-        const questionContainer = document.createElement('div');
-        questionContainer.className = 'question-container';
+        const section = document.createElement('div');
+        section.className = 'parameter-section';
 
-        const questionText = document.createElement('h3');
-        questionText.className = 'question-title';
-        questionText.textContent = 'Does your entity pay corporate tax?';
+        const row = document.createElement('div');
+        row.className = 'parameter-toggle-row';
 
-        const subtitle = document.createElement('p');
-        subtitle.className = 'question-subtitle';
+        const textDiv = document.createElement('div');
+        textDiv.className = 'parameter-toggle-text';
+
+        const title = document.createElement('div');
+        title.className = 'parameter-toggle-title';
+        title.textContent = 'Does your entity pay corporate tax?';
+
+        const subtitle = document.createElement('div');
+        subtitle.className = 'parameter-toggle-subtitle';
         subtitle.textContent = 'Select whether your business is subject to corporate income tax obligations.';
 
-        // Create toggle
-        const toggleContainer = document.createElement('div');
-        toggleContainer.className = 'toggle-container';
+        textDiv.appendChild(title);
+        textDiv.appendChild(subtitle);
 
-        this.components.corporateTaxToggle = new Toggle({
-            id: 'corporate-tax-toggle',
+        const toggleContainer = document.createElement('div');
+        toggleContainer.className = 'toggle-switch-container';
+
+        const corporateTaxComponent = new Toggle({
+            id: 'corporateTax',
             labels: ['No', 'Yes'],
-            defaultValue: this.responses.corporateTax === 'yes' ? 'active' : 'inactive',
+            defaultValue: this.responses.corporateTax,
             onChange: (value) => {
-                this.responses.corporateTax = value === 'active' ? 'yes' : 'no';
+                this.userHasInteracted = true;
+                this.responses.corporateTax = value;
                 this.updateConditionalVisibility();
-                this.notifyChange();
+                this.onResponseChange();
             }
         });
 
-        const toggleElement = this.components.corporateTaxToggle.createElement();
-        toggleContainer.appendChild(toggleElement);
+        this.components.corporateTax = corporateTaxComponent;
+        corporateTaxComponent.render(toggleContainer);
 
-        questionContainer.appendChild(questionText);
-        questionContainer.appendChild(subtitle);
-        questionContainer.appendChild(toggleContainer);
+        row.appendChild(textDiv);
+        row.appendChild(toggleContainer);
+        section.appendChild(row);
 
-        return questionContainer;
+        return section;
     }
 
     createVATQuestion() {
-        const questionContainer = document.createElement('div');
-        questionContainer.className = 'question-container';
+        const section = document.createElement('div');
+        section.className = 'parameter-section';
 
-        const questionText = document.createElement('h3');
-        questionText.className = 'question-title';
-        questionText.textContent = 'Does your entity pay value added tax?';
+        const row = document.createElement('div');
+        row.className = 'parameter-toggle-row';
 
-        const subtitle = document.createElement('p');
-        subtitle.className = 'question-subtitle';
+        const textDiv = document.createElement('div');
+        textDiv.className = 'parameter-toggle-text';
+
+        const title = document.createElement('div');
+        title.className = 'parameter-toggle-title';
+        title.textContent = 'Does your entity pay value added tax?';
+
+        const subtitle = document.createElement('div');
+        subtitle.className = 'parameter-toggle-subtitle';
         subtitle.textContent = 'Select whether your business is subject to VAT, GST, or similar consumption tax obligations.';
 
-        // Create toggle
-        const toggleContainer = document.createElement('div');
-        toggleContainer.className = 'toggle-container';
+        textDiv.appendChild(title);
+        textDiv.appendChild(subtitle);
 
-        this.components.vatToggle = new Toggle({
-            id: 'vat-toggle',
+        const toggleContainer = document.createElement('div');
+        toggleContainer.className = 'toggle-switch-container';
+
+        const vatComponent = new Toggle({
+            id: 'valueTax',
             labels: ['No', 'Yes'],
-            defaultValue: this.responses.valueTax === 'yes' ? 'active' : 'inactive',
+            defaultValue: this.responses.valueTax,
             onChange: (value) => {
-                this.responses.valueTax = value === 'active' ? 'yes' : 'no';
+                this.userHasInteracted = true;
+                this.responses.valueTax = value;
                 this.updateConditionalVisibility();
-                this.notifyChange();
+                this.onResponseChange();
             }
         });
 
-        const toggleElement = this.components.vatToggle.createElement();
-        toggleContainer.appendChild(toggleElement);
+        this.components.valueTax = vatComponent;
+        vatComponent.render(toggleContainer);
 
-        questionContainer.appendChild(questionText);
-        questionContainer.appendChild(subtitle);
-        questionContainer.appendChild(toggleContainer);
+        row.appendChild(textDiv);
+        row.appendChild(toggleContainer);
+        section.appendChild(row);
 
-        return questionContainer;
+        return section;
     }
 
     createCorporateTaxModelQuestion() {
-        const questionContainer = document.createElement('div');
-        questionContainer.className = 'question-container conditional-question';
-        questionContainer.id = 'corporate-tax-model-question';
+        const section = document.createElement('div');
+        section.className = 'parameter-section conditional-question';
+        section.id = 'corporate-tax-model-question';
 
-        const questionText = document.createElement('h3');
-        questionText.className = 'question-title';
-        questionText.textContent = 'How will you model your corporate tax?';
+        const row = document.createElement('div');
+        row.className = 'parameter-toggle-row';
 
-        const subtitle = document.createElement('p');
-        subtitle.className = 'question-subtitle';
+        const textDiv = document.createElement('div');
+        textDiv.className = 'parameter-toggle-text';
+
+        const title = document.createElement('div');
+        title.className = 'parameter-toggle-title';
+        title.textContent = 'How will you model your corporate tax?';
+
+        const subtitle = document.createElement('div');
+        subtitle.className = 'parameter-toggle-subtitle';
         subtitle.textContent = 'Choose the approach for calculating corporate tax in your financial model.';
+
+        textDiv.appendChild(title);
+        textDiv.appendChild(subtitle);
 
         // Create dropdown with free text
         const dropdownContainer = document.createElement('div');
         dropdownContainer.className = 'dropdown-with-freetext-container';
+        dropdownContainer.style.flex = '0 0 375px';
 
         this.components.corporateTaxModelDropdown = new Dropdown({
             id: 'corporate-tax-model-dropdown',
@@ -274,12 +303,14 @@ export class TaxesModule {
             allowCustom: true,
             value: this.responses.corporateTaxModel,
             onChange: (value) => {
+                this.userHasInteracted = true;
                 this.responses.corporateTaxModel = value;
-                this.notifyChange();
+                this.onResponseChange();
             },
             onCustomText: (text) => {
+                this.userHasInteracted = true;
                 this.responses.corporateTaxModelFreeText = text;
-                this.notifyChange();
+                this.onResponseChange();
             }
         });
 
@@ -289,6 +320,7 @@ export class TaxesModule {
         // Add free text section
         const freeTextSection = document.createElement('div');
         freeTextSection.className = 'free-text-section';
+        freeTextSection.style.marginTop = '16px';
 
         const freeTextLabel = document.createElement('label');
         freeTextLabel.className = 'free-text-label';
@@ -299,37 +331,48 @@ export class TaxesModule {
         freeTextInput.placeholder = 'Describe any specific corporate tax considerations, rates, or methodologies you would like to include in your model...';
         freeTextInput.value = this.responses.corporateTaxModelFreeText;
         freeTextInput.addEventListener('input', (e) => {
+            this.userHasInteracted = true;
             this.responses.corporateTaxModelFreeText = e.target.value;
-            this.notifyChange();
+            this.onResponseChange();
         });
 
         freeTextSection.appendChild(freeTextLabel);
         freeTextSection.appendChild(freeTextInput);
 
-        questionContainer.appendChild(questionText);
-        questionContainer.appendChild(subtitle);
-        questionContainer.appendChild(dropdownContainer);
-        questionContainer.appendChild(freeTextSection);
+        row.appendChild(textDiv);
+        row.appendChild(dropdownContainer);
+        section.appendChild(row);
+        section.appendChild(freeTextSection);
 
-        return questionContainer;
+        return section;
     }
 
     createVATModelQuestion() {
-        const questionContainer = document.createElement('div');
-        questionContainer.className = 'question-container conditional-question';
-        questionContainer.id = 'vat-model-question';
+        const section = document.createElement('div');
+        section.className = 'parameter-section conditional-question';
+        section.id = 'vat-model-question';
 
-        const questionText = document.createElement('h3');
-        questionText.className = 'question-title';
-        questionText.textContent = 'How will you model your value added tax?';
+        const row = document.createElement('div');
+        row.className = 'parameter-toggle-row';
 
-        const subtitle = document.createElement('p');
-        subtitle.className = 'question-subtitle';
+        const textDiv = document.createElement('div');
+        textDiv.className = 'parameter-toggle-text';
+
+        const title = document.createElement('div');
+        title.className = 'parameter-toggle-title';
+        title.textContent = 'How will you model your value added tax?';
+
+        const subtitle = document.createElement('div');
+        subtitle.className = 'parameter-toggle-subtitle';
         subtitle.textContent = 'Choose the approach for calculating VAT/GST in your financial model.';
+
+        textDiv.appendChild(title);
+        textDiv.appendChild(subtitle);
 
         // Create dropdown with free text
         const dropdownContainer = document.createElement('div');
         dropdownContainer.className = 'dropdown-with-freetext-container';
+        dropdownContainer.style.flex = '0 0 375px';
 
         this.components.vatModelDropdown = new Dropdown({
             id: 'vat-model-dropdown',
@@ -338,12 +381,14 @@ export class TaxesModule {
             allowCustom: true,
             value: this.responses.valueTaxModel,
             onChange: (value) => {
+                this.userHasInteracted = true;
                 this.responses.valueTaxModel = value;
-                this.notifyChange();
+                this.onResponseChange();
             },
             onCustomText: (text) => {
+                this.userHasInteracted = true;
                 this.responses.valueTaxModelFreeText = text;
-                this.notifyChange();
+                this.onResponseChange();
             }
         });
 
@@ -353,6 +398,7 @@ export class TaxesModule {
         // Add free text section
         const freeTextSection = document.createElement('div');
         freeTextSection.className = 'free-text-section';
+        freeTextSection.style.marginTop = '16px';
 
         const freeTextLabel = document.createElement('label');
         freeTextLabel.className = 'free-text-label';
@@ -363,19 +409,20 @@ export class TaxesModule {
         freeTextInput.placeholder = 'Describe any specific VAT/GST considerations, rates, exemptions, or methodologies you would like to include in your model...';
         freeTextInput.value = this.responses.valueTaxModelFreeText;
         freeTextInput.addEventListener('input', (e) => {
+            this.userHasInteracted = true;
             this.responses.valueTaxModelFreeText = e.target.value;
-            this.notifyChange();
+            this.onResponseChange();
         });
 
         freeTextSection.appendChild(freeTextLabel);
         freeTextSection.appendChild(freeTextInput);
 
-        questionContainer.appendChild(questionText);
-        questionContainer.appendChild(subtitle);
-        questionContainer.appendChild(dropdownContainer);
-        questionContainer.appendChild(freeTextSection);
+        row.appendChild(textDiv);
+        row.appendChild(dropdownContainer);
+        section.appendChild(row);
+        section.appendChild(freeTextSection);
 
-        return questionContainer;
+        return section;
     }
 
     updateConditionalVisibility() {
@@ -404,6 +451,12 @@ export class TaxesModule {
                 vatModelQuestion.style.opacity = '0';
                 vatModelQuestion.style.transform = 'translateY(-20px)';
             }
+        }
+    }
+
+    onResponseChange() {
+        if (window.questionnaireEngine && window.questionnaireEngine.validator) {
+            window.questionnaireEngine.validator.validateCurrentQuestion();
         }
     }
 
@@ -450,19 +503,21 @@ export class TaxesModule {
 
         // Update UI components if they exist
         setTimeout(() => {
-            Object.entries(this.components).forEach(([key, component]) => {
-                if (key === 'corporateTaxToggle') {
-                    const value = this.responses.corporateTax === 'yes' ? 'active' : 'inactive';
-                    if (component.setValue) component.setValue(value);
-                } else if (key === 'vatToggle') {
-                    const value = this.responses.valueTax === 'yes' ? 'active' : 'inactive';
-                    if (component.setValue) component.setValue(value);
-                } else if (key === 'corporateTaxModelDropdown') {
-                    if (component.setValue) component.setValue(this.responses.corporateTaxModel);
-                } else if (key === 'vatModelDropdown') {
-                    if (component.setValue) component.setValue(this.responses.valueTaxModel);
-                }
-            });
+            if (this.components.corporateTax) {
+                this.components.corporateTax.setValue(this.responses.corporateTax);
+            }
+            
+            if (this.components.valueTax) {
+                this.components.valueTax.setValue(this.responses.valueTax);
+            }
+            
+            if (this.components.corporateTaxModelDropdown) {
+                this.components.corporateTaxModelDropdown.setValue(this.responses.corporateTaxModel);
+            }
+            
+            if (this.components.vatModelDropdown) {
+                this.components.vatModelDropdown.setValue(this.responses.valueTaxModel);
+            }
             
             // Update conditional visibility
             this.updateConditionalVisibility();
