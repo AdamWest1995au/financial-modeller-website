@@ -1,4 +1,4 @@
-// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH FIXED COMPLETION FLOW
+// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH FIXED SECURITY VERIFICATION FLOW
 
 export class QuestionnaireEngine {
     constructor(config = {}) {
@@ -47,8 +47,11 @@ export class QuestionnaireEngine {
         this.handleBack = this.handleBack.bind(this);
         this.onInlineRecaptchaComplete = this.onInlineRecaptchaComplete.bind(this);
         this.onInlineRecaptchaExpired = this.onInlineRecaptchaExpired.bind(this);
+        this.onSecurityRecaptchaComplete = this.onSecurityRecaptchaComplete.bind(this);
+        this.onSecurityRecaptchaExpired = this.onSecurityRecaptchaExpired.bind(this);
         this.showSimpleSecurityCheck = this.showSimpleSecurityCheck.bind(this);
         this.handleFinalSubmission = this.handleFinalSubmission.bind(this);
+        this.closeSecurityModal = this.closeSecurityModal.bind(this);
     }
 
     async initialize() {
@@ -678,72 +681,23 @@ export class QuestionnaireEngine {
         }
     }
 
-    // FIXED COMPLETION FLOW WITH DEBUG LOGGING
+    // FIXED COMPLETION FLOW - SHOWS SECURITY VERIFICATION MODAL DIRECTLY
     completeQuestionnaire() {
         console.log('🎉 DEBUG: completeQuestionnaire called!');
         console.log('🎉 DEBUG: Questionnaire completed! Responses:', this.responses);
-        
-        // Show completion pane with simplified security check
-        if (this.questionContent) {
-            console.log('🎉 DEBUG: Updating question content with completion screen');
-            this.questionContent.innerHTML = `
-                <div style="text-align: center; padding: 60px 40px;">
-                    <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
-                    <h3 style="color: #8b5cf6; margin-bottom: 20px; font-size: 1.8rem;">Questionnaire Complete!</h3>
-                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px; font-size: 1.1rem; line-height: 1.6;">
-                        Thank you for completing our questionnaire. One final security check is required before we can process your submission.
-                    </p>
-                    <p style="color: rgba(255,255,255,0.6); margin-bottom: 40px; font-size: 0.95rem;">
-                        After verification, our team will create your custom financial model and you'll receive an email within 24-48 hours.
-                    </p>
-                    
-                    <!-- Simple Security Check Button -->
-                    <div style="margin-bottom: 30px;">
-                        <button 
-                            id="securityCheckBtn" 
-                            onclick="window.questionnaireEngine.showSimpleSecurityCheck()" 
-                            class="security-check-btn"
-                            style="
-                                background: rgba(139, 92, 246, 0.2); 
-                                border: 1px solid rgba(139, 92, 246, 0.4); 
-                                color: #8b5cf6; 
-                                padding: 8px 16px; 
-                                border-radius: 6px; 
-                                font-size: 0.9rem; 
-                                cursor: pointer;
-                                transition: all 0.2s ease;
-                            "
-                            onmouseover="this.style.background='rgba(139, 92, 246, 0.3)'"
-                            onmouseout="this.style.background='rgba(139, 92, 246, 0.2)'"
-                        >
-                            🔒 Security Check Required
-                        </button>
-                    </div>
-                    
-                    <p style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 20px;">
-                        You can skip any question and come back to it later
-                    </p>
-                </div>
-            `;
-            console.log('🎉 DEBUG: Question content updated successfully');
-        } else {
-            console.error('🎉 DEBUG: questionContent element not found!');
-        }
         
         // Update progress to 100%
         this.updateProgress(100);
         console.log('🎉 DEBUG: Progress updated to 100%');
         
-        // Hide back button, update next button for final submission
+        // Hide navigation buttons for completion
         if (this.backBtn) {
             this.backBtn.style.display = 'none';
             console.log('🎉 DEBUG: Back button hidden');
         }
         if (this.nextBtn) {
-            this.nextBtn.textContent = 'Complete Questionnaire';
-            this.nextBtn.disabled = false;
-            this.nextBtn.onclick = () => this.showSimpleSecurityCheck();
-            console.log('🎉 DEBUG: Next button updated for final submission');
+            this.nextBtn.style.display = 'none';
+            console.log('🎉 DEBUG: Next button hidden');
         }
         
         // Hide skip text for completion page
@@ -752,90 +706,134 @@ export class QuestionnaireEngine {
             console.log('🎉 DEBUG: Skip text hidden');
         }
         
+        // Show security verification modal directly (matching your second image)
+        this.showSecurityVerificationModal();
+        
         console.log('🎉 DEBUG: completeQuestionnaire finished');
     }
 
     /**
-     * Show simplified security check (inline reCAPTCHA)
+     * Show security verification modal (matching the design in your second image)
      */
-    showSimpleSecurityCheck() {
-        console.log('🔐 DEBUG: Showing simple security check...');
+    showSecurityVerificationModal() {
+        console.log('🔐 DEBUG: Showing security verification modal...');
         
-        // Show inline reCAPTCHA instead of modal
+        // Show the security verification modal content in the question modal
         if (this.questionContent) {
-            console.log('🔐 DEBUG: Updating content for security check');
+            console.log('🔐 DEBUG: Updating content for security verification modal');
             this.questionContent.innerHTML = `
-                <div style="text-align: center; padding: 60px 40px;">
-                    <div style="font-size: 2.5rem; margin-bottom: 20px;">🔒</div>
-                    <h3 style="color: #8b5cf6; margin-bottom: 20px; font-size: 1.6rem;">Security Verification</h3>
-                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 1rem; line-height: 1.6;">
-                        Please complete the security check below to submit your questionnaire.
+                <div style="text-align: center; padding: 40px; max-width: 500px; margin: 0 auto;">
+                    <!-- Security Icon -->
+                    <div style="margin-bottom: 24px;">
+                        <div style="
+                            width: 64px; 
+                            height: 64px; 
+                            background: #8b5cf6; 
+                            border-radius: 50%; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            margin: 0 auto;
+                            font-size: 24px;
+                        ">
+                            🔒
+                        </div>
+                    </div>
+                    
+                    <!-- Title -->
+                    <h3 style="
+                        color: white; 
+                        margin-bottom: 16px; 
+                        font-size: 1.5rem; 
+                        font-weight: 600;
+                        text-align: center;
+                    ">Security Verification</h3>
+                    
+                    <!-- Description -->
+                    <p style="
+                        color: rgba(255,255,255,0.8); 
+                        margin-bottom: 32px; 
+                        font-size: 1rem; 
+                        line-height: 1.5;
+                        text-align: center;
+                    ">
+                        Please complete the security check below to continue with the questionnaire.
                     </p>
                     
                     <!-- reCAPTCHA Container -->
-                    <div style="display: flex; justify-content: center; margin-bottom: 30px;">
+                    <div style="display: flex; justify-content: center; margin-bottom: 32px;">
                         <div id="inlineRecaptcha"></div>
                     </div>
                     
-                    <!-- Submit Button (initially disabled) -->
-                    <button 
-                        id="finalSubmitBtn" 
-                        onclick="window.questionnaireEngine.handleFinalSubmission()" 
-                        disabled
-                        class="final-submit-btn"
-                        style="
-                            background: #6b7280; 
-                            border: none; 
-                            color: white; 
-                            padding: 12px 24px; 
-                            border-radius: 6px; 
-                            font-size: 1rem; 
-                            cursor: not-allowed;
-                            opacity: 0.5;
-                            transition: all 0.2s ease;
-                        "
-                    >
-                        Complete Questionnaire
-                    </button>
-                    
-                    <div style="margin-top: 20px;">
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
                         <button 
-                            onclick="window.questionnaireEngine.completeQuestionnaire()" 
-                            class="back-btn-security"
+                            onclick="window.questionnaireEngine.closeSecurityModal()" 
+                            class="cancel-btn"
                             style="
                                 background: transparent; 
-                                border: none; 
-                                color: rgba(255,255,255,0.5); 
-                                font-size: 0.9rem; 
+                                border: 1px solid rgba(255,255,255,0.3); 
+                                color: rgba(255,255,255,0.7); 
+                                padding: 12px 24px; 
+                                border-radius: 6px; 
+                                font-size: 1rem; 
                                 cursor: pointer;
-                                text-decoration: underline;
+                                transition: all 0.2s ease;
+                                min-width: 120px;
+                            "
+                            onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='white';"
+                            onmouseout="this.style.background='transparent'; this.style.color='rgba(255,255,255,0.7)';"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            id="continueToQuestionnaireBtn" 
+                            onclick="window.questionnaireEngine.handleFinalSubmission()" 
+                            disabled
+                            class="continue-btn"
+                            style="
+                                background: #6b7280; 
+                                border: none; 
+                                color: white; 
+                                padding: 12px 24px; 
+                                border-radius: 6px; 
+                                font-size: 1rem; 
+                                cursor: not-allowed;
+                                opacity: 0.5;
+                                transition: all 0.2s ease;
+                                min-width: 180px;
                             "
                         >
-                            ← Back
+                            Continue to Questionnaire
                         </button>
                     </div>
                 </div>
             `;
-            console.log('🔐 DEBUG: Security check content updated');
-        }
-        
-        // Update next button to be hidden during security check
-        if (this.nextBtn) {
-            this.nextBtn.style.display = 'none';
-            console.log('🔐 DEBUG: Next button hidden');
+            console.log('🔐 DEBUG: Security verification modal content updated');
         }
         
         // Initialize inline reCAPTCHA
         setTimeout(() => {
-            this.initializeInlineRecaptcha();
+            this.initializeSecurityRecaptcha();
         }, 100);
     }
 
     /**
-     * Initialize inline reCAPTCHA
+     * Close security verification modal (Cancel button)
      */
-    initializeInlineRecaptcha() {
-        console.log('🔐 DEBUG: Initializing inline reCAPTCHA...');
+    closeSecurityModal() {
+        console.log('❌ Security modal cancelled by user');
+        
+        // You can customize this behavior - either close the entire questionnaire
+        // or go back to a previous step. For now, we'll close the modal.
+        this.closeModal();
+    }
+
+    /**
+     * Initialize reCAPTCHA for security verification
+     */
+    initializeSecurityRecaptcha() {
+        console.log('🔐 DEBUG: Initializing security reCAPTCHA...');
         if (window.grecaptcha && window.grecaptcha.ready) {
             window.grecaptcha.ready(() => {
                 try {
@@ -849,78 +847,126 @@ export class QuestionnaireEngine {
                     if (container) {
                         this.inlineRecaptchaId = grecaptcha.render('inlineRecaptcha', {
                             'sitekey': this.config.recaptchaSiteKey,
-                            'callback': this.onInlineRecaptchaComplete,
-                            'expired-callback': this.onInlineRecaptchaExpired
+                            'callback': this.onSecurityRecaptchaComplete,
+                            'expired-callback': this.onSecurityRecaptchaExpired
                         });
-                        console.log('✅ Inline reCAPTCHA rendered successfully');
+                        console.log('✅ Security reCAPTCHA rendered successfully');
                     } else {
                         console.error('❌ inlineRecaptcha container not found');
                     }
                 } catch (error) {
-                    console.error('❌ Error rendering inline reCAPTCHA:', error);
+                    console.error('❌ Error rendering security reCAPTCHA:', error);
                     // Fallback: enable submit button if reCAPTCHA fails
-                    this.enableFinalSubmit();
+                    this.enableContinueButton();
                 }
             });
         } else {
-            console.warn('⚠️ reCAPTCHA not loaded, enabling submit button');
-            this.enableFinalSubmit();
+            console.warn('⚠️ reCAPTCHA not loaded, enabling continue button');
+            this.enableContinueButton();
         }
     }
 
     /**
-     * Handle inline reCAPTCHA completion
+     * Handle security reCAPTCHA completion
+     */
+    onSecurityRecaptchaComplete(token) {
+        console.log('✅ Security reCAPTCHA completed');
+        this.submissionRecaptchaToken = token;
+        this.enableContinueButton();
+    }
+
+    /**
+     * Handle security reCAPTCHA expiration
+     */
+    onSecurityRecaptchaExpired() {
+        console.log('⏰ Security reCAPTCHA expired');
+        this.submissionRecaptchaToken = null;
+        this.disableContinueButton();
+    }
+
+    /**
+     * Enable the "Continue to Questionnaire" button
+     */
+    enableContinueButton() {
+        const continueBtn = document.getElementById('continueToQuestionnaireBtn');
+        if (continueBtn) {
+            continueBtn.disabled = false;
+            continueBtn.style.cursor = 'pointer';
+            continueBtn.style.opacity = '1';
+            continueBtn.style.background = '#8b5cf6';
+            
+            continueBtn.onmouseover = () => {
+                continueBtn.style.background = '#7c3aed';
+            };
+            continueBtn.onmouseout = () => {
+                continueBtn.style.background = '#8b5cf6';
+            };
+            console.log('✅ Continue button enabled');
+        }
+    }
+
+    /**
+     * Disable the "Continue to Questionnaire" button
+     */
+    disableContinueButton() {
+        const continueBtn = document.getElementById('continueToQuestionnaireBtn');
+        if (continueBtn) {
+            continueBtn.disabled = true;
+            continueBtn.style.cursor = 'not-allowed';
+            continueBtn.style.opacity = '0.5';
+            continueBtn.style.background = '#6b7280';
+            continueBtn.onmouseover = null;
+            continueBtn.onmouseout = null;
+            console.log('❌ Continue button disabled');
+        }
+    }
+
+    /**
+     * Show simplified security check (inline reCAPTCHA) - LEGACY METHOD FOR COMPATIBILITY
+     */
+    showSimpleSecurityCheck() {
+        console.log('🔐 DEBUG: Legacy showSimpleSecurityCheck called - redirecting to new modal');
+        this.showSecurityVerificationModal();
+    }
+
+    /**
+     * Initialize inline reCAPTCHA - LEGACY METHOD FOR COMPATIBILITY
+     */
+    initializeInlineRecaptcha() {
+        console.log('🔐 DEBUG: Legacy initializeInlineRecaptcha called - redirecting to new method');
+        this.initializeSecurityRecaptcha();
+    }
+
+    /**
+     * Handle inline reCAPTCHA completion - LEGACY METHOD FOR COMPATIBILITY
      */
     onInlineRecaptchaComplete(token) {
-        console.log('✅ Inline reCAPTCHA completed');
-        this.submissionRecaptchaToken = token;
-        this.enableFinalSubmit();
+        console.log('✅ Legacy inline reCAPTCHA completed - redirecting to new handler');
+        this.onSecurityRecaptchaComplete(token);
     }
 
     /**
-     * Handle inline reCAPTCHA expiration
+     * Handle inline reCAPTCHA expiration - LEGACY METHOD FOR COMPATIBILITY
      */
     onInlineRecaptchaExpired() {
-        console.log('⏰ Inline reCAPTCHA expired');
-        this.submissionRecaptchaToken = null;
-        this.disableFinalSubmit();
+        console.log('⏰ Legacy inline reCAPTCHA expired - redirecting to new handler');
+        this.onSecurityRecaptchaExpired();
     }
 
     /**
-     * Enable final submit button
+     * Enable final submit button - LEGACY METHOD FOR COMPATIBILITY
      */
     enableFinalSubmit() {
-        const submitBtn = document.getElementById('finalSubmitBtn');
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.style.cursor = 'pointer';
-            submitBtn.style.opacity = '1';
-            submitBtn.style.background = '#22c55e';
-            
-            submitBtn.onmouseover = () => {
-                submitBtn.style.background = '#16a34a';
-            };
-            submitBtn.onmouseout = () => {
-                submitBtn.style.background = '#22c55e';
-            };
-            console.log('✅ Final submit button enabled');
-        }
+        console.log('✅ Legacy enableFinalSubmit called - redirecting to new method');
+        this.enableContinueButton();
     }
 
     /**
-     * Disable final submit button
+     * Disable final submit button - LEGACY METHOD FOR COMPATIBILITY
      */
     disableFinalSubmit() {
-        const submitBtn = document.getElementById('finalSubmitBtn');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.style.cursor = 'not-allowed';
-            submitBtn.style.opacity = '0.5';
-            submitBtn.style.background = '#6b7280';
-            submitBtn.onmouseover = null;
-            submitBtn.onmouseout = null;
-            console.log('❌ Final submit button disabled');
-        }
+        console.log('❌ Legacy disableFinalSubmit called - redirecting to new method');
+        this.disableContinueButton();
     }
 
     /**
@@ -1004,7 +1050,7 @@ export class QuestionnaireEngine {
                         Error: ${error.message || 'Unknown error occurred'}
                     </p>
                     <button 
-                        onclick="window.questionnaireEngine.showSimpleSecurityCheck()" 
+                        onclick="window.questionnaireEngine.showSecurityVerificationModal()" 
                         style="
                             background: #8b5cf6; 
                             border: none; 
