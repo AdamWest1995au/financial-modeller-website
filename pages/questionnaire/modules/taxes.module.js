@@ -99,18 +99,18 @@ export class TaxesModule {
         
         console.log('Checking taxes customization from responses:', customizationResponse1, customizationResponse2);
         
-        if (customizationResponse1?.customizationPreferences?.taxes) {
+        if (customizationResponse1?.customizationPreferences?.taxes !== undefined) {
             return customizationResponse1.customizationPreferences.taxes === 'generic';
-        } else if (customizationResponse2?.customizationPreferences?.taxes) {
+        } else if (customizationResponse2?.customizationPreferences?.taxes !== undefined) {
             return customizationResponse2.customizationPreferences.taxes === 'generic';
-        } else if (window.customizationPreferencesFormatted?.taxes) {
-    return window.customizationPreferencesFormatted.taxes === 'generic';
+        } else if (window.customizationPreferencesFormatted?.taxes !== undefined) {
+            return window.customizationPreferencesFormatted.taxes === 'generic';
         } else if (window.customizationPreferences?.taxesCustomization !== undefined) {
             return !window.customizationPreferences.taxesCustomization;
         }
         
-        // Default to custom if no preference found
-        return false;
+        // Default to generic if no preference found
+        return true;
     }
 
     createGenericPlaceholder() {

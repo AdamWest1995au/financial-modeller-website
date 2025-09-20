@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/customization.module.js - COMPLETE UPDATED VERSION WITH TAXES
+// /pages/questionnaire/modules/customization.module.js - FIXED VERSION
 export class CustomizationModule {
     constructor() {
         this.id = 'customization';
@@ -60,7 +60,6 @@ export class CustomizationModule {
         ];
 
         // Initialize responses - default to Generic (false = Generic, true = Custom)
-        // UPDATED WITH TAXES
         this.responses = {
             revenueCustomization: false,
             cogsCustomization: false,
@@ -71,6 +70,9 @@ export class CustomizationModule {
             debtCustomization: false,
             equityCustomization: false
         };
+
+        // Initialize global state immediately
+        this.updateGlobalCustomizationState();
     }
 
     render() {
@@ -138,7 +140,7 @@ export class CustomizationModule {
         const toggleContainer = document.createElement('div');
         toggleContainer.className = 'customization-toggle-container';
 
-        // Create custom toggle element (not using the Toggle component due to specific styling needs)
+        // Create custom toggle element
         const toggle = document.createElement('div');
         toggle.className = 'customization-toggle';
         toggle.dataset.sectionKey = section.key;
@@ -200,33 +202,32 @@ export class CustomizationModule {
         // Update time estimate
         this.updateTimeEstimate();
         
+        // Update global state FIRST (critical for other modules)
+        this.updateGlobalCustomizationState();
+        
         // Save response to state manager
         const response = this.getResponse();
         console.log('Saving response:', response);
         
-        // Save to the state manager with the key other modules expect
         if (window.questionnaireEngine && window.questionnaireEngine.stateManager) {
-            // Save under 'customization-preference' key so other modules can find it
+            // Save under both keys for compatibility
             window.questionnaireEngine.stateManager.saveResponse('customization-preference', 0, response);
-            
-            // Also save under 'customization' for backward compatibility
             window.questionnaireEngine.stateManager.saveResponse('customization', 0, response);
-            
             console.log('Response saved to state manager');
         }
         
-        // Update global customization state for backward compatibility
-        this.updateGlobalCustomizationState();
-        
-        // Dispatch event to notify other modules of the change
-        const customizationEvent = new CustomEvent('customizationChanged', {
-            detail: {
-                section: sectionKey,
-                value: this.responses[sectionKey],
-                allPreferences: this.getCustomizationPreferences()
-            }
-        });
-        document.dispatchEvent(customizationEvent);
+        // Dispatch event to notify other modules (after a small delay to ensure state is set)
+        setTimeout(() => {
+            const customizationEvent = new CustomEvent('customizationChanged', {
+                detail: {
+                    section: sectionKey,
+                    value: this.responses[sectionKey],
+                    allPreferences: this.getCustomizationPreferences()
+                }
+            });
+            document.dispatchEvent(customizationEvent);
+            console.log('Dispatched customizationChanged event');
+        }, 10);
         
         console.log('=== END CUSTOMIZATION TOGGLE DEBUG ===');
     }
@@ -272,7 +273,6 @@ export class CustomizationModule {
     }
 
     getCustomizationPreferences() {
-        // UPDATED WITH TAXES
         return {
             revenue: this.responses.revenueCustomization ? 'custom' : 'generic',
             cogs: this.responses.cogsCustomization ? 'custom' : 'generic', 
@@ -315,7 +315,6 @@ export class CustomizationModule {
             }
         });
 
-        // UPDATED WITH TAXES
         return {
             ...summary,
             revenue: this.responses.revenueCustomization ? 'Custom' : 'Generic',
@@ -332,8 +331,13 @@ export class CustomizationModule {
     loadResponse(response) {
         if (!response || !response.data) return;
 
+        console.log('Loading customization response:', response);
+
         // Load saved responses
         this.responses = { ...this.responses, ...response.data };
+
+        // Update global state immediately
+        this.updateGlobalCustomizationState();
 
         // Update UI after a small delay to ensure elements are rendered
         setTimeout(() => {
@@ -349,7 +353,6 @@ export class CustomizationModule {
             });
             
             this.updateTimeEstimate();
-            this.updateGlobalCustomizationState();
         }, 100);
     }
 
@@ -366,7 +369,6 @@ export class CustomizationModule {
     }
 
     getDatabaseFields() {
-        // UPDATED WITH TAXES
         return {
             customization_revenue: this.responses.revenueCustomization,
             customization_cogs: this.responses.cogsCustomization,
@@ -389,12 +391,11 @@ export class CustomizationModule {
         this.components = {};
     }
 
-    // Helper method to check if a specific section is set to Custom
+    // Helper methods
     isSectionCustom(sectionKey) {
         return this.responses[sectionKey] === true;
     }
 
-    // Helper method to check if a specific section is set to Generic  
     isSectionGeneric(sectionKey) {
         return this.responses[sectionKey] === false;
     }
