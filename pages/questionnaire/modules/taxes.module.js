@@ -209,11 +209,11 @@ export class TaxesModule {
         const corporateTaxComponent = new Toggle({
             id: 'corporateTax',
             labels: ['No', 'Yes'],
-            defaultValue: this.responses.corporateTax,
+            defaultValue: this.responses.corporateTax === 'yes' ? 'active' : 'inactive',
             onChange: (value) => {
                 this.userHasInteracted = true;
-                this.responses.corporateTax = value;
-                console.log('Corporate tax changed to:', value);
+                this.responses.corporateTax = value === 'active' ? 'yes' : 'no';
+                console.log('Corporate tax changed to:', value, 'mapped to:', this.responses.corporateTax);
                 this.updateConditionalVisibility();
                 this.onResponseChange();
             }
@@ -256,11 +256,11 @@ export class TaxesModule {
         const vatComponent = new Toggle({
             id: 'valueTax',
             labels: ['No', 'Yes'],
-            defaultValue: this.responses.valueTax,
+            defaultValue: this.responses.valueTax === 'yes' ? 'active' : 'inactive',
             onChange: (value) => {
                 this.userHasInteracted = true;
-                this.responses.valueTax = value;
-                console.log('Value tax changed to:', value);
+                this.responses.valueTax = value === 'active' ? 'yes' : 'no';
+                console.log('Value tax changed to:', value, 'mapped to:', this.responses.valueTax);
                 this.updateConditionalVisibility();
                 this.onResponseChange();
             }
@@ -465,11 +465,13 @@ export class TaxesModule {
         // Update UI components if they exist
         setTimeout(() => {
             if (this.components.corporateTax) {
-                this.components.corporateTax.setValue(this.responses.corporateTax);
+                const corporateValue = this.responses.corporateTax === 'yes' ? 'active' : 'inactive';
+                this.components.corporateTax.setValue(corporateValue);
             }
             
             if (this.components.valueTax) {
-                this.components.valueTax.setValue(this.responses.valueTax);
+                const vatValue = this.responses.valueTax === 'yes' ? 'active' : 'inactive';
+                this.components.valueTax.setValue(vatValue);
             }
             
             if (this.components.corporateTaxModel) {
