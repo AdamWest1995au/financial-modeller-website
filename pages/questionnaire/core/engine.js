@@ -4,7 +4,7 @@ export class QuestionnaireEngine {
     constructor(config = {}) {
         this.config = {
             apiEndpoint: config.apiEndpoint || '/api/submit-questionnaire',
-            recaptchaSiteKey: config.recaptchaSiteKey || '',
+            recaptchaSiteKey: config.recaptchaSiteKey || '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF',
             debug: config.debug || false,
             ...config
         };
@@ -19,6 +19,8 @@ export class QuestionnaireEngine {
         this.submissionRecaptchaToken = null;
         this.recaptchaToken = null;
         this.submissionRecaptchaWidgetId = undefined;
+        this.inlineRecaptchaId = undefined;
+        this.startTime = null;
         
         // ADDED: Initialize conditional logic system
         this.conditionalLogic = null; // Will be initialized in initialize()
@@ -32,15 +34,29 @@ export class QuestionnaireEngine {
         this.backBtn = null;
         this.progressFill = null;
         this.progressText = null;
+        this.questionNumber = null;
+        this.skipTextContainer = null;
+        this.titleRowHeader = null;
+        this.questionTitleWithTime = null;
+        this.questionDescriptionWithTime = null;
+        this.customizationTimeBoxTop = null;
+        this.totalEstimatedTimeTop = null;
         
         // Bind methods to prevent context issues
         this.handleNext = this.handleNext.bind(this);
         this.handleBack = this.handleBack.bind(this);
+        this.onInlineRecaptchaComplete = this.onInlineRecaptchaComplete.bind(this);
+        this.onInlineRecaptchaExpired = this.onInlineRecaptchaExpired.bind(this);
+        this.showSimpleSecurityCheck = this.showSimpleSecurityCheck.bind(this);
+        this.handleFinalSubmission = this.handleFinalSubmission.bind(this);
     }
 
     async initialize() {
         try {
             console.log('Initializing Questionnaire Engine...');
+            
+            // Record start time
+            this.startTime = Date.now();
             
             // ADDED: Initialize conditional logic system
             if (window.ConditionalLogic) {
@@ -59,6 +75,13 @@ export class QuestionnaireEngine {
             this.backBtn = document.getElementById('backBtn');
             this.progressFill = document.getElementById('modalProgressFill');
             this.progressText = document.getElementById('modalProgressText');
+            this.questionNumber = document.getElementById('questionNumber');
+            this.skipTextContainer = document.getElementById('skipTextContainer');
+            this.titleRowHeader = document.getElementById('titleRowHeader');
+            this.questionTitleWithTime = document.getElementById('questionTitleWithTime');
+            this.questionDescriptionWithTime = document.getElementById('questionDescriptionWithTime');
+            this.customizationTimeBoxTop = document.getElementById('customizationTimeBoxTop');
+            this.totalEstimatedTimeTop = document.getElementById('totalEstimatedTimeTop');
             
             if (!this.questionModal) {
                 throw new Error('Question modal not found');
@@ -123,6 +146,33 @@ export class QuestionnaireEngine {
                 e.preventDefault();
                 e.stopPropagation();
                 this.handleBack();
+            });
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (this.isModalOpen()) {
+                if (e.key === 'Escape') {
+                    this.closeModal();
+                } else if (e.key === 'Enter' && !this.nextBtn?.disabled) {
+                    const isValidTarget = e.target.tagName === 'BUTTON' || 
+                                        e.target.getAttribute('role') === 'button' ||
+                                        e.target.hasAttribute('data-allow-enter');
+                    if (isValidTarget) {
+                        this.handleNext();
+                    }
+                } else if (e.key === 'ArrowLeft' && this.backBtn?.style.display !== 'none') {
+                    this.handleBack();
+                }
+            }
+        });
+        
+        // Close modal on overlay click
+        if (this.questionModal) {
+            this.questionModal.addEventListener('click', (e) => {
+                if (e.target === this.questionModal) {
+                    this.closeModal();
+                }
             });
         }
         
@@ -221,12 +271,16 @@ export class QuestionnaireEngine {
         }
     }
 
-    hideModal() {
+    closeModal() {
         if (this.questionModal) {
             this.questionModal.classList.remove('active');
             this.questionModal.classList.remove('question-mode');
             document.body.style.overflow = 'auto';
         }
+    }
+
+    isModalOpen() {
+        return this.questionModal?.classList.contains('active');
     }
 
     showCurrentModule() {
@@ -265,13 +319,16 @@ export class QuestionnaireEngine {
         // Reset interaction flag for new module
         this.userHasInteracted = false;
         
-        // Update header
-        if (this.questionTitle) {
-            this.questionTitle.textContent = currentModule.title || 'Question';
+        // Update question number
+        if (this.questionNumber) {
+            this.questionNumber.textContent = this.currentModuleIndex + 1;
         }
         
-        if (this.questionDescription) {
-            this.questionDescription.textContent = currentModule.description || '';
+        // Handle customization questions with time display
+        if (currentModule.isCustomizationQuestion) {
+            this.showCustomizationQuestion(currentModule);
+        } else {
+            this.showRegularQuestion(currentModule);
         }
         
         // Render module content
@@ -308,8 +365,60 @@ export class QuestionnaireEngine {
             currentModule.loadResponse(this.responses[currentModule.id]);
         }
         
+        // Module-specific initialization
+        if (currentModule.onShow && typeof currentModule.onShow === 'function') {
+            currentModule.onShow();
+        }
+        
         // Hide notifications after module renders
         setTimeout(() => this.hideNotifications(), 100);
+    }
+
+    showCustomizationQuestion(module) {
+        // Show time-based header
+        if (this.titleRowHeader) {
+            this.titleRowHeader.style.display = 'flex';
+        }
+        
+        // Hide regular header
+        if (this.questionTitle) {
+            this.questionTitle.style.display = 'none';
+        }
+        if (this.questionDescription) {
+            this.questionDescription.style.display = 'none';
+        }
+        
+        // Update customization header content
+        if (this.questionTitleWithTime) {
+            this.questionTitleWithTime.textContent = module.title || 'Customization Question';
+        }
+        
+        if (this.questionDescriptionWithTime) {
+            this.questionDescriptionWithTime.textContent = module.description || '';
+        }
+        
+        // Update estimated time
+        if (this.totalEstimatedTimeTop && module.estimatedTime) {
+            this.totalEstimatedTimeTop.textContent = module.estimatedTime;
+        }
+    }
+
+    showRegularQuestion(module) {
+        // Hide time-based header
+        if (this.titleRowHeader) {
+            this.titleRowHeader.style.display = 'none';
+        }
+        
+        // Show regular header
+        if (this.questionTitle) {
+            this.questionTitle.style.display = 'block';
+            this.questionTitle.textContent = module.title || 'Question';
+        }
+        
+        if (this.questionDescription) {
+            this.questionDescription.style.display = 'block';
+            this.questionDescription.textContent = module.description || '';
+        }
     }
     
     addInteractionTracking(container) {
@@ -322,6 +431,7 @@ export class QuestionnaireEngine {
                 if (e.isTrusted) {
                     console.log(`User interaction detected: ${eventType}`);
                     this.userHasInteracted = true;
+                    this.updateNavigationButtons();
                 }
             }, true); // Use capture phase
         });
@@ -418,11 +528,25 @@ export class QuestionnaireEngine {
             this.backBtn.style.display = hasPreviousModule ? 'block' : 'none';
         }
         
+        this.updateNavigationButtons();
+    }
+
+    updateNavigationButtons() {
         if (this.nextBtn) {
             // Check if there are more visible modules after current
             const hasNextModule = this.findNextVisibleModule() !== -1;
             this.nextBtn.textContent = hasNextModule ? 'Next →' : 'Complete';
-            this.nextBtn.disabled = false;
+            
+            // Enable/disable based on current module validation and user interaction
+            const currentModule = this.getCurrentModule();
+            let isValid = true;
+            
+            if (currentModule?.validate) {
+                const validation = currentModule.validate();
+                isValid = validation.isValid;
+            }
+            
+            this.nextBtn.disabled = !isValid;
         }
     }
 
@@ -553,17 +677,44 @@ export class QuestionnaireEngine {
     completeQuestionnaire() {
         console.log('Questionnaire completed! Responses:', this.responses);
         
-        // Show completion pane with reCAPTCHA requirement
+        // Show completion pane with simplified security check
         if (this.questionContent) {
             this.questionContent.innerHTML = `
                 <div style="text-align: center; padding: 60px 40px;">
                     <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
                     <h3 style="color: #8b5cf6; margin-bottom: 20px; font-size: 1.8rem;">Questionnaire Complete!</h3>
-                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 1.1rem; line-height: 1.6;">
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px; font-size: 1.1rem; line-height: 1.6;">
                         Thank you for completing our questionnaire. One final security check is required before we can process your submission.
                     </p>
                     <p style="color: rgba(255,255,255,0.6); margin-bottom: 40px; font-size: 0.95rem;">
                         After verification, our team will create your custom financial model and you'll receive an email within 24-48 hours.
+                    </p>
+                    
+                    <!-- Simple Security Check Button -->
+                    <div style="margin-bottom: 30px;">
+                        <button 
+                            id="securityCheckBtn" 
+                            onclick="window.questionnaireEngine.showSimpleSecurityCheck()" 
+                            class="security-check-btn"
+                            style="
+                                background: rgba(139, 92, 246, 0.2); 
+                                border: 1px solid rgba(139, 92, 246, 0.4); 
+                                color: #8b5cf6; 
+                                padding: 8px 16px; 
+                                border-radius: 6px; 
+                                font-size: 0.9rem; 
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                            "
+                            onmouseover="this.style.background='rgba(139, 92, 246, 0.3)'"
+                            onmouseout="this.style.background='rgba(139, 92, 246, 0.2)'"
+                        >
+                            🔒 Security Check Required
+                        </button>
+                    </div>
+                    
+                    <p style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 20px;">
+                        You can skip any question and come back to it later
                     </p>
                 </div>
             `;
@@ -575,12 +726,277 @@ export class QuestionnaireEngine {
         // Hide back button, update next button for final submission
         if (this.backBtn) this.backBtn.style.display = 'none';
         if (this.nextBtn) {
-            this.nextBtn.textContent = 'Complete Security Check';
+            this.nextBtn.textContent = 'Complete Questionnaire';
             this.nextBtn.disabled = false;
-            this.nextBtn.onclick = () => this.showSubmissionRecaptcha();
+            this.nextBtn.onclick = () => this.showSimpleSecurityCheck();
+        }
+        
+        // Hide skip text for completion page
+        if (this.skipTextContainer) {
+            this.skipTextContainer.style.display = 'none';
         }
     }
 
+    /**
+     * Show simplified security check (inline reCAPTCHA)
+     */
+    showSimpleSecurityCheck() {
+        console.log('🔐 Showing simple security check...');
+        
+        // Show inline reCAPTCHA instead of modal
+        if (this.questionContent) {
+            this.questionContent.innerHTML = `
+                <div style="text-align: center; padding: 60px 40px;">
+                    <div style="font-size: 2.5rem; margin-bottom: 20px;">🔒</div>
+                    <h3 style="color: #8b5cf6; margin-bottom: 20px; font-size: 1.6rem;">Security Verification</h3>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 1rem; line-height: 1.6;">
+                        Please complete the security check below to submit your questionnaire.
+                    </p>
+                    
+                    <!-- reCAPTCHA Container -->
+                    <div style="display: flex; justify-content: center; margin-bottom: 30px;">
+                        <div id="inlineRecaptcha"></div>
+                    </div>
+                    
+                    <!-- Submit Button (initially disabled) -->
+                    <button 
+                        id="finalSubmitBtn" 
+                        onclick="window.questionnaireEngine.handleFinalSubmission()" 
+                        disabled
+                        class="final-submit-btn"
+                        style="
+                            background: #6b7280; 
+                            border: none; 
+                            color: white; 
+                            padding: 12px 24px; 
+                            border-radius: 6px; 
+                            font-size: 1rem; 
+                            cursor: not-allowed;
+                            opacity: 0.5;
+                            transition: all 0.2s ease;
+                        "
+                    >
+                        Complete Questionnaire
+                    </button>
+                    
+                    <div style="margin-top: 20px;">
+                        <button 
+                            onclick="window.questionnaireEngine.completeQuestionnaire()" 
+                            class="back-btn-security"
+                            style="
+                                background: transparent; 
+                                border: none; 
+                                color: rgba(255,255,255,0.5); 
+                                font-size: 0.9rem; 
+                                cursor: pointer;
+                                text-decoration: underline;
+                            "
+                        >
+                            ← Back
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Update next button to be hidden during security check
+        if (this.nextBtn) {
+            this.nextBtn.style.display = 'none';
+        }
+        
+        // Initialize inline reCAPTCHA
+        setTimeout(() => {
+            this.initializeInlineRecaptcha();
+        }, 100);
+    }
+
+    /**
+     * Initialize inline reCAPTCHA
+     */
+    initializeInlineRecaptcha() {
+        if (window.grecaptcha && window.grecaptcha.ready) {
+            window.grecaptcha.ready(() => {
+                try {
+                    // Clean up any existing reCAPTCHA
+                    if (this.inlineRecaptchaId !== undefined) {
+                        grecaptcha.reset(this.inlineRecaptchaId);
+                    }
+                    
+                    // Render new reCAPTCHA
+                    const container = document.getElementById('inlineRecaptcha');
+                    if (container) {
+                        this.inlineRecaptchaId = grecaptcha.render('inlineRecaptcha', {
+                            'sitekey': this.config.recaptchaSiteKey,
+                            'callback': this.onInlineRecaptchaComplete,
+                            'expired-callback': this.onInlineRecaptchaExpired
+                        });
+                        console.log('✅ Inline reCAPTCHA rendered successfully');
+                    }
+                } catch (error) {
+                    console.error('Error rendering inline reCAPTCHA:', error);
+                    // Fallback: enable submit button if reCAPTCHA fails
+                    this.enableFinalSubmit();
+                }
+            });
+        } else {
+            console.warn('reCAPTCHA not loaded, enabling submit button');
+            this.enableFinalSubmit();
+        }
+    }
+
+    /**
+     * Handle inline reCAPTCHA completion
+     */
+    onInlineRecaptchaComplete(token) {
+        console.log('✅ Inline reCAPTCHA completed');
+        this.submissionRecaptchaToken = token;
+        this.enableFinalSubmit();
+    }
+
+    /**
+     * Handle inline reCAPTCHA expiration
+     */
+    onInlineRecaptchaExpired() {
+        console.log('⏰ Inline reCAPTCHA expired');
+        this.submissionRecaptchaToken = null;
+        this.disableFinalSubmit();
+    }
+
+    /**
+     * Enable final submit button
+     */
+    enableFinalSubmit() {
+        const submitBtn = document.getElementById('finalSubmitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.cursor = 'pointer';
+            submitBtn.style.opacity = '1';
+            submitBtn.style.background = '#22c55e';
+            
+            submitBtn.onmouseover = () => {
+                submitBtn.style.background = '#16a34a';
+            };
+            submitBtn.onmouseout = () => {
+                submitBtn.style.background = '#22c55e';
+            };
+        }
+    }
+
+    /**
+     * Disable final submit button
+     */
+    disableFinalSubmit() {
+        const submitBtn = document.getElementById('finalSubmitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.style.cursor = 'not-allowed';
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.background = '#6b7280';
+            submitBtn.onmouseover = null;
+            submitBtn.onmouseout = null;
+        }
+    }
+
+    /**
+     * Handle final submission
+     */
+    async handleFinalSubmission() {
+        if (!this.submissionRecaptchaToken) {
+            alert('Please complete the security verification first.');
+            return;
+        }
+        
+        console.log('🚀 Starting final submission...');
+        
+        // Show loading state
+        this.showSubmissionLoading();
+        
+        try {
+            // Submit the questionnaire
+            const result = await this.submitResponses();
+            
+            if (result && result.submission_id) {
+                this.submissionId = result.submission_id;
+                console.log('✅ Submission successful, redirecting to loading page...');
+                
+                // Redirect to loading page immediately
+                window.location.href = `/pages/loading.html?submission_id=${this.submissionId}`;
+            } else {
+                throw new Error('No submission ID received');
+            }
+            
+        } catch (error) {
+            console.error('❌ Submission failed:', error);
+            this.showSubmissionError(error);
+        }
+    }
+
+    /**
+     * Show submission loading state
+     */
+    showSubmissionLoading() {
+        if (this.questionContent) {
+            this.questionContent.innerHTML = `
+                <div style="text-align: center; padding: 60px 40px;">
+                    <div style="font-size: 2.5rem; margin-bottom: 20px;">⏳</div>
+                    <h3 style="color: #8b5cf6; margin-bottom: 20px; font-size: 1.6rem;">Submitting Questionnaire...</h3>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 1rem;">
+                        Please wait while we process your submission.
+                    </p>
+                    <div class="loading-spinner" style="display: inline-block; width: 32px; height: 32px; border: 3px solid rgba(139, 92, 246, 0.3); border-top: 3px solid #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                </div>
+            `;
+        }
+        
+        // Add spinner animation CSS if not present
+        if (!document.getElementById('spinner-animation')) {
+            const style = document.createElement('style');
+            style.id = 'spinner-animation';
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+
+    /**
+     * Show submission error
+     */
+    showSubmissionError(error) {
+        if (this.questionContent) {
+            this.questionContent.innerHTML = `
+                <div style="text-align: center; padding: 60px 40px;">
+                    <div style="font-size: 2.5rem; margin-bottom: 20px;">❌</div>
+                    <h3 style="color: #ef4444; margin-bottom: 20px; font-size: 1.6rem;">Submission Failed</h3>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 1rem;">
+                        There was an error submitting your questionnaire. Please try again.
+                    </p>
+                    <p style="color: rgba(255,255,255,0.6); margin-bottom: 30px; font-size: 0.9rem;">
+                        Error: ${error.message || 'Unknown error occurred'}
+                    </p>
+                    <button 
+                        onclick="window.questionnaireEngine.showSimpleSecurityCheck()" 
+                        style="
+                            background: #8b5cf6; 
+                            border: none; 
+                            color: white; 
+                            padding: 12px 24px; 
+                            border-radius: 6px; 
+                            font-size: 1rem; 
+                            cursor: pointer;
+                        "
+                    >
+                        Try Again
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    // OLD METHOD (for backwards compatibility) - Shows modal-based reCAPTCHA
     showSubmissionRecaptcha() {
         console.log('🔒 Showing submission reCAPTCHA...');
         
@@ -647,7 +1063,7 @@ export class QuestionnaireEngine {
                             
                             // Render reCAPTCHA in the new container
                             const widgetId = window.grecaptcha.render(newRecaptchaDiv, {
-                                'sitekey': '6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF',
+                                'sitekey': this.config.recaptchaSiteKey,
                                 'callback': 'onSubmissionRecaptchaComplete'
                             });
                             
@@ -715,7 +1131,7 @@ export class QuestionnaireEngine {
                     
                     <div class="recaptcha-content">
                         <div class="recaptcha-container">
-                            <div class="g-recaptcha" id="submissionRecaptcha" data-sitekey="6Lc4qoIrAAAAAEMzFRTNgfApcLPSozgLDOWI5yNF" data-callback="onSubmissionRecaptchaComplete"></div>
+                            <div class="g-recaptcha" id="submissionRecaptcha" data-sitekey="${this.config.recaptchaSiteKey}" data-callback="onSubmissionRecaptchaComplete"></div>
                         </div>
                     </div>
                     
@@ -1085,6 +1501,11 @@ export class QuestionnaireEngine {
                 submissionData.recaptchaToken = recaptchaToken;
             }
             
+            // Add completion time
+            if (this.startTime) {
+                submissionData.completion_time = Date.now() - this.startTime;
+            }
+            
             console.log('Submission data prepared:', submissionData);
             
             // Make the HTTP request to your API
@@ -1140,14 +1561,9 @@ export class QuestionnaireEngine {
         }
     }
 
-    // Public API methods
-    getCurrentState() {
-        return {
-            currentModule: this.currentModuleIndex,
-            totalModules: this.modules.length,
-            responses: { ...this.responses },
-            progress: Math.round(((this.currentModuleIndex + 1) / this.modules.length) * 100)
-        };
+    // Utility methods
+    getCurrentModule() {
+        return this.modules[this.currentModuleIndex] || null;
     }
 
     getModuleById(id) {
@@ -1162,6 +1578,30 @@ export class QuestionnaireEngine {
         }
     }
 
+    showErrorModule(message) {
+        if (this.questionContent) {
+            this.questionContent.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #ef4444;">
+                    <div style="font-size: 2rem; margin-bottom: 20px;">⚠️</div>
+                    <h3 style="margin-bottom: 15px;">Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+    }
+
+    // Public API methods
+    getCurrentState() {
+        return {
+            currentModule: this.currentModuleIndex,
+            totalModules: this.modules.length,
+            responses: { ...this.responses },
+            progress: Math.round(((this.currentModuleIndex + 1) / this.modules.length) * 100),
+            isInitialized: this.isInitialized,
+            userHasInteracted: this.userHasInteracted
+        };
+    }
+
     reset() {
         this.currentModuleIndex = 0;
         this.responses = {};
@@ -1171,9 +1611,120 @@ export class QuestionnaireEngine {
         this.submissionRecaptchaToken = null;
         this.recaptchaToken = null;
         this.submissionRecaptchaWidgetId = undefined;
+        this.inlineRecaptchaId = undefined;
+        this.startTime = Date.now();
         console.log('Questionnaire reset');
+    }
+
+    // Response management
+    addResponse(moduleId, response) {
+        this.responses[moduleId] = response;
+        console.log(`Response added for ${moduleId}:`, response);
+        this.updateNavigationButtons();
+    }
+
+    getResponse(moduleId) {
+        return this.responses[moduleId];
+    }
+
+    updateModuleResponse(moduleId, response) {
+        this.responses[moduleId] = response;
+        this.updateNavigationButtons();
+    }
+
+    // Completion checking
+    isComplete() {
+        return this.modules.every(module => {
+            if (!this.shouldShowModule(module)) {
+                return true; // Hidden modules are considered complete
+            }
+            if (module.isRequired && !module.isRequired()) {
+                return true; // Not required, so considered complete
+            }
+            return this.responses[module.id] !== undefined;
+        });
+    }
+
+    getCompletionPercentage() {
+        const visibleModules = this.modules.filter(module => this.shouldShowModule(module));
+        const completedModules = visibleModules.filter(module => this.responses[module.id] !== undefined);
+        return visibleModules.length > 0 ? Math.round((completedModules.length / visibleModules.length) * 100) : 0;
+    }
+
+    // Debug utilities
+    debugModuleVisibility() {
+        console.log('=== Module Visibility Debug ===');
+        this.modules.forEach((module, index) => {
+            const isVisible = this.shouldShowModule(module);
+            const hasResponse = !!this.responses[module.id];
+            console.log(`${index + 1}. ${module.id}: visible=${isVisible}, hasResponse=${hasResponse}`);
+        });
+        console.log('Current responses:', this.responses);
+        console.log('===========================');
+    }
+
+    // Event system for extensibility
+    addEventListener(eventType, callback) {
+        if (!this._eventListeners) {
+            this._eventListeners = {};
+        }
+        if (!this._eventListeners[eventType]) {
+            this._eventListeners[eventType] = [];
+        }
+        this._eventListeners[eventType].push(callback);
+    }
+
+    removeEventListener(eventType, callback) {
+        if (!this._eventListeners || !this._eventListeners[eventType]) {
+            return;
+        }
+        const index = this._eventListeners[eventType].indexOf(callback);
+        if (index > -1) {
+            this._eventListeners[eventType].splice(index, 1);
+        }
+    }
+
+    emit(eventType, data) {
+        if (!this._eventListeners || !this._eventListeners[eventType]) {
+            return;
+        }
+        this._eventListeners[eventType].forEach(callback => {
+            try {
+                callback(data);
+            } catch (error) {
+                console.error(`Error in event listener for ${eventType}:`, error);
+            }
+        });
     }
 }
 
-// Export as default for flexibility
+// Global instance management
+let questionnaireEngine = null;
+
+// Initialize global functions for HTML onclick handlers
+window.nextQuestion = function() {
+    if (questionnaireEngine) {
+        questionnaireEngine.handleNext();
+    }
+};
+
+window.previousQuestion = function() {
+    if (questionnaireEngine) {
+        questionnaireEngine.handleBack();
+    }
+};
+
+// Global reCAPTCHA callbacks
+window.onSubmissionRecaptchaComplete = function(token) {
+    console.log('Global submission reCAPTCHA callback triggered');
+    if (window.currentQuestionnaireEngine) {
+        window.currentQuestionnaireEngine.proceedWithSubmission(token);
+    } else if (questionnaireEngine) {
+        questionnaireEngine.proceedWithSubmission(token);
+    } else {
+        console.error('No questionnaire engine instance available for reCAPTCHA callback');
+    }
+};
+
+// Export for use in modules
 export default QuestionnaireEngine;

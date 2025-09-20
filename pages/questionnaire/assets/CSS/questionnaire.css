@@ -1,0 +1,131 @@
+/* Add this CSS to your questionnaire.css or main stylesheet */
+
+/* Spinning animation for loading indicators */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Enhanced security check button styles */
+.security-check-btn {
+    background: rgba(139, 92, 246, 0.2) !important;
+    border: 1px solid rgba(139, 92, 246, 0.4) !important;
+    color: #8b5cf6 !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    font-size: 0.9rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.security-check-btn:hover {
+    background: rgba(139, 92, 246, 0.3) !important;
+}
+
+/* Final submit button styles */
+.final-submit-btn {
+    background: #22c55e !important;
+    border: none !important;
+    color: white !important;
+    padding: 12px 24px !important;
+    border-radius: 6px !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.final-submit-btn:hover:not(:disabled) {
+    background: #16a34a !important;
+}
+
+.final-submit-btn:disabled {
+    background: #6b7280 !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+}
+
+/* Back button for security check */
+.back-btn-security {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(255,255,255,0.5) !important;
+    font-size: 0.9rem !important;
+    cursor: pointer !important;
+    text-decoration: underline !important;
+}
+
+.back-btn-security:hover {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+/* Loading spinner styles */
+.loading-spinner {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(139, 92, 246, 0.3);
+    border-top: 3px solid #8b5cf6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Completion page container improvements */
+.completion-container {
+    text-align: center;
+    padding: 60px 40px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.completion-container h3 {
+    color: #8b5cf6;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.completion-container p {
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.completion-container .primary-text {
+    color: rgba(255,255,255,0.8);
+    font-size: 1.1rem;
+}
+
+.completion-container .secondary-text {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.95rem;
+}
+
+.completion-container .small-text {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.85rem;
+}
+
+/* reCAPTCHA container styling */
+.recaptcha-inline-container {
+    display: flex;
+    justify-content: center;
+    margin: 30px 0;
+}
+
+/* Success/Error message styling */
+.status-message {
+    padding: 60px 40px;
+    text-align: center;
+}
+
+.status-message.success h3 {
+    color: #22c55e;
+}
+
+.status-message.error h3 {
+    color: #ef4444;
+}
+
+.status-message .icon {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
