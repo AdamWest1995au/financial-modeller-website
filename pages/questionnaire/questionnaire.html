@@ -4793,6 +4793,13 @@ window.previousQuestion = function() {
         };
     </script>
 
+// Modal functions (for navigation links)
+window.showModal = function(modalType) {
+    console.log('Modal type:', modalType);
+    alert(`${modalType} modal not implemented yet`);
+};
+</script>
+
 <script type="module">
 import { QuestionnaireEngine } from './core/engine.js';
 import { UserInfoModule } from './modules/user-info.module.js';
@@ -4804,6 +4811,7 @@ import { CogsCodbModule } from './modules/cogs-codb.module.js';
 import { WorkingCapitalModule } from './modules/working-capital.module.js';
 import { TaxesModule } from './modules/taxes.module.js'; 
 import { AssetsModule } from './modules/assets.module.js';
+import { EquityModule } from './modules/equity.module.js';
 
 // Initialize the questionnaire engine
 async function initializeQuestionnaire() {
@@ -4824,6 +4832,7 @@ async function initializeQuestionnaire() {
         engine.registerModule(new WorkingCapitalModule());
         engine.registerModule(new TaxesModule());
         engine.registerModule(new AssetsModule());
+        engine.registerModule(new EquityModule());
 
         await engine.initialize();
         window.questionnaireEngine = engine;
