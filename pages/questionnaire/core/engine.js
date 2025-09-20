@@ -1,4 +1,4 @@
-// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH CONDITIONAL LOGIC INTEGRATION
+// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH FIXED COMPLETION FLOW
 
 export class QuestionnaireEngine {
     constructor(config = {}) {
@@ -22,8 +22,8 @@ export class QuestionnaireEngine {
         this.inlineRecaptchaId = undefined;
         this.startTime = null;
         
-        // ADDED: Initialize conditional logic system
-        this.conditionalLogic = null; // Will be initialized in initialize()
+        // Initialize conditional logic system
+        this.conditionalLogic = null;
         
         // UI Elements
         this.questionModal = null;
@@ -53,17 +53,17 @@ export class QuestionnaireEngine {
 
     async initialize() {
         try {
-            console.log('Initializing Questionnaire Engine...');
+            console.log('🚀 Initializing Questionnaire Engine...');
             
             // Record start time
             this.startTime = Date.now();
             
-            // ADDED: Initialize conditional logic system
+            // Initialize conditional logic system
             if (window.ConditionalLogic) {
                 this.conditionalLogic = new window.ConditionalLogic();
-                console.log('Conditional logic system initialized');
+                console.log('✅ Conditional logic system initialized');
             } else {
-                console.warn('ConditionalLogic not available - modules will use individual shouldShow methods only');
+                console.warn('⚠️ ConditionalLogic not available - modules will use individual shouldShow methods only');
             }
             
             // Get UI elements
@@ -84,7 +84,7 @@ export class QuestionnaireEngine {
             this.totalEstimatedTimeTop = document.getElementById('totalEstimatedTimeTop');
             
             if (!this.questionModal) {
-                throw new Error('Question modal not found');
+                throw new Error('❌ Question modal not found');
             }
             
             // Setup event listeners
@@ -94,11 +94,11 @@ export class QuestionnaireEngine {
             this.hideNotifications();
             
             this.isInitialized = true;
-            console.log('Questionnaire Engine initialized successfully');
+            console.log('✅ Questionnaire Engine initialized successfully');
             
             return true;
         } catch (error) {
-            console.error('Failed to initialize Questionnaire Engine:', error);
+            console.error('❌ Failed to initialize Questionnaire Engine:', error);
             throw error;
         }
     }
@@ -108,10 +108,10 @@ export class QuestionnaireEngine {
             throw new Error('Module must have an id property');
         }
         
-        console.log(`Registering module: ${moduleInstance.id}`);
+        console.log(`📝 Registering module: ${moduleInstance.id}`);
         this.modules.push(moduleInstance);
         
-        console.log(`Module ${moduleInstance.id} registered successfully`);
+        console.log(`✅ Module ${moduleInstance.id} registered successfully`);
     }
 
     setupEventListeners() {
@@ -131,7 +131,7 @@ export class QuestionnaireEngine {
         // Add clean event listeners
         if (this.nextBtn) {
             this.nextBtn.addEventListener('click', (e) => {
-                console.log('Next button clicked by user');
+                console.log('👆 Next button clicked by user');
                 this.userHasInteracted = true;
                 e.preventDefault();
                 e.stopPropagation();
@@ -141,7 +141,7 @@ export class QuestionnaireEngine {
         
         if (this.backBtn) {
             this.backBtn.addEventListener('click', (e) => {
-                console.log('Back button clicked by user');
+                console.log('👆 Back button clicked by user');
                 this.userHasInteracted = true;
                 e.preventDefault();
                 e.stopPropagation();
@@ -179,7 +179,7 @@ export class QuestionnaireEngine {
         // Prevent form submissions and unwanted Enter key behavior
         if (this.questionModal) {
             this.questionModal.addEventListener('submit', (e) => {
-                console.log('Form submission prevented');
+                console.log('🚫 Form submission prevented');
                 e.preventDefault();
                 return false;
             });
@@ -190,7 +190,7 @@ export class QuestionnaireEngine {
                                         e.target.getAttribute('role') === 'button' ||
                                         e.target.hasAttribute('data-allow-enter');
                     if (!isValidTarget) {
-                        console.log('Enter key prevented on', e.target.tagName);
+                        console.log('🚫 Enter key prevented on', e.target.tagName);
                         e.preventDefault();
                     }
                 }
@@ -244,14 +244,14 @@ export class QuestionnaireEngine {
 
     start() {
         if (!this.isInitialized) {
-            console.error('Engine not initialized');
+            console.error('❌ Engine not initialized');
             return;
         }
         
-        console.log('Starting questionnaire...');
+        console.log('🎯 Starting questionnaire...');
         
         if (this.modules.length === 0) {
-            console.error('No modules registered');
+            console.error('❌ No modules registered');
             return;
         }
         
@@ -293,6 +293,7 @@ export class QuestionnaireEngine {
             const currentModule = this.modules[this.currentModuleIndex];
             
             if (!currentModule) {
+                console.log('🎉 No more modules - completing questionnaire');
                 this.completeQuestionnaire();
                 return;
             }
@@ -302,7 +303,7 @@ export class QuestionnaireEngine {
                 break; // This module should be shown
             } else {
                 // Skip this module
-                console.log(`Skipping module during show: ${currentModule.id}`);
+                console.log(`⏭️ Skipping module during show: ${currentModule.id}`);
                 this.currentModuleIndex++;
                 continue;
             }
@@ -310,11 +311,12 @@ export class QuestionnaireEngine {
         
         const currentModule = this.modules[this.currentModuleIndex];
         if (!currentModule) {
+            console.log('🎉 No current module - completing questionnaire');
             this.completeQuestionnaire();
             return;
         }
         
-        console.log(`Showing module: ${currentModule.id}`);
+        console.log(`📋 Showing module: ${currentModule.id} (${this.currentModuleIndex + 1}/${this.modules.length})`);
         
         // Reset interaction flag for new module
         this.userHasInteracted = false;
@@ -347,7 +349,7 @@ export class QuestionnaireEngine {
                 this.addInteractionTracking(this.questionContent);
                 
             } catch (error) {
-                console.error(`Error rendering module ${currentModule.id}:`, error);
+                console.error(`❌ Error rendering module ${currentModule.id}:`, error);
                 this.questionContent.innerHTML = `<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
                     <p>Error loading this section. Please continue to the next step.</p>
                 </div>`;
@@ -429,7 +431,7 @@ export class QuestionnaireEngine {
             container.addEventListener(eventType, (e) => {
                 // Only count real user interactions, not programmatic events
                 if (e.isTrusted) {
-                    console.log(`User interaction detected: ${eventType}`);
+                    console.log(`👆 User interaction detected: ${eventType}`);
                     this.userHasInteracted = true;
                     this.updateNavigationButtons();
                 }
@@ -437,7 +439,6 @@ export class QuestionnaireEngine {
         });
     }
 
-    // UPDATED: Enhanced shouldShowModule method with conditional logic integration
     shouldShowModule(module) {
         let shouldShow = true;
         
@@ -448,11 +449,11 @@ export class QuestionnaireEngine {
                 const moduleRules = this.conditionalLogic.rules.get(module.id);
                 if (moduleRules && moduleRules['*']) {
                     const ruleResult = this.conditionalLogic.evaluateRule(moduleRules['*'], this.responses, null);
-                    console.log(`Conditional logic for ${module.id}: ${ruleResult}`);
+                    console.log(`🧠 Conditional logic for ${module.id}: ${ruleResult}`);
                     shouldShow = shouldShow && ruleResult;
                 }
             } catch (error) {
-                console.error(`Error in conditional logic for module ${module.id}:`, error);
+                console.error(`❌ Error in conditional logic for module ${module.id}:`, error);
                 // Continue with module's own shouldShow method
             }
         }
@@ -461,33 +462,22 @@ export class QuestionnaireEngine {
         if (typeof module.shouldShow === 'function' && shouldShow) {
             try {
                 const moduleResult = module.shouldShow(this.responses);
-                console.log(`Module ${module.id} shouldShow: ${moduleResult}`);
-                
-                // Debug logging for specific modules
-                if (module.id === 'combined-parameters') {
-                    console.log('Checking combined-parameters visibility');
-                    console.log('Current responses:', this.responses);
-                    const userInfoResponse = this.responses['user-info'];
-                    console.log('User info response:', userInfoResponse);
-                    if (userInfoResponse && userInfoResponse.data) {
-                        console.log('Parameter toggle value:', userInfoResponse.data.parameterToggle);
-                    }
-                }
+                console.log(`📋 Module ${module.id} shouldShow: ${moduleResult}`);
                 
                 shouldShow = shouldShow && moduleResult;
             } catch (error) {
-                console.error(`Error checking shouldShow for module ${module.id}:`, error);
+                console.error(`❌ Error checking shouldShow for module ${module.id}:`, error);
                 // Default to showing if error, but respect conditional logic result
             }
         }
         
         // Default to showing module if no conditional logic and no module shouldShow method
         if (!this.conditionalLogic && typeof module.shouldShow !== 'function') {
-            console.log(`Module ${module.id} has no conditional logic - showing by default`);
+            console.log(`📋 Module ${module.id} has no conditional logic - showing by default`);
             shouldShow = true;
         }
         
-        console.log(`Final decision for ${module.id}: ${shouldShow}`);
+        console.log(`✅ Final decision for ${module.id}: ${shouldShow}`);
         return shouldShow;
     }
 
@@ -496,13 +486,13 @@ export class QuestionnaireEngine {
         for (let i = this.currentModuleIndex + 1; i < this.modules.length; i++) {
             const module = this.modules[i];
             if (this.shouldShowModule(module)) {
-                console.log(`Next visible module found: ${module.id} at index ${i}`);
+                console.log(`⏭️ Next visible module found: ${module.id} at index ${i}`);
                 return i;
             } else {
-                console.log(`Skipping module: ${module.id} (conditional logic)`);
+                console.log(`⏭️ Skipping module: ${module.id} (conditional logic)`);
             }
         }
-        console.log('No more visible modules found');
+        console.log('⏭️ No more visible modules found');
         return -1; // No more visible modules
     }
 
@@ -511,10 +501,10 @@ export class QuestionnaireEngine {
         for (let i = this.currentModuleIndex - 1; i >= 0; i--) {
             const module = this.modules[i];
             if (this.shouldShowModule(module)) {
-                console.log(`Previous visible module found: ${module.id} at index ${i}`);
+                console.log(`⏮️ Previous visible module found: ${module.id} at index ${i}`);
                 return i;
             } else {
-                console.log(`Skipping previous module: ${module.id} (conditional logic)`);
+                console.log(`⏮️ Skipping previous module: ${module.id} (conditional logic)`);
             }
         }
         return -1; // No previous visible modules
@@ -592,15 +582,20 @@ export class QuestionnaireEngine {
         }
     }
 
+    // FIXED WITH EXTENSIVE DEBUG LOGGING
     handleNext() {
+        console.log('🔍 DEBUG: handleNext called');
+        console.log('🔍 DEBUG: isProcessingNavigation:', this.isProcessingNavigation);
+        console.log('🔍 DEBUG: userHasInteracted:', this.userHasInteracted);
+        
         if (this.isProcessingNavigation) {
-            console.log('Already processing navigation, ignoring handleNext');
+            console.log('⏸️ Already processing navigation, ignoring handleNext');
             return;
         }
         
         // CRITICAL: Only proceed if user has interacted
         if (!this.userHasInteracted) {
-            console.log('No user interaction detected - not advancing automatically');
+            console.log('⏸️ No user interaction detected - not advancing automatically');
             return;
         }
         
@@ -608,58 +603,67 @@ export class QuestionnaireEngine {
         
         try {
             const currentModule = this.modules[this.currentModuleIndex];
+            console.log('🔍 DEBUG: Current module:', currentModule?.id);
+            console.log('🔍 DEBUG: Current module index:', this.currentModuleIndex);
+            console.log('🔍 DEBUG: Total modules:', this.modules.length);
             
             if (!currentModule) {
+                console.log('🔍 DEBUG: No current module, processing navigation false');
                 this.isProcessingNavigation = false;
                 return;
             }
             
-            console.log(`Processing navigation from module: ${currentModule.id}`);
+            console.log(`🔍 DEBUG: Processing navigation from module: ${currentModule.id}`);
             
             // Collect response from current module
             if (currentModule.getResponse) {
                 try {
                     const response = currentModule.getResponse();
                     this.responses[currentModule.id] = response;
-                    console.log(`Saved response for ${currentModule.id}:`, response);
+                    console.log(`💾 Saved response for ${currentModule.id}:`, response);
                 } catch (error) {
-                    console.error(`Error getting response from ${currentModule.id}:`, error);
+                    console.error(`❌ Error getting response from ${currentModule.id}:`, error);
                 }
             }
             
             // Validate if module has validation
             if (currentModule.validate) {
                 const validation = currentModule.validate();
+                console.log('🔍 DEBUG: Validation result:', validation);
                 if (!validation.isValid) {
-                    console.log('Validation failed:', validation.errors);
+                    console.log('❌ Validation failed:', validation.errors);
                     this.isProcessingNavigation = false;
                     return;
                 }
             }
             
             // Find next visible module instead of just incrementing
+            console.log('🔍 DEBUG: Looking for next visible module...');
             const nextModuleIndex = this.findNextVisibleModule();
+            console.log('🔍 DEBUG: Next module index:', nextModuleIndex);
             
             if (nextModuleIndex !== -1) {
+                console.log('🔍 DEBUG: Found next module, navigating to index:', nextModuleIndex);
                 this.currentModuleIndex = nextModuleIndex;
                 setTimeout(() => {
                     this.isProcessingNavigation = false;
                     this.showCurrentModule();
                 }, 10);
             } else {
+                console.log('🔍 DEBUG: No next module found - CALLING COMPLETE QUESTIONNAIRE');
                 this.isProcessingNavigation = false;
                 this.completeQuestionnaire();
             }
             
         } catch (error) {
-            console.error('Error in handleNext:', error);
+            console.error('🔍 DEBUG: Error in handleNext:', error);
             this.isProcessingNavigation = false;
         }
     }
 
     handleBack() {
         if (this.isProcessingNavigation) {
-            console.log('Already processing navigation, ignoring handleBack');
+            console.log('⏸️ Already processing navigation, ignoring handleBack');
             return;
         }
         
@@ -674,11 +678,14 @@ export class QuestionnaireEngine {
         }
     }
 
+    // FIXED COMPLETION FLOW WITH DEBUG LOGGING
     completeQuestionnaire() {
-        console.log('Questionnaire completed! Responses:', this.responses);
+        console.log('🎉 DEBUG: completeQuestionnaire called!');
+        console.log('🎉 DEBUG: Questionnaire completed! Responses:', this.responses);
         
         // Show completion pane with simplified security check
         if (this.questionContent) {
+            console.log('🎉 DEBUG: Updating question content with completion screen');
             this.questionContent.innerHTML = `
                 <div style="text-align: center; padding: 60px 40px;">
                     <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
@@ -718,34 +725,45 @@ export class QuestionnaireEngine {
                     </p>
                 </div>
             `;
+            console.log('🎉 DEBUG: Question content updated successfully');
+        } else {
+            console.error('🎉 DEBUG: questionContent element not found!');
         }
         
         // Update progress to 100%
         this.updateProgress(100);
+        console.log('🎉 DEBUG: Progress updated to 100%');
         
         // Hide back button, update next button for final submission
-        if (this.backBtn) this.backBtn.style.display = 'none';
+        if (this.backBtn) {
+            this.backBtn.style.display = 'none';
+            console.log('🎉 DEBUG: Back button hidden');
+        }
         if (this.nextBtn) {
             this.nextBtn.textContent = 'Complete Questionnaire';
             this.nextBtn.disabled = false;
-            // FIXED: Use the new inline security check instead of modal
             this.nextBtn.onclick = () => this.showSimpleSecurityCheck();
+            console.log('🎉 DEBUG: Next button updated for final submission');
         }
         
         // Hide skip text for completion page
         if (this.skipTextContainer) {
             this.skipTextContainer.style.display = 'none';
+            console.log('🎉 DEBUG: Skip text hidden');
         }
+        
+        console.log('🎉 DEBUG: completeQuestionnaire finished');
     }
 
     /**
      * Show simplified security check (inline reCAPTCHA)
      */
     showSimpleSecurityCheck() {
-        console.log('🔐 Showing simple security check...');
+        console.log('🔐 DEBUG: Showing simple security check...');
         
         // Show inline reCAPTCHA instead of modal
         if (this.questionContent) {
+            console.log('🔐 DEBUG: Updating content for security check');
             this.questionContent.innerHTML = `
                 <div style="text-align: center; padding: 60px 40px;">
                     <div style="font-size: 2.5rem; margin-bottom: 20px;">🔒</div>
@@ -798,11 +816,13 @@ export class QuestionnaireEngine {
                     </div>
                 </div>
             `;
+            console.log('🔐 DEBUG: Security check content updated');
         }
         
         // Update next button to be hidden during security check
         if (this.nextBtn) {
             this.nextBtn.style.display = 'none';
+            console.log('🔐 DEBUG: Next button hidden');
         }
         
         // Initialize inline reCAPTCHA
@@ -815,6 +835,7 @@ export class QuestionnaireEngine {
      * Initialize inline reCAPTCHA
      */
     initializeInlineRecaptcha() {
+        console.log('🔐 DEBUG: Initializing inline reCAPTCHA...');
         if (window.grecaptcha && window.grecaptcha.ready) {
             window.grecaptcha.ready(() => {
                 try {
@@ -832,15 +853,17 @@ export class QuestionnaireEngine {
                             'expired-callback': this.onInlineRecaptchaExpired
                         });
                         console.log('✅ Inline reCAPTCHA rendered successfully');
+                    } else {
+                        console.error('❌ inlineRecaptcha container not found');
                     }
                 } catch (error) {
-                    console.error('Error rendering inline reCAPTCHA:', error);
+                    console.error('❌ Error rendering inline reCAPTCHA:', error);
                     // Fallback: enable submit button if reCAPTCHA fails
                     this.enableFinalSubmit();
                 }
             });
         } else {
-            console.warn('reCAPTCHA not loaded, enabling submit button');
+            console.warn('⚠️ reCAPTCHA not loaded, enabling submit button');
             this.enableFinalSubmit();
         }
     }
@@ -880,6 +903,7 @@ export class QuestionnaireEngine {
             submitBtn.onmouseout = () => {
                 submitBtn.style.background = '#22c55e';
             };
+            console.log('✅ Final submit button enabled');
         }
     }
 
@@ -895,6 +919,7 @@ export class QuestionnaireEngine {
             submitBtn.style.background = '#6b7280';
             submitBtn.onmouseover = null;
             submitBtn.onmouseout = null;
+            console.log('❌ Final submit button disabled');
         }
     }
 
@@ -997,34 +1022,12 @@ export class QuestionnaireEngine {
         }
     }
 
-    // REMOVED: Old modal-based reCAPTCHA method - now using inline security check only
-
-    // REMOVED: Old modal cleanup methods - using inline security check only
-
+    // OLD COMPATIBILITY METHODS FOR BACKWARDS COMPATIBILITY
     proceedWithSubmission(recaptchaToken) {
         console.log('📤 Proceeding with submission...');
         
         // Store the submission reCAPTCHA token
         this.submissionRecaptchaToken = recaptchaToken;
-        
-        // Hide the submission reCAPTCHA modal and show loading
-        const submissionModal = document.getElementById('submissionRecaptchaModal');
-        if (submissionModal) {
-            const recaptchaContent = submissionModal.querySelector('.recaptcha-content');
-            const loadingContent = submissionModal.querySelector('.submission-loading');
-            
-            if (recaptchaContent) recaptchaContent.style.display = 'none';
-            if (loadingContent) {
-                loadingContent.style.display = 'block';
-            } else {
-                // Fallback loading display
-                const loadingDiv = document.getElementById('submissionLoading');
-                if (loadingDiv) loadingDiv.style.display = 'block';
-            }
-        }
-        
-        // Update the question modal to show submission status
-        this.showSubmissionStatus();
         
         // Submit responses
         this.submitResponses();
@@ -1069,21 +1072,21 @@ export class QuestionnaireEngine {
         }
     }
 
-    // reCAPTCHA verification - now uses token from verification screen
+    // reCAPTCHA verification
     async verifyRecaptcha() {
         // Use the submission reCAPTCHA token if available
         if (this.submissionRecaptchaToken) {
-            console.log('Using submission reCAPTCHA token');
+            console.log('🔐 Using submission reCAPTCHA token');
             return this.submissionRecaptchaToken;
         }
         
         // Fallback to initial reCAPTCHA token if needed
         if (this.recaptchaToken) {
-            console.log('Using initial reCAPTCHA token as fallback');
+            console.log('🔐 Using initial reCAPTCHA token as fallback');
             return this.recaptchaToken;
         }
         
-        console.warn('No reCAPTCHA token available, proceeding without verification');
+        console.warn('⚠️ No reCAPTCHA token available, proceeding without verification');
         return null;
     }
 
@@ -1121,7 +1124,7 @@ export class QuestionnaireEngine {
             sales_channels_freetext: null,
             revenue_staff: null,
             
-            // Assets fields (ADDED)
+            // Assets fields
             asset_types_selected: null,
             asset_types_freetext: null,
             multiple_depreciation_methods: 'no',
@@ -1144,9 +1147,9 @@ export class QuestionnaireEngine {
                 try {
                     const dbFields = module.getDatabaseFields();
                     Object.assign(submissionData, dbFields);
-                    console.log(`Database fields from ${module.id}:`, dbFields);
+                    console.log(`💾 Database fields from ${module.id}:`, dbFields);
                 } catch (error) {
-                    console.warn(`Error getting database fields from module ${module.id}:`, error);
+                    console.warn(`⚠️ Error getting database fields from module ${module.id}:`, error);
                 }
             }
         }
@@ -1177,7 +1180,7 @@ export class QuestionnaireEngine {
         }
     }
 
-    // FIXED: Show success message and redirect to loading page
+    // Show success message and redirect to loading page
     showSuccessMessage() {
         console.log('✅ Submission successful, redirecting to loading page...');
         
@@ -1208,13 +1211,6 @@ export class QuestionnaireEngine {
                     <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #22c55e; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-top: 20px;"></div>
                 </div>
             `;
-        }
-        
-        // Hide the submission modal
-        const submissionModal = document.getElementById('submissionRecaptchaModal');
-        if (submissionModal) {
-            submissionModal.style.display = 'none';
-            submissionModal.classList.remove('active');
         }
         
         // Redirect to loading page after a short delay (2 seconds)
@@ -1256,7 +1252,7 @@ export class QuestionnaireEngine {
     // Main submission method
     async submitResponses() {
         try {
-            console.log('Submitting responses...');
+            console.log('📤 Submitting responses...');
             
             // Verify reCAPTCHA if configured
             const recaptchaToken = await this.verifyRecaptcha();
@@ -1274,7 +1270,7 @@ export class QuestionnaireEngine {
                 submissionData.completion_time = Date.now() - this.startTime;
             }
             
-            console.log('Submission data prepared:', submissionData);
+            console.log('📦 Submission data prepared:', submissionData);
             
             // Make the HTTP request to your API
             const response = await fetch(this.config.apiEndpoint, {
@@ -1292,9 +1288,9 @@ export class QuestionnaireEngine {
             }
             
             const result = await response.json();
-            console.log('Submission successful:', result);
+            console.log('✅ Submission successful:', result);
             
-            // ⭐ CRITICAL: Store the submission ID for the redirect
+            // Store the submission ID for the redirect
             if (result.submission_id) {
                 this.submissionId = result.submission_id;
                 console.log('✅ Submission ID stored:', this.submissionId);
@@ -1308,7 +1304,7 @@ export class QuestionnaireEngine {
             return result;
             
         } catch (error) {
-            console.error('Submission failed:', error);
+            console.error('❌ Submission failed:', error);
             
             // Show user-friendly error message
             let errorMessage = 'An unexpected error occurred. Please try again.';
@@ -1381,13 +1377,13 @@ export class QuestionnaireEngine {
         this.submissionRecaptchaWidgetId = undefined;
         this.inlineRecaptchaId = undefined;
         this.startTime = Date.now();
-        console.log('Questionnaire reset');
+        console.log('🔄 Questionnaire reset');
     }
 
     // Response management
     addResponse(moduleId, response) {
         this.responses[moduleId] = response;
-        console.log(`Response added for ${moduleId}:`, response);
+        console.log(`💾 Response added for ${moduleId}:`, response);
         this.updateNavigationButtons();
     }
 
@@ -1484,13 +1480,13 @@ window.previousQuestion = function() {
 
 // Global reCAPTCHA callbacks - Updated for inline security check only
 window.onSubmissionRecaptchaComplete = function(token) {
-    console.log('Global submission reCAPTCHA callback triggered - using inline approach');
+    console.log('📞 Global submission reCAPTCHA callback triggered - using inline approach');
     if (window.questionnaireEngine) {
         // For inline reCAPTCHA, the token is handled by onInlineRecaptchaComplete
         // This callback shouldn't be used anymore, but keeping for safety
-        console.warn('Old reCAPTCHA callback triggered - this should not happen with inline security check');
+        console.warn('⚠️ Old reCAPTCHA callback triggered - this should not happen with inline security check');
     } else {
-        console.error('No questionnaire engine instance available for reCAPTCHA callback');
+        console.error('❌ No questionnaire engine instance available for reCAPTCHA callback');
     }
 };
 
