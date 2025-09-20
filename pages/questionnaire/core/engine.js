@@ -758,98 +758,126 @@ export class QuestionnaireEngine {
     showSecurityVerificationModal() {
         console.log('🔐 DEBUG: Showing security verification modal...');
         
-        // Show the security verification modal content in the question modal
+        // Create a proper modal overlay and dialog
         if (this.questionContent) {
-            console.log('🔐 DEBUG: Updating content for security verification modal');
+            console.log('🔐 DEBUG: Creating compact security verification modal');
             this.questionContent.innerHTML = `
-                <div style="text-align: center; padding: 40px; max-width: 500px; margin: 0 auto;">
-                    <!-- Security Icon -->
-                    <div style="margin-bottom: 24px;">
-                        <div style="
-                            width: 64px; 
-                            height: 64px; 
-                            background: #8b5cf6; 
-                            border-radius: 50%; 
-                            display: flex; 
-                            align-items: center; 
-                            justify-content: center; 
-                            margin: 0 auto;
-                            font-size: 24px;
-                        ">
-                            🔒
-                        </div>
-                    </div>
-                    
-                    <!-- Title -->
-                    <h3 style="
-                        color: white; 
-                        margin-bottom: 16px; 
-                        font-size: 1.5rem; 
-                        font-weight: 600;
-                        text-align: center;
-                    ">Security Verification</h3>
-                    
-                    <!-- Description -->
-                    <p style="
-                        color: rgba(255,255,255,0.8); 
-                        margin-bottom: 32px; 
-                        font-size: 1rem; 
-                        line-height: 1.5;
-                        text-align: center;
+                <!-- Modal Overlay -->
+                <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                ">
+                    <!-- Modal Dialog -->
+                    <div style="
+                        background: #1f2937;
+                        border-radius: 12px;
+                        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                        max-width: 480px;
+                        width: 90%;
+                        max-height: 90vh;
+                        overflow-y: auto;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        position: relative;
                     ">
-                        Please complete the security check below to continue with the questionnaire.
-                    </p>
-                    
-                    <!-- reCAPTCHA Container -->
-                    <div style="display: flex; justify-content: center; margin-bottom: 32px;">
-                        <div id="inlineRecaptcha"></div>
-                    </div>
-                    
-                    <!-- Action Buttons -->
-                    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-                        <button 
-                            onclick="window.questionnaireEngine.closeSecurityModal()" 
-                            class="cancel-btn"
-                            style="
-                                background: transparent; 
-                                border: 1px solid rgba(255,255,255,0.3); 
-                                color: rgba(255,255,255,0.7); 
-                                padding: 12px 24px; 
-                                border-radius: 6px; 
-                                font-size: 1rem; 
-                                cursor: pointer;
-                                transition: all 0.2s ease;
-                                min-width: 120px;
-                            "
-                            onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='white';"
-                            onmouseout="this.style.background='transparent'; this.style.color='rgba(255,255,255,0.7)';"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            id="continueToQuestionnaireBtn" 
-                            onclick="window.questionnaireEngine.handleFinalSubmission()" 
-                            disabled
-                            class="continue-btn"
-                            style="
-                                background: #6b7280; 
-                                border: none; 
+                        <!-- Modal Content -->
+                        <div style="padding: 40px 32px; text-align: center;">
+                            <!-- Security Icon -->
+                            <div style="margin-bottom: 24px;">
+                                <div style="
+                                    width: 64px; 
+                                    height: 64px; 
+                                    background: #8b5cf6; 
+                                    border-radius: 50%; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    justify-content: center; 
+                                    margin: 0 auto;
+                                    font-size: 24px;
+                                ">
+                                    🔒
+                                </div>
+                            </div>
+                            
+                            <!-- Title -->
+                            <h3 style="
                                 color: white; 
-                                padding: 12px 24px; 
-                                border-radius: 6px; 
+                                margin-bottom: 16px; 
+                                font-size: 1.5rem; 
+                                font-weight: 600;
+                                text-align: center;
+                            ">Security Verification</h3>
+                            
+                            <!-- Description -->
+                            <p style="
+                                color: rgba(255,255,255,0.8); 
+                                margin-bottom: 32px; 
                                 font-size: 1rem; 
-                                cursor: not-allowed;
-                                opacity: 0.5;
-                                transition: all 0.2s ease;
-                                min-width: 180px;
-                            "
-                        >
-                            Continue to Questionnaire
-                        </button>
+                                line-height: 1.5;
+                                text-align: center;
+                            ">
+                                Please complete the security check below to continue with the questionnaire.
+                            </p>
+                            
+                            <!-- reCAPTCHA Container -->
+                            <div style="display: flex; justify-content: center; margin-bottom: 32px;">
+                                <div id="inlineRecaptcha"></div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                                <button 
+                                    onclick="window.questionnaireEngine.closeSecurityModal()" 
+                                    class="cancel-btn"
+                                    style="
+                                        background: transparent; 
+                                        border: 1px solid rgba(255,255,255,0.3); 
+                                        color: rgba(255,255,255,0.7); 
+                                        padding: 12px 24px; 
+                                        border-radius: 6px; 
+                                        font-size: 1rem; 
+                                        cursor: pointer;
+                                        transition: all 0.2s ease;
+                                        min-width: 120px;
+                                    "
+                                    onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='white';"
+                                    onmouseout="this.style.background='transparent'; this.style.color='rgba(255,255,255,0.7)';"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    id="continueToQuestionnaireBtn" 
+                                    onclick="window.questionnaireEngine.handleFinalSubmission()" 
+                                    disabled
+                                    class="continue-btn"
+                                    style="
+                                        background: #6b7280; 
+                                        border: none; 
+                                        color: white; 
+                                        padding: 12px 24px; 
+                                        border-radius: 6px; 
+                                        font-size: 1rem; 
+                                        cursor: not-allowed;
+                                        opacity: 0.5;
+                                        transition: all 0.2s ease;
+                                        min-width: 180px;
+                                    "
+                                >
+                                    Continue to Questionnaire
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
-            console.log('🔐 DEBUG: Security verification modal content updated');
+            console.log('🔐 DEBUG: Compact security verification modal created');
         }
         
         // Initialize inline reCAPTCHA
