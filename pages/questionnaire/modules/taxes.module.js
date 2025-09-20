@@ -648,7 +648,7 @@ export class TaxesModule {
         dropdownContainer.style.flex = '0 0 375px';
 
         const corporateTaxModelComponent = new MultiSelect({
-            id: 'corporateTaxModel',
+            id: 'corporateTaxPurpose', // Changed to get purpose-custom-indicator styling
             placeholder: 'Search or select corporate tax modeling approach...',
             options: this.corporateTaxOptions,
             allowCustom: true,
@@ -698,7 +698,7 @@ export class TaxesModule {
         dropdownContainer.style.flex = '0 0 375px';
 
         const vatModelComponent = new MultiSelect({
-            id: 'valueTaxModel',
+            id: 'vatPurpose', // Changed to get purpose-custom-indicator styling
             placeholder: 'Search or select VAT modeling approach...',
             options: this.vatOptions,
             allowCustom: true,
