@@ -1,12 +1,10 @@
-/* Add this CSS to your questionnaire.css or main stylesheet */
-
 /* Spinning animation for loading indicators */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-/* Enhanced security check button styles */
+/* Security check button styles */
 .security-check-btn {
     background: rgba(139, 92, 246, 0.2) !important;
     border: 1px solid rgba(139, 92, 246, 0.4) !important;
@@ -128,4 +126,49 @@
 .status-message .icon {
     font-size: 2.5rem;
     margin-bottom: 20px;
+}
+
+/* Hide old modal styles */
+#submissionRecaptchaModal {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Ensure no conflicts with existing modal styles */
+.modal-overlay.submission-recaptcha-modal {
+    display: none !important;
+}
+
+/* Additional animation keyframes for consistency */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Smooth transitions for content changes */
+.question-content {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .completion-container {
+        padding: 40px 20px;
+    }
+    
+    .completion-container h3 {
+        font-size: 1.5rem;
+    }
+    
+    .security-check-btn,
+    .final-submit-btn {
+        width: 100%;
+        max-width: 300px;
+    }
 }

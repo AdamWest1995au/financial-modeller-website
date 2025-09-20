@@ -728,6 +728,7 @@ export class QuestionnaireEngine {
         if (this.nextBtn) {
             this.nextBtn.textContent = 'Complete Questionnaire';
             this.nextBtn.disabled = false;
+            // FIXED: Use the new inline security check instead of modal
             this.nextBtn.onclick = () => this.showSimpleSecurityCheck();
         }
         
@@ -996,242 +997,9 @@ export class QuestionnaireEngine {
         }
     }
 
-    // OLD METHOD (for backwards compatibility) - Shows modal-based reCAPTCHA
-    showSubmissionRecaptcha() {
-        console.log('🔒 Showing submission reCAPTCHA...');
-        
-        // Store reference to engine for the callback
-        window.currentQuestionnaireEngine = this;
-        
-        // Clean up any existing reCAPTCHA first
-        this.cleanupSubmissionRecaptcha();
-        
-        // First, check if the modal exists
-        const submissionModal = document.getElementById('submissionRecaptchaModal');
-        console.log('Submission modal found:', !!submissionModal);
-        
-        if (submissionModal) {
-            // Debug: Check current modal state
-            console.log('Modal current classes:', submissionModal.className);
-            console.log('Modal current display:', window.getComputedStyle(submissionModal).display);
-            
-            // Force show the modal with multiple approaches
-            submissionModal.style.display = 'flex';
-            submissionModal.style.visibility = 'visible';
-            submissionModal.style.opacity = '1';
-            submissionModal.style.zIndex = '10000';
-            submissionModal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            
-            // Debug: Check if modal is now visible
-            setTimeout(() => {
-                const modalRect = submissionModal.getBoundingClientRect();
-                console.log('Modal position after show:', modalRect);
-                console.log('Modal computed display:', window.getComputedStyle(submissionModal).display);
-            }, 100);
-            
-            // Ensure reCAPTCHA content is visible
-            const recaptchaContent = submissionModal.querySelector('.recaptcha-content');
-            const loadingContent = submissionModal.querySelector('.submission-loading');
-            
-            if (recaptchaContent) {
-                recaptchaContent.style.display = 'block';
-                console.log('reCAPTCHA content shown');
-            }
-            if (loadingContent) {
-                loadingContent.style.display = 'none';
-                console.log('Loading content hidden');
-            }
-            
-            // FIXED: Properly reset and render reCAPTCHA
-            setTimeout(() => {
-                if (window.grecaptcha) {
-                    try {
-                        console.log('Attempting to render reCAPTCHA...');
-                        const submissionRecaptchaElement = document.getElementById('submissionRecaptcha');
-                        
-                        if (submissionRecaptchaElement) {
-                            console.log('reCAPTCHA element found, resetting...');
-                            
-                            // CRITICAL FIX: Completely clear the element and create a new unique container
-                            submissionRecaptchaElement.innerHTML = '';
-                            
-                            // Create a new div with a unique ID to avoid the "already rendered" error
-                            const newRecaptchaDiv = document.createElement('div');
-                            newRecaptchaDiv.id = 'submissionRecaptcha-' + Date.now(); // Unique ID
-                            submissionRecaptchaElement.appendChild(newRecaptchaDiv);
-                            
-                            // Render reCAPTCHA in the new container
-                            const widgetId = window.grecaptcha.render(newRecaptchaDiv, {
-                                'sitekey': this.config.recaptchaSiteKey,
-                                'callback': 'onSubmissionRecaptchaComplete'
-                            });
-                            
-                            console.log('reCAPTCHA rendered successfully with widget ID:', widgetId);
-                            
-                            // Store widget ID for future cleanup
-                            this.submissionRecaptchaWidgetId = widgetId;
-                            
-                        } else {
-                            console.error('submissionRecaptcha element not found');
-                        }
-                    } catch (error) {
-                        console.warn('reCAPTCHA render failed:', error);
-                        
-                        // Fallback: Try to use the existing reCAPTCHA if it's already rendered
-                        console.log('Attempting fallback - using existing reCAPTCHA');
-                        const existingRecaptcha = submissionModal.querySelector('.g-recaptcha');
-                        if (existingRecaptcha) {
-                            console.log('Found existing reCAPTCHA widget');
-                        }
-                    }
-                } else {
-                    console.warn('grecaptcha not available');
-                }
-            }, 200);
-            
-        } else {
-            console.error('Submission reCAPTCHA modal not found');
-            
-            // Create the modal if it doesn't exist
-            this.createSubmissionModal();
-            
-            // Try again after creation
-            setTimeout(() => {
-                this.showSubmissionRecaptcha();
-            }, 100);
-        }
-    }
+    // REMOVED: Old modal-based reCAPTCHA method - now using inline security check only
 
-    // Add cleanup method for reCAPTCHA
-    cleanupSubmissionRecaptcha() {
-        if (this.submissionRecaptchaWidgetId !== undefined && window.grecaptcha) {
-            try {
-                window.grecaptcha.reset(this.submissionRecaptchaWidgetId);
-                console.log('reCAPTCHA widget reset successfully');
-            } catch (error) {
-                console.warn('reCAPTCHA reset failed:', error);
-            }
-        }
-        this.submissionRecaptchaWidgetId = undefined;
-    }
-
-    // Add this new method to create the modal if it doesn't exist
-    createSubmissionModal() {
-        console.log('Creating submission reCAPTCHA modal...');
-        
-        const modalHTML = `
-            <div class="modal-overlay" id="submissionRecaptchaModal">
-                <div class="submission-recaptcha-modal">
-                    <div class="recaptcha-header">
-                        <div class="recaptcha-icon">🔒</div>
-                        <h2 class="recaptcha-title">Final Security Check</h2>
-                        <p class="recaptcha-description">Please complete one final security verification before submitting your responses.</p>
-                    </div>
-                    
-                    <div class="recaptcha-content">
-                        <div class="recaptcha-container">
-                            <div class="g-recaptcha" id="submissionRecaptcha" data-sitekey="${this.config.recaptchaSiteKey}" data-callback="onSubmissionRecaptchaComplete"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="submission-loading" id="submissionLoading" style="display: none;">
-                        <div class="loading-spinner" style="display: inline-block; width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
-                        <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem;">Submitting your questionnaire...</p>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Add to document body
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
-        // Add CSS if not already present
-        if (!document.getElementById('submission-modal-styles')) {
-            const style = document.createElement('style');
-            style.id = 'submission-modal-styles';
-            style.textContent = `
-                .modal-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.8);
-                    display: none;
-                    justify-content: center;
-                    align-items: center;
-                    z-index: 9999;
-                    opacity: 0;
-                    transition: opacity 0.3s ease;
-                }
-                
-                .modal-overlay.active {
-                    display: flex !important;
-                    opacity: 1 !important;
-                }
-                
-                .submission-recaptcha-modal {
-                    background: rgba(0, 0, 0, 0.9);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 16px;
-                    padding: 40px;
-                    max-width: 500px;
-                    width: 90%;
-                    text-align: center;
-                    transform: scale(0.8);
-                    transition: transform 0.3s ease;
-                }
-                
-                .modal-overlay.active .submission-recaptcha-modal {
-                    transform: scale(1);
-                }
-                
-                .recaptcha-header {
-                    margin-bottom: 30px;
-                }
-                
-                .recaptcha-icon {
-                    font-size: 3rem;
-                    margin-bottom: 20px;
-                }
-                
-                .recaptcha-title {
-                    font-size: 1.6rem;
-                    color: #ffffff;
-                    margin-bottom: 10px;
-                    font-weight: 600;
-                }
-                
-                .recaptcha-description {
-                    color: rgba(255, 255, 255, 0.6);
-                    font-size: 1rem;
-                    line-height: 1.5;
-                }
-                
-                .recaptcha-content {
-                    margin-bottom: 20px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                }
-                
-                .recaptcha-container {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 78px;
-                }
-                
-                @keyframes spin {
-                    to { transform: rotate(360deg); }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        console.log('Submission modal created');
-    }
+    // REMOVED: Old modal cleanup methods - using inline security check only
 
     proceedWithSubmission(recaptchaToken) {
         console.log('📤 Proceeding with submission...');
@@ -1714,13 +1482,13 @@ window.previousQuestion = function() {
     }
 };
 
-// Global reCAPTCHA callbacks
+// Global reCAPTCHA callbacks - Updated for inline security check only
 window.onSubmissionRecaptchaComplete = function(token) {
-    console.log('Global submission reCAPTCHA callback triggered');
-    if (window.currentQuestionnaireEngine) {
-        window.currentQuestionnaireEngine.proceedWithSubmission(token);
-    } else if (questionnaireEngine) {
-        questionnaireEngine.proceedWithSubmission(token);
+    console.log('Global submission reCAPTCHA callback triggered - using inline approach');
+    if (window.questionnaireEngine) {
+        // For inline reCAPTCHA, the token is handled by onInlineRecaptchaComplete
+        // This callback shouldn't be used anymore, but keeping for safety
+        console.warn('Old reCAPTCHA callback triggered - this should not happen with inline security check');
     } else {
         console.error('No questionnaire engine instance available for reCAPTCHA callback');
     }
