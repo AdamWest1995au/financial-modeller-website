@@ -1,6 +1,7 @@
 // /pages/questionnaire/modules/taxes.module.js - FIXED VERSION WITH MULTISELECT AND CONDITIONAL LOGIC
 import { BaseComponent } from '../components/base-component.js';
 import { Toggle } from '../components/toggle.js';
+import { MultiSelect } from '../components/multi-select.js';
 import { GenericPlaceholder } from '../components/generic-placeholder.js';
 
 export class TaxesModule {
@@ -646,29 +647,21 @@ export class TaxesModule {
         dropdownContainer.className = 'corporate-tax-dropdown-container';
         dropdownContainer.style.flex = '0 0 375px';
 
-        // Create the exact HTML structure like modeling approach dropdown
-        dropdownContainer.innerHTML = `
-            <div class="corporate-tax-dropdown">
-                <input 
-                    type="text" 
-                    class="corporate-tax-input" 
-                    id="corporateTaxModel"
-                    placeholder="Search or select corporate tax modeling approach..."
-                    autocomplete="off"
-                >
-                <div class="corporate-tax-options" id="corporateTaxOptions">
-                    ${this.corporateTaxOptions.map(option => `
-                        <div class="corporate-tax-option" data-value="${option.value}">${option.text}</div>
-                    `).join('')}
-                </div>
-                <div class="corporate-tax-custom-indicator" id="corporateTaxCustomIndicator">
-                    Press Enter to add your custom option
-                </div>
-            </div>
-        `;
+        const corporateTaxModelComponent = new MultiSelect({
+            id: 'corporateTaxModel',
+            placeholder: 'Search or select corporate tax modeling approach...',
+            options: this.corporateTaxOptions,
+            allowCustom: true,
+            required: false,
+            onChange: (selectedValues) => {
+                this.userHasInteracted = true;
+                this.responses.corporateTaxModel = selectedValues;
+                this.onResponseChange();
+            }
+        });
 
-        // Store references and setup event listeners
-        this.setupCorporateTaxEvents(dropdownContainer);
+        this.components.corporateTaxModel = corporateTaxModelComponent;
+        corporateTaxModelComponent.render(dropdownContainer);
 
         row.appendChild(textDiv);
         row.appendChild(dropdownContainer);
@@ -704,29 +697,21 @@ export class TaxesModule {
         dropdownContainer.className = 'vat-dropdown-container';
         dropdownContainer.style.flex = '0 0 375px';
 
-        // Create the exact HTML structure like modeling approach dropdown
-        dropdownContainer.innerHTML = `
-            <div class="vat-dropdown">
-                <input 
-                    type="text" 
-                    class="vat-input" 
-                    id="vatModel"
-                    placeholder="Search or select VAT modeling approach..."
-                    autocomplete="off"
-                >
-                <div class="vat-options" id="vatOptions">
-                    ${this.vatOptions.map(option => `
-                        <div class="vat-option" data-value="${option.value}">${option.text}</div>
-                    `).join('')}
-                </div>
-                <div class="vat-custom-indicator" id="vatCustomIndicator">
-                    Press Enter to add your custom option
-                </div>
-            </div>
-        `;
+        const vatModelComponent = new MultiSelect({
+            id: 'valueTaxModel',
+            placeholder: 'Search or select VAT modeling approach...',
+            options: this.vatOptions,
+            allowCustom: true,
+            required: false,
+            onChange: (selectedValues) => {
+                this.userHasInteracted = true;
+                this.responses.valueTaxModel = selectedValues;
+                this.onResponseChange();
+            }
+        });
 
-        // Store references and setup event listeners
-        this.setupVATEvents(dropdownContainer);
+        this.components.valueTaxModel = vatModelComponent;
+        vatModelComponent.render(dropdownContainer);
 
         row.appendChild(textDiv);
         row.appendChild(dropdownContainer);
@@ -833,12 +818,12 @@ export class TaxesModule {
                 this.components.valueTax.setValue(vatValue);
             }
             
-            if (this.corporateTaxInput && this.responses.corporateTaxModel.length > 0) {
-                this.corporateTaxInput.setSelectedValues(this.responses.corporateTaxModel);
+            if (this.components.corporateTaxModel) {
+                this.components.corporateTaxModel.setValue(this.responses.corporateTaxModel);
             }
             
-            if (this.vatInput && this.responses.valueTaxModel.length > 0) {
-                this.vatInput.setSelectedValues(this.responses.valueTaxModel);
+            if (this.components.valueTaxModel) {
+                this.components.valueTaxModel.setValue(this.responses.valueTaxModel);
             }
             
             // Update conditional visibility
