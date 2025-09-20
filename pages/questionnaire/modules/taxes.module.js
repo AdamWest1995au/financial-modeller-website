@@ -573,6 +573,350 @@ export class TaxesModule {
         this.onResponseChange();
     }
 
+    setupCorporateTaxEvents(container) {
+        const corporateTaxInput = container.querySelector('#corporateTaxModel');
+        const corporateTaxOptions = container.querySelector('#corporateTaxOptions');
+        const corporateTaxCustomIndicator = container.querySelector('#corporateTaxCustomIndicator');
+        
+        if (!corporateTaxInput || !corporateTaxOptions || !corporateTaxCustomIndicator) return;
+
+        // Store references
+        this.corporateTaxInput = corporateTaxInput;
+        this.corporateTaxOptions = corporateTaxOptions;
+        this.corporateTaxCustomIndicator = corporateTaxCustomIndicator;
+
+        let selectedValues = [];
+
+        // Add methods to the input for external access
+        corporateTaxInput.getSelectedValues = function() {
+            return selectedValues;
+        };
+
+        corporateTaxInput.setSelectedValues = function(values) {
+            selectedValues = values;
+            updateInputDisplay();
+            updateOptionsDisplay();
+        };
+
+        function updateInputDisplay() {
+            if (selectedValues.length === 0) {
+                corporateTaxInput.placeholder = 'Search or select corporate tax modeling approach...';
+                corporateTaxInput.value = '';
+            } else {
+                const selectedTexts = selectedValues.map(function(value) {
+                    const option = corporateTaxOptions.querySelector(`[data-value="${value}"]`);
+                    return option ? option.textContent : value;
+                });
+                corporateTaxInput.value = selectedTexts.join(', ');
+            }
+        }
+
+        function updateOptionsDisplay() {
+            const options = corporateTaxOptions.querySelectorAll('.corporate-tax-option');
+            options.forEach(function(option) {
+                const value = option.dataset.value;
+                if (selectedValues.includes(value)) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+        }
+
+        // Show dropdown on focus
+        corporateTaxInput.addEventListener('focus', () => {
+            corporateTaxOptions.style.display = 'block';
+            this.filterCorporateTaxOptions('');
+        });
+
+        // Filter options and handle custom input as user types
+        corporateTaxInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            // Only filter if user is actually searching, not when we update the display
+            if (!selectedValues.some(function(val) { return corporateTaxInput.value.includes(val); })) {
+                this.filterCorporateTaxOptions(searchTerm);
+                corporateTaxOptions.style.display = 'block';
+                
+                // Show custom indicator for new text
+                if (searchTerm && !Array.from(corporateTaxOptions.querySelectorAll('.corporate-tax-option')).some(function(option) {
+                    return option.textContent.toLowerCase().includes(searchTerm);
+                })) {
+                    corporateTaxCustomIndicator.classList.add('show');
+                } else {
+                    corporateTaxCustomIndicator.classList.remove('show');
+                }
+            }
+            
+            this.updateCorporateTaxResponse();
+        });
+
+        // Handle option selection from dropdown (multi-select)
+        corporateTaxOptions.addEventListener('click', (e) => {
+            const option = e.target.closest('.corporate-tax-option');
+            if (option) {
+                const value = option.dataset.value;
+                
+                if (selectedValues.includes(value)) {
+                    // Remove from selection
+                    selectedValues = selectedValues.filter(function(v) { return v !== value; });
+                } else {
+                    // Add to selection
+                    selectedValues.push(value);
+                }
+                
+                updateInputDisplay();
+                updateOptionsDisplay();
+                corporateTaxCustomIndicator.classList.remove('show');
+                this.updateCorporateTaxResponse();
+            }
+        });
+
+        // Handle Enter key to add custom input
+        corporateTaxInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const currentValue = corporateTaxInput.value.trim();
+                
+                // Extract the last part after comma (what user is currently typing)
+                const parts = currentValue.split(',').map(function(part) { return part.trim(); });
+                const lastPart = parts[parts.length - 1];
+                
+                // Check if the last part is new custom text
+                const isExistingOption = Array.from(corporateTaxOptions.querySelectorAll('.corporate-tax-option')).find(function(option) {
+                    return option.textContent.toLowerCase() === lastPart.toLowerCase();
+                });
+                
+                if (lastPart && !isExistingOption && !selectedValues.includes(lastPart)) {
+                    // Add custom text to selections
+                    selectedValues.push(lastPart);
+                    updateInputDisplay();
+                    // Keep dropdown open for more selections
+                    corporateTaxOptions.style.display = 'block';
+                    this.filterCorporateTaxOptions('');
+                }
+                
+                corporateTaxCustomIndicator.classList.remove('show');
+                this.updateCorporateTaxResponse();
+            } else if (e.key === 'Escape') {
+                corporateTaxOptions.style.display = 'none';
+                corporateTaxCustomIndicator.classList.remove('show');
+                this.updateCorporateTaxResponse();
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!corporateTaxInput.contains(e.target) && !corporateTaxOptions.contains(e.target)) {
+                corporateTaxOptions.style.display = 'none';
+                corporateTaxCustomIndicator.classList.remove('show');
+                this.updateCorporateTaxResponse();
+            }
+        });
+
+        // Clear selection when input is manually cleared
+        corporateTaxInput.addEventListener('keyup', (e) => {
+            if (corporateTaxInput.value === '') {
+                selectedValues = [];
+                updateOptionsDisplay();
+                corporateTaxCustomIndicator.classList.remove('show');
+                this.updateCorporateTaxResponse();
+            }
+        });
+    }
+
+    setupVATEvents(container) {
+        const vatInput = container.querySelector('#vatModel');
+        const vatOptions = container.querySelector('#vatOptions');
+        const vatCustomIndicator = container.querySelector('#vatCustomIndicator');
+        
+        if (!vatInput || !vatOptions || !vatCustomIndicator) return;
+
+        // Store references
+        this.vatInput = vatInput;
+        this.vatOptions = vatOptions;
+        this.vatCustomIndicator = vatCustomIndicator;
+
+        let selectedValues = [];
+
+        // Add methods to the input for external access
+        vatInput.getSelectedValues = function() {
+            return selectedValues;
+        };
+
+        vatInput.setSelectedValues = function(values) {
+            selectedValues = values;
+            updateInputDisplay();
+            updateOptionsDisplay();
+        };
+
+        function updateInputDisplay() {
+            if (selectedValues.length === 0) {
+                vatInput.placeholder = 'Search or select VAT modeling approach...';
+                vatInput.value = '';
+            } else {
+                const selectedTexts = selectedValues.map(function(value) {
+                    const option = vatOptions.querySelector(`[data-value="${value}"]`);
+                    return option ? option.textContent : value;
+                });
+                vatInput.value = selectedTexts.join(', ');
+            }
+        }
+
+        function updateOptionsDisplay() {
+            const options = vatOptions.querySelectorAll('.vat-option');
+            options.forEach(function(option) {
+                const value = option.dataset.value;
+                if (selectedValues.includes(value)) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+        }
+
+        // Show dropdown on focus
+        vatInput.addEventListener('focus', () => {
+            vatOptions.style.display = 'block';
+            this.filterVATOptions('');
+        });
+
+        // Filter options and handle custom input as user types
+        vatInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            // Only filter if user is actually searching, not when we update the display
+            if (!selectedValues.some(function(val) { return vatInput.value.includes(val); })) {
+                this.filterVATOptions(searchTerm);
+                vatOptions.style.display = 'block';
+                
+                // Show custom indicator for new text
+                if (searchTerm && !Array.from(vatOptions.querySelectorAll('.vat-option')).some(function(option) {
+                    return option.textContent.toLowerCase().includes(searchTerm);
+                })) {
+                    vatCustomIndicator.classList.add('show');
+                } else {
+                    vatCustomIndicator.classList.remove('show');
+                }
+            }
+            
+            this.updateVATResponse();
+        });
+
+        // Handle option selection from dropdown (multi-select)
+        vatOptions.addEventListener('click', (e) => {
+            const option = e.target.closest('.vat-option');
+            if (option) {
+                const value = option.dataset.value;
+                
+                if (selectedValues.includes(value)) {
+                    // Remove from selection
+                    selectedValues = selectedValues.filter(function(v) { return v !== value; });
+                } else {
+                    // Add to selection
+                    selectedValues.push(value);
+                }
+                
+                updateInputDisplay();
+                updateOptionsDisplay();
+                vatCustomIndicator.classList.remove('show');
+                this.updateVATResponse();
+            }
+        });
+
+        // Handle Enter key to add custom input
+        vatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const currentValue = vatInput.value.trim();
+                
+                // Extract the last part after comma (what user is currently typing)
+                const parts = currentValue.split(',').map(function(part) { return part.trim(); });
+                const lastPart = parts[parts.length - 1];
+                
+                // Check if the last part is new custom text
+                const isExistingOption = Array.from(vatOptions.querySelectorAll('.vat-option')).find(function(option) {
+                    return option.textContent.toLowerCase() === lastPart.toLowerCase();
+                });
+                
+                if (lastPart && !isExistingOption && !selectedValues.includes(lastPart)) {
+                    // Add custom text to selections
+                    selectedValues.push(lastPart);
+                    updateInputDisplay();
+                    // Keep dropdown open for more selections
+                    vatOptions.style.display = 'block';
+                    this.filterVATOptions('');
+                }
+                
+                vatCustomIndicator.classList.remove('show');
+                this.updateVATResponse();
+            } else if (e.key === 'Escape') {
+                vatOptions.style.display = 'none';
+                vatCustomIndicator.classList.remove('show');
+                this.updateVATResponse();
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!vatInput.contains(e.target) && !vatOptions.contains(e.target)) {
+                vatOptions.style.display = 'none';
+                vatCustomIndicator.classList.remove('show');
+                this.updateVATResponse();
+            }
+        });
+
+        // Clear selection when input is manually cleared
+        vatInput.addEventListener('keyup', (e) => {
+            if (vatInput.value === '') {
+                selectedValues = [];
+                updateOptionsDisplay();
+                vatCustomIndicator.classList.remove('show');
+                this.updateVATResponse();
+            }
+        });
+    }
+
+    filterCorporateTaxOptions(searchTerm) {
+        if (!this.corporateTaxOptions) return;
+        
+        const options = this.corporateTaxOptions.querySelectorAll('.corporate-tax-option');
+        options.forEach(option => {
+            const optionText = option.textContent.toLowerCase();
+            const matches = optionText.includes(searchTerm);
+            option.style.display = matches ? 'block' : 'none';
+        });
+    }
+
+    filterVATOptions(searchTerm) {
+        if (!this.vatOptions) return;
+        
+        const options = this.vatOptions.querySelectorAll('.vat-option');
+        options.forEach(option => {
+            const optionText = option.textContent.toLowerCase();
+            const matches = optionText.includes(searchTerm);
+            option.style.display = matches ? 'block' : 'none';
+        });
+    }
+
+    updateCorporateTaxResponse() {
+        if (!this.corporateTaxInput) return;
+        
+        const selectedValues = this.corporateTaxInput.getSelectedValues ? this.corporateTaxInput.getSelectedValues() : [];
+        this.responses.corporateTaxModel = selectedValues;
+        this.userHasInteracted = true;
+        this.onResponseChange();
+    }
+
+    updateVATResponse() {
+        if (!this.vatInput) return;
+        
+        const selectedValues = this.vatInput.getSelectedValues ? this.vatInput.getSelectedValues() : [];
+        this.responses.valueTaxModel = selectedValues;
+        this.userHasInteracted = true;
+        this.onResponseChange();
+    }
+
     createVATQuestion() {
         const section = document.createElement('div');
         section.className = 'parameter-section';
@@ -648,7 +992,7 @@ export class TaxesModule {
         dropdownContainer.style.flex = '0 0 375px';
 
         const corporateTaxModelComponent = new MultiSelect({
-            id: 'corporateTaxPurpose', // Changed to get purpose-custom-indicator styling
+            id: 'purposeCorporateTax', // Using 'purpose' prefix to get purple styling
             placeholder: 'Search or select corporate tax modeling approach...',
             options: this.corporateTaxOptions,
             allowCustom: true,
@@ -698,7 +1042,7 @@ export class TaxesModule {
         dropdownContainer.style.flex = '0 0 375px';
 
         const vatModelComponent = new MultiSelect({
-            id: 'vatPurpose', // Changed to get purpose-custom-indicator styling
+            id: 'purposeVAT', // Using 'purpose' prefix to get purple styling
             placeholder: 'Search or select VAT modeling approach...',
             options: this.vatOptions,
             allowCustom: true,
