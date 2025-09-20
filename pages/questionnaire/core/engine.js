@@ -291,6 +291,13 @@ export class QuestionnaireEngine {
             return;
         }
         
+        // CRITICAL FIX: Check if we've exceeded the module count before processing
+        if (this.currentModuleIndex >= this.modules.length) {
+            console.log('🎉 DEBUG: Current module index exceeds total modules - COMPLETING QUESTIONNAIRE');
+            this.completeQuestionnaire();
+            return;
+        }
+        
         // Make sure we're showing a visible module
         while (this.currentModuleIndex < this.modules.length) {
             const currentModule = this.modules[this.currentModuleIndex];
@@ -310,6 +317,13 @@ export class QuestionnaireEngine {
                 this.currentModuleIndex++;
                 continue;
             }
+        }
+        
+        // ADDITIONAL CHECK: After the while loop, verify we haven't exceeded bounds
+        if (this.currentModuleIndex >= this.modules.length) {
+            console.log('🎉 DEBUG: After skipping modules, exceeded bounds - COMPLETING QUESTIONNAIRE');
+            this.completeQuestionnaire();
+            return;
         }
         
         const currentModule = this.modules[this.currentModuleIndex];
@@ -585,7 +599,7 @@ export class QuestionnaireEngine {
         }
     }
 
-    // FIXED WITH EXTENSIVE DEBUG LOGGING
+    // FIXED WITH EXTENSIVE DEBUG LOGGING AND PROPER COMPLETION DETECTION
     handleNext() {
         console.log('🔍 DEBUG: handleNext called');
         console.log('🔍 DEBUG: isProcessingNavigation:', this.isProcessingNavigation);
@@ -611,8 +625,9 @@ export class QuestionnaireEngine {
             console.log('🔍 DEBUG: Total modules:', this.modules.length);
             
             if (!currentModule) {
-                console.log('🔍 DEBUG: No current module, processing navigation false');
+                console.log('🔍 DEBUG: No current module - COMPLETING QUESTIONNAIRE');
                 this.isProcessingNavigation = false;
+                this.completeQuestionnaire();
                 return;
             }
             
@@ -640,10 +655,14 @@ export class QuestionnaireEngine {
                 }
             }
             
-            // Find next visible module instead of just incrementing
+            // CRITICAL FIX: Check if we're at the last visible module
             console.log('🔍 DEBUG: Looking for next visible module...');
             const nextModuleIndex = this.findNextVisibleModule();
             console.log('🔍 DEBUG: Next module index:', nextModuleIndex);
+            
+            // Additional check: if we're at the last module and no next visible module
+            const isCurrentLastModule = this.currentModuleIndex === this.modules.length - 1;
+            console.log('🔍 DEBUG: Is current last module:', isCurrentLastModule);
             
             if (nextModuleIndex !== -1) {
                 console.log('🔍 DEBUG: Found next module, navigating to index:', nextModuleIndex);
@@ -655,7 +674,11 @@ export class QuestionnaireEngine {
             } else {
                 console.log('🔍 DEBUG: No next module found - CALLING COMPLETE QUESTIONNAIRE');
                 this.isProcessingNavigation = false;
+                
+                // FORCE COMPLETION - don't call showCurrentModule
+                console.log('🎉 FORCING COMPLETION - All modules processed');
                 this.completeQuestionnaire();
+                return; // Important: return here to prevent any further processing
             }
             
         } catch (error) {
@@ -686,9 +709,26 @@ export class QuestionnaireEngine {
         console.log('🎉 DEBUG: completeQuestionnaire called!');
         console.log('🎉 DEBUG: Questionnaire completed! Responses:', this.responses);
         
+        // CRITICAL: Stop any further module processing
+        this.isProcessingNavigation = true;
+        
+        // CRITICAL: Force current module index to beyond bounds to prevent any module from showing
+        this.currentModuleIndex = this.modules.length;
+        
         // Update progress to 100%
         this.updateProgress(100);
         console.log('🎉 DEBUG: Progress updated to 100%');
+        
+        // Hide all module-related elements
+        if (this.titleRowHeader) {
+            this.titleRowHeader.style.display = 'none';
+        }
+        if (this.questionTitle) {
+            this.questionTitle.style.display = 'none';
+        }
+        if (this.questionDescription) {
+            this.questionDescription.style.display = 'none';
+        }
         
         // Hide navigation buttons for completion
         if (this.backBtn) {
@@ -709,7 +749,7 @@ export class QuestionnaireEngine {
         // Show security verification modal directly (matching your second image)
         this.showSecurityVerificationModal();
         
-        console.log('🎉 DEBUG: completeQuestionnaire finished');
+        console.log('🎉 DEBUG: completeQuestionnaire finished - processing stopped');
     }
 
     /**
