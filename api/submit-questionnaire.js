@@ -110,45 +110,94 @@ function checkSpam(formData) {
 }
 
 /**
- * Prepare data for database insertion
+ * Prepare data for database insertion - COMPLETE VERSION WITH ALL FIELDS
  */
 function prepareDbData(formData, clientIP, userAgent) {
   return {
-    // Required fields
+    // ==================== REQUIRED FIELDS ====================
     full_name: formData.full_name.trim(),
     company_name: formData.company_name.trim(),
     email: formData.email.trim().toLowerCase(),
     phone: formData.phone ? formData.phone.trim() : null,
     country_name: formData.country_name ? formData.country_name.trim() : null,
     
-    // Optional location data
+    // ==================== OPTIONAL LOCATION DATA ====================
     country_code: formData.country_code ? formData.country_code.trim() : null,
     country_flag: formData.country_flag || null,
     
-    // Industry information
+    // ==================== INDUSTRY INFORMATION ====================
     industry_dropdown: formData.industry_dropdown || null,
     industry_freetext: formData.industry_freetext || null,
     
-    // NEW: Conditional question fields
+    // ==================== CONDITIONAL QUESTION FIELDS ====================
     quick_parameters_choice: formData.quick_parameters_choice || null,
     model_periodicity: formData.model_periodicity || null,
     historical_start_date: formData.historical_start_date || null,
     forecast_years: formData.forecast_years || null,
     
-    // Business model questions (JSONB fields)
+    // ==================== BUSINESS MODEL QUESTIONS (JSONB FIELDS) ====================
     model_purpose_selected: formData.model_purpose_selected || null,
     model_purpose_freetext: formData.model_purpose_freetext || null,
     modeling_approach: formData.modeling_approach || null,
+    
+    // ==================== REVENUE FIELDS ====================
     revenue_generation_selected: formData.revenue_generation_selected || null,
     revenue_generation_freetext: formData.revenue_generation_freetext || null,
+    charging_models: formData.charging_models || null,
+    product_procurement_selected: formData.product_procurement_selected || null,
+    product_procurement_freetext: formData.product_procurement_freetext || null,
+    sales_channels_selected: formData.sales_channels_selected || null,
+    sales_channels_freetext: formData.sales_channels_freetext || null,
     revenue_staff: formData.revenue_staff || null,
     
-    // Metadata
+    // ==================== ASSETS FIELDS ====================
+    asset_types_selected: formData.asset_types_selected || null,
+    asset_types_freetext: formData.asset_types_freetext || null,
+    multiple_depreciation_methods: formData.multiple_depreciation_methods || null,
+    units_of_production_depreciation: formData.units_of_production_depreciation || null,
+    manufactures_products: formData.manufactures_products || null,
+    
+    // ==================== WORKING CAPITAL FIELDS ====================
+    multiple_inventory_methods: formData.multiple_inventory_methods || null,
+    inventory_days_outstanding: formData.inventory_days_outstanding || null,
+    prepaid_expenses_days: formData.prepaid_expenses_days || null,
+    
+    // ==================== TAXES FIELDS ====================
+    corporate_tax_enabled: formData.corporate_tax_enabled || null,
+    value_tax_enabled: formData.value_tax_enabled || null,
+    corporate_tax_model: formData.corporate_tax_model || null,
+    corporate_tax_model_custom: formData.corporate_tax_model_custom || null,
+    value_tax_model: formData.value_tax_model || null,
+    value_tax_model_custom: formData.value_tax_model_custom || null,
+    
+    // ==================== CUSTOMIZATION FIELDS ====================
+    customization_revenue: formData.customization_revenue || null,
+    customization_cogs: formData.customization_cogs || null,
+    customization_expenses: formData.customization_expenses || null,
+    customization_assets: formData.customization_assets || null,
+    customization_working_capital: formData.customization_working_capital || null,
+    customization_taxes: formData.customization_taxes || null,
+    customization_debt: formData.customization_debt || null,
+    customization_equity: formData.customization_equity || null,
+    customization_summary: formData.customization_summary || null,
+    
+    // ==================== EQUITY FINANCING FIELDS ====================
+    equity_financing_approach: formData.equity_financing_approach || null,
+    equity_financing_custom: formData.equity_financing_custom || null,
+    equity_financing_details: formData.equity_financing_details || null,
+    
+    // ==================== QUESTIONNAIRE COMPLETION TRACKING ====================
+    questionnaire_completion_status: formData.questionnaire_completion_status || 'pending',
+    total_completion_time_seconds: formData.total_completion_time_seconds || null,
+    modules_completed: formData.modules_completed || null,
+    skipped_modules: formData.skipped_modules || null,
+    
+    // ==================== METADATA ====================
     ip_address: clientIP,
     user_agent: userAgent,
     submission_count: 1,
     
-    // Honeypot fields for spam detection
+    // ==================== HONEYPOT FIELDS FOR SPAM DETECTION ====================
     honeypot_website: formData.honeypot_website || null,
     honeypot_phone: formData.honeypot_phone || null
     
@@ -226,26 +275,82 @@ export default async function handler(req, res) {
       })
     }
 
+    // COMPLETE FORM DATA LOGGING - ALL FIELDS
     console.log('📝 Form data received:', {
+      // Required fields
       full_name: formData.full_name ? '✓' : '✗',
       company_name: formData.company_name ? '✓' : '✗',
       email: formData.email ? '✓' : '✗',
       phone: formData.phone ? '✓' : '✗',
       country_name: formData.country_name ? '✓' : '✗',
-      // NEW: Log conditional question fields
+      
+      // Parameters
       quick_parameters_choice: formData.quick_parameters_choice ? '✓' : '✗',
       model_periodicity: formData.model_periodicity ? '✓' : '✗',
       historical_start_date: formData.historical_start_date ? '✓' : '✗',
       forecast_years: formData.forecast_years ? '✓' : '✗',
+      
+      // Business model
+      model_purpose_selected: formData.model_purpose_selected ? '✓' : '✗',
+      modeling_approach: formData.modeling_approach ? '✓' : '✗',
+      
+      // Revenue fields
+      revenue_generation_selected: formData.revenue_generation_selected ? '✓' : '✗',
+      charging_models: formData.charging_models ? '✓' : '✗',
+      product_procurement_selected: formData.product_procurement_selected ? '✓' : '✗',
+      sales_channels_selected: formData.sales_channels_selected ? '✓' : '✗',
+      revenue_staff: formData.revenue_staff ? '✓' : '✗',
+      
+      // Assets fields
+      asset_types_selected: formData.asset_types_selected ? '✓' : '✗',
+      multiple_depreciation_methods: formData.multiple_depreciation_methods ? '✓' : '✗',
+      units_of_production_depreciation: formData.units_of_production_depreciation ? '✓' : '✗',
+      manufactures_products: formData.manufactures_products ? '✓' : '✗',
+      
+      // Working capital fields
+      multiple_inventory_methods: formData.multiple_inventory_methods ? '✓' : '✗',
+      inventory_days_outstanding: formData.inventory_days_outstanding ? '✓' : '✗',
+      prepaid_expenses_days: formData.prepaid_expenses_days ? '✓' : '✗',
+      
+      // Taxes fields
+      corporate_tax_enabled: formData.corporate_tax_enabled ? '✓' : '✗',
+      value_tax_enabled: formData.value_tax_enabled ? '✓' : '✗',
+      corporate_tax_model: formData.corporate_tax_model ? '✓' : '✗',
+      value_tax_model: formData.value_tax_model ? '✓' : '✗',
+      
+      // Customization fields
+      customization_revenue: formData.customization_revenue ? '✓' : '✗',
+      customization_cogs: formData.customization_cogs ? '✓' : '✗',
+      customization_expenses: formData.customization_expenses ? '✓' : '✗',
+      customization_assets: formData.customization_assets ? '✓' : '✗',
+      customization_working_capital: formData.customization_working_capital ? '✓' : '✗',
+      customization_taxes: formData.customization_taxes ? '✓' : '✗',
+      customization_debt: formData.customization_debt ? '✓' : '✗',
+      customization_equity: formData.customization_equity ? '✓' : '✗',
+      
+      // Completion tracking
+      questionnaire_completion_status: formData.questionnaire_completion_status ? '✓' : '✗',
+      total_completion_time_seconds: formData.total_completion_time_seconds ? '✓' : '✗',
+      modules_completed: formData.modules_completed ? '✓' : '✗',
+      skipped_modules: formData.skipped_modules ? '✓' : '✗',
+      
+      // Equity financing
+      equity_financing_approach: formData.equity_financing_approach ? '✓' : '✗',
+      equity_financing_details: formData.equity_financing_details ? '✓' : '✗',
+      
       hasRecaptchaToken: !!formData.recaptchaToken
     })
     
-    // NEW: Debug log for conditional question values
-    console.log('🔧 Conditional question values:', {
+    // Debug log with actual values (not just checkmarks) for key fields
+    console.log('🔧 Key field values debug:', {
       quick_parameters_choice: formData.quick_parameters_choice,
       model_periodicity: formData.model_periodicity,
-      historical_start_date: formData.historical_start_date,
-      forecast_years: formData.forecast_years
+      charging_models: formData.charging_models,
+      asset_types_selected: formData.asset_types_selected,
+      customization_revenue: formData.customization_revenue,
+      questionnaire_completion_status: formData.questionnaire_completion_status,
+      corporate_tax_enabled: formData.corporate_tax_enabled,
+      modules_completed: formData.modules_completed
     })
     
     // Check for spam
@@ -295,14 +400,16 @@ export default async function handler(req, res) {
 
     // Prepare data for database insertion
     const dbData = prepareDbData(formData, clientIP, userAgent)
-    console.log('📦 Database data prepared')
+    console.log('📦 Database data prepared with', Object.keys(dbData).length, 'fields')
     
-    // NEW: Debug log for database data being inserted
-    console.log('💾 Database data being inserted:', {
-      ...dbData,
-      // Don't log sensitive data, just show structure
-      email: dbData.email ? '[EMAIL]' : null,
-      phone: dbData.phone ? '[PHONE]' : null
+    // Debug log for database data being inserted (show structure, not sensitive data)
+    console.log('💾 Database data structure being inserted:', {
+      requiredFields: ['full_name', 'company_name', 'email', 'phone', 'country_name'].map(f => f + ': ' + (dbData[f] ? 'SET' : 'NULL')).join(', '),
+      parameterFields: ['quick_parameters_choice', 'model_periodicity', 'forecast_years'].map(f => f + ': ' + (dbData[f] ? 'SET' : 'NULL')).join(', '),
+      revenueFields: ['revenue_generation_selected', 'charging_models', 'revenue_staff'].map(f => f + ': ' + (dbData[f] ? 'SET' : 'NULL')).join(', '),
+      assetFields: ['asset_types_selected', 'multiple_depreciation_methods'].map(f => f + ': ' + (dbData[f] ? 'SET' : 'NULL')).join(', '),
+      customizationFields: ['customization_revenue', 'customization_cogs', 'customization_taxes'].map(f => f + ': ' + (dbData[f] ? 'SET' : 'NULL')).join(', '),
+      completionFields: ['questionnaire_completion_status', 'modules_completed'].map(f => f + ': ' + (dbData[f] ? 'SET' : 'NULL')).join(', ')
     })
 
     // Insert data into Supabase
@@ -332,22 +439,86 @@ export default async function handler(req, res) {
 
     console.log('✅ Data successfully inserted with ID:', data.id)
 
-    // Success response - return submission_id directly at root level
+    // COMPLETE SUCCESS RESPONSE - ALL FIELDS
     return res.status(200).json({ 
       success: true, 
       message: 'Questionnaire submitted successfully',
       submission_id: data.id, // This is what the frontend expects
       data: {
+        // Basic info
         id: data.id,
         created_at: data.created_at,
         full_name: data.full_name,
         company_name: data.company_name,
         email: data.email,
-        // NEW: Include conditional question fields in response
+        phone: data.phone,
+        country_name: data.country_name,
+        country_code: data.country_code,
+        industry_dropdown: data.industry_dropdown,
+        industry_freetext: data.industry_freetext,
+        
+        // Parameters
         quick_parameters_choice: data.quick_parameters_choice,
         model_periodicity: data.model_periodicity,
         historical_start_date: data.historical_start_date,
-        forecast_years: data.forecast_years
+        forecast_years: data.forecast_years,
+        
+        // Business model
+        model_purpose_selected: data.model_purpose_selected,
+        model_purpose_freetext: data.model_purpose_freetext,
+        modeling_approach: data.modeling_approach,
+        
+        // Revenue fields
+        revenue_generation_selected: data.revenue_generation_selected,
+        revenue_generation_freetext: data.revenue_generation_freetext,
+        charging_models: data.charging_models,
+        product_procurement_selected: data.product_procurement_selected,
+        product_procurement_freetext: data.product_procurement_freetext,
+        sales_channels_selected: data.sales_channels_selected,
+        sales_channels_freetext: data.sales_channels_freetext,
+        revenue_staff: data.revenue_staff,
+        
+        // Assets fields
+        asset_types_selected: data.asset_types_selected,
+        asset_types_freetext: data.asset_types_freetext,
+        multiple_depreciation_methods: data.multiple_depreciation_methods,
+        units_of_production_depreciation: data.units_of_production_depreciation,
+        manufactures_products: data.manufactures_products,
+        
+        // Working capital
+        multiple_inventory_methods: data.multiple_inventory_methods,
+        inventory_days_outstanding: data.inventory_days_outstanding,
+        prepaid_expenses_days: data.prepaid_expenses_days,
+        
+        // Taxes
+        corporate_tax_enabled: data.corporate_tax_enabled,
+        value_tax_enabled: data.value_tax_enabled,
+        corporate_tax_model: data.corporate_tax_model,
+        corporate_tax_model_custom: data.corporate_tax_model_custom,
+        value_tax_model: data.value_tax_model,
+        value_tax_model_custom: data.value_tax_model_custom,
+        
+        // Customization
+        customization_revenue: data.customization_revenue,
+        customization_cogs: data.customization_cogs,
+        customization_expenses: data.customization_expenses,
+        customization_assets: data.customization_assets,
+        customization_working_capital: data.customization_working_capital,
+        customization_taxes: data.customization_taxes,
+        customization_debt: data.customization_debt,
+        customization_equity: data.customization_equity,
+        customization_summary: data.customization_summary,
+        
+        // Completion tracking
+        questionnaire_completion_status: data.questionnaire_completion_status,
+        total_completion_time_seconds: data.total_completion_time_seconds,
+        modules_completed: data.modules_completed,
+        skipped_modules: data.skipped_modules,
+        
+        // Equity financing
+        equity_financing_approach: data.equity_financing_approach,
+        equity_financing_custom: data.equity_financing_custom,
+        equity_financing_details: data.equity_financing_details
       }
     })
 
