@@ -110,32 +110,32 @@ function checkSpam(formData) {
 }
 
 /**
- * Prepare data for database insertion
+ * FIXED: Complete data preparation function with ALL database fields
  */
 function prepareDbData(formData, clientIP, userAgent) {
   return {
-    // Required fields
-    full_name: formData.full_name.trim(),
-    company_name: formData.company_name.trim(),
-    email: formData.email.trim().toLowerCase(),
+    // ===== REQUIRED FIELDS =====
+    full_name: formData.full_name ? formData.full_name.trim() : null,
+    company_name: formData.company_name ? formData.company_name.trim() : null,
+    email: formData.email ? formData.email.trim().toLowerCase() : null,
     phone: formData.phone ? formData.phone.trim() : null,
     country_name: formData.country_name ? formData.country_name.trim() : null,
     
-    // Optional location data
+    // ===== OPTIONAL LOCATION DATA =====
     country_code: formData.country_code ? formData.country_code.trim() : null,
     country_flag: formData.country_flag || null,
     
-    // Industry information
+    // ===== INDUSTRY INFORMATION =====
     industry_dropdown: formData.industry_dropdown || null,
     industry_freetext: formData.industry_freetext || null,
     
-    // NEW: Conditional question fields
+    // ===== CONDITIONAL QUESTION FIELDS =====
     quick_parameters_choice: formData.quick_parameters_choice || null,
     model_periodicity: formData.model_periodicity || null,
     historical_start_date: formData.historical_start_date || null,
-    forecast_years: formData.forecast_years || null,
+    forecast_years: formData.forecast_years ? parseInt(formData.forecast_years) : null,
     
-    // Business model questions (JSONB fields)
+    // ===== BUSINESS MODEL QUESTIONS (JSONB FIELDS) =====
     model_purpose_selected: formData.model_purpose_selected || null,
     model_purpose_freetext: formData.model_purpose_freetext || null,
     modeling_approach: formData.modeling_approach || null,
@@ -143,16 +143,78 @@ function prepareDbData(formData, clientIP, userAgent) {
     revenue_generation_freetext: formData.revenue_generation_freetext || null,
     revenue_staff: formData.revenue_staff || null,
     
-    // Metadata
+    // ===== MISSING FIELDS - THESE WERE CAUSING NULL VALUES =====
+    
+    // Revenue & Sales Fields
+    charging_models: formData.charging_models || null,
+    product_procurement_selected: formData.product_procurement_selected || null,
+    product_procurement_freetext: formData.product_procurement_freetext || null,
+    sales_channels_selected: formData.sales_channels_selected || null,
+    sales_channels_freetext: formData.sales_channels_freetext || null,
+    
+    // Manufacturing
+    manufactures_products: formData.manufactures_products || null,
+    
+    // Assets Fields
+    asset_types_selected: formData.asset_types_selected || null,
+    asset_types_freetext: formData.asset_types_freetext || null,
+    multiple_depreciation_methods: formData.multiple_depreciation_methods || null,
+    units_of_production_depreciation: formData.units_of_production_depreciation || null,
+    
+    // Working Capital Fields
+    multiple_inventory_methods: formData.multiple_inventory_methods || null,
+    inventory_days_outstanding: formData.inventory_days_outstanding || null,
+    prepaid_expenses_days: formData.prepaid_expenses_days || null,
+    
+    // Tax Fields
+    corporate_tax_enabled: formData.corporate_tax_enabled !== undefined ? 
+      Boolean(formData.corporate_tax_enabled) : null,
+    value_tax_enabled: formData.value_tax_enabled !== undefined ? 
+      Boolean(formData.value_tax_enabled) : null,
+    corporate_tax_model: formData.corporate_tax_model || null,
+    corporate_tax_model_custom: formData.corporate_tax_model_custom || null,
+    value_tax_model: formData.value_tax_model || null,
+    value_tax_model_custom: formData.value_tax_model_custom || null,
+    
+    // Customization Fields (Boolean flags)
+    customization_revenue: formData.customization_revenue !== undefined ? 
+      Boolean(formData.customization_revenue) : null,
+    customization_cogs: formData.customization_cogs !== undefined ? 
+      Boolean(formData.customization_cogs) : null,
+    customization_expenses: formData.customization_expenses !== undefined ? 
+      Boolean(formData.customization_expenses) : null,
+    customization_assets: formData.customization_assets !== undefined ? 
+      Boolean(formData.customization_assets) : null,
+    customization_working_capital: formData.customization_working_capital !== undefined ? 
+      Boolean(formData.customization_working_capital) : null,
+    customization_taxes: formData.customization_taxes !== undefined ? 
+      Boolean(formData.customization_taxes) : null,
+    customization_debt: formData.customization_debt !== undefined ? 
+      Boolean(formData.customization_debt) : null,
+    customization_equity: formData.customization_equity !== undefined ? 
+      Boolean(formData.customization_equity) : null,
+    customization_summary: formData.customization_summary || null,
+    
+    // Equity Financing Fields
+    equity_financing_approach: formData.equity_financing_approach || null,
+    equity_financing_custom: formData.equity_financing_custom || null,
+    equity_financing_details: formData.equity_financing_details || null,
+    
+    // Completion Tracking Fields
+    questionnaire_completion_status: formData.questionnaire_completion_status || 'pending',
+    total_completion_time_seconds: formData.total_completion_time_seconds ? 
+      parseInt(formData.total_completion_time_seconds) : null,
+    modules_completed: formData.modules_completed || null,
+    skipped_modules: formData.skipped_modules || null,
+    
+    // ===== METADATA =====
     ip_address: clientIP,
     user_agent: userAgent,
     submission_count: 1,
     
-    // Honeypot fields for spam detection
+    // ===== HONEYPOT FIELDS FOR SPAM DETECTION =====
     honeypot_website: formData.honeypot_website || null,
     honeypot_phone: formData.honeypot_phone || null
-    
-    // Note: created_at and updated_at will be automatically added by Supabase if they exist in the schema
   }
 }
 
@@ -232,21 +294,16 @@ export default async function handler(req, res) {
       email: formData.email ? '✓' : '✗',
       phone: formData.phone ? '✓' : '✗',
       country_name: formData.country_name ? '✓' : '✗',
-      // NEW: Log conditional question fields
-      quick_parameters_choice: formData.quick_parameters_choice ? '✓' : '✗',
-      model_periodicity: formData.model_periodicity ? '✓' : '✗',
-      historical_start_date: formData.historical_start_date ? '✓' : '✗',
-      forecast_years: formData.forecast_years ? '✓' : '✗',
+      // Additional fields that were missing
+      charging_models: formData.charging_models ? '✓' : '✗',
+      asset_types_selected: formData.asset_types_selected ? '✓' : '✗',
+      customization_revenue: formData.customization_revenue !== undefined ? '✓' : '✗',
+      corporate_tax_enabled: formData.corporate_tax_enabled !== undefined ? '✓' : '✗',
       hasRecaptchaToken: !!formData.recaptchaToken
     })
     
-    // NEW: Debug log for conditional question values
-    console.log('🔧 Conditional question values:', {
-      quick_parameters_choice: formData.quick_parameters_choice,
-      model_periodicity: formData.model_periodicity,
-      historical_start_date: formData.historical_start_date,
-      forecast_years: formData.forecast_years
-    })
+    // Debug log all received form fields
+    console.log('🔧 All form data keys:', Object.keys(formData))
     
     // Check for spam
     if (checkSpam(formData)) {
@@ -293,16 +350,24 @@ export default async function handler(req, res) {
     }
     console.log('✅ Email validation passed')
 
-    // Prepare data for database insertion
+    // Prepare data for database insertion - NOW WITH ALL FIELDS
     const dbData = prepareDbData(formData, clientIP, userAgent)
-    console.log('📦 Database data prepared')
+    console.log('📦 Database data prepared with all fields')
     
-    // NEW: Debug log for database data being inserted
-    console.log('💾 Database data being inserted:', {
-      ...dbData,
-      // Don't log sensitive data, just show structure
-      email: dbData.email ? '[EMAIL]' : null,
-      phone: dbData.phone ? '[PHONE]' : null
+    // Debug log database data being inserted (without sensitive info)
+    console.log('💾 Database fields being inserted:', {
+      requiredFields: ['full_name', 'company_name', 'email', 'phone', 'country_name'].map(f => 
+        f + ': ' + (dbData[f] ? '✓' : '✗')).join(', '),
+      conditionalFields: ['quick_parameters_choice', 'model_periodicity', 'forecast_years'].map(f => 
+        f + ': ' + (dbData[f] ? '✓' : '✗')).join(', '),
+      revenueFields: ['charging_models', 'product_procurement_selected', 'sales_channels_selected'].map(f => 
+        f + ': ' + (dbData[f] ? '✓' : '✗')).join(', '),
+      assetFields: ['asset_types_selected', 'multiple_depreciation_methods'].map(f => 
+        f + ': ' + (dbData[f] ? '✓' : '✗')).join(', '),
+      taxFields: ['corporate_tax_enabled', 'value_tax_enabled'].map(f => 
+        f + ': ' + (dbData[f] !== null ? '✓' : '✗')).join(', '),
+      customizationFields: ['customization_revenue', 'customization_assets', 'customization_taxes'].map(f => 
+        f + ': ' + (dbData[f] !== null ? '✓' : '✗')).join(', ')
     })
 
     // Insert data into Supabase
@@ -343,11 +408,11 @@ export default async function handler(req, res) {
         full_name: data.full_name,
         company_name: data.company_name,
         email: data.email,
-        // NEW: Include conditional question fields in response
+        // Include some of the new fields in response
         quick_parameters_choice: data.quick_parameters_choice,
         model_periodicity: data.model_periodicity,
-        historical_start_date: data.historical_start_date,
-        forecast_years: data.forecast_years
+        forecast_years: data.forecast_years,
+        questionnaire_completion_status: data.questionnaire_completion_status
       }
     })
 
