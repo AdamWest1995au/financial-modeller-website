@@ -1,4 +1,4 @@
-// /pages/questionnaire/modules/customization.module.js - FIXED VERSION
+// /pages/questionnaire/modules/customization.module.js - UPDATED TO DEFAULT TO CUSTOM
 export class CustomizationModule {
     constructor() {
         this.id = 'customization';
@@ -59,16 +59,16 @@ export class CustomizationModule {
             }
         ];
 
-        // Initialize responses - default to Generic (false = Generic, true = Custom)
+        // Initialize responses - CHANGED: default to Custom (false = Generic, true = Custom)
         this.responses = {
-            revenueCustomization: false,
-            cogsCustomization: false,
-            expensesCustomization: false,
-            assetsCustomization: false,
-            workingCapitalCustomization: false,
-            taxesCustomization: false,
-            debtCustomization: false,
-            equityCustomization: false
+            revenueCustomization: true,
+            cogsCustomization: true,
+            expensesCustomization: true,
+            assetsCustomization: true,
+            workingCapitalCustomization: true,
+            taxesCustomization: true,
+            debtCustomization: true,
+            equityCustomization: true
         };
 
         // Initialize global state immediately
@@ -145,7 +145,7 @@ export class CustomizationModule {
         toggle.className = 'customization-toggle';
         toggle.dataset.sectionKey = section.key;
         
-        // Add active class if Custom is selected (true)
+        // Add active class if Custom is selected (true) - NOW DEFAULTS TO TRUE
         if (this.responses[section.key]) {
             toggle.classList.add('active');
         }
