@@ -1,4 +1,4 @@
-// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH FIXED SECURITY VERIFICATION FLOW
+// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH FIXED SUBMISSION DATA MAPPING
 
 export class QuestionnaireEngine {
     constructor(config = {}) {
@@ -1204,9 +1204,11 @@ export class QuestionnaireEngine {
         return null;
     }
 
-    // Prepare submission data in the format your API expects
+    // FIXED: Complete prepareSubmissionData method with ALL database fields
     prepareSubmissionData() {
-        // Initialize with default structure matching your API schema
+        console.log('📦 Preparing submission data with ALL fields...');
+        
+        // Initialize with complete structure matching your API schema
         const submissionData = {
             // Required fields
             full_name: '',
@@ -1220,7 +1222,7 @@ export class QuestionnaireEngine {
             industry_freetext: null,
             
             // Optional parameters
-            quick_parameters_choice: 'no',
+            quick_parameters_choice: null,
             model_periodicity: null,
             historical_start_date: null,
             forecast_years: null,
@@ -1231,17 +1233,56 @@ export class QuestionnaireEngine {
             modeling_approach: null,
             revenue_generation_selected: null,
             revenue_generation_freetext: null,
+            revenue_staff: null,
+            
+            // Revenue-related fields
             charging_models: null,
             product_procurement_selected: null,
             product_procurement_freetext: null,
             sales_channels_selected: null,
             sales_channels_freetext: null,
-            revenue_staff: null,
+            manufactures_products: null,
             
-            // Assets fields
+            // Asset fields
             asset_types_selected: null,
             asset_types_freetext: null,
-            multiple_depreciation_methods: 'no',
+            multiple_depreciation_methods: null,
+            units_of_production_depreciation: null,
+            
+            // Working capital fields
+            multiple_inventory_methods: null,
+            inventory_days_outstanding: null,
+            prepaid_expenses_days: null,
+            
+            // Tax fields
+            corporate_tax_enabled: null,
+            value_tax_enabled: null,
+            corporate_tax_model: null,
+            corporate_tax_model_custom: null,
+            value_tax_model: null,
+            value_tax_model_custom: null,
+            
+            // Customization preferences
+            customization_revenue: null,
+            customization_cogs: null,
+            customization_expenses: null,
+            customization_assets: null,
+            customization_working_capital: null,
+            customization_taxes: null,
+            customization_debt: null,
+            customization_equity: null,
+            customization_summary: null,
+            
+            // Equity financing fields
+            equity_financing_approach: null,
+            equity_financing_custom: null,
+            equity_financing_details: null,
+            
+            // Completion tracking
+            questionnaire_completion_status: 'completed',
+            total_completion_time_seconds: null,
+            modules_completed: [],
+            skipped_modules: [],
             
             // Metadata
             ip_address: null,
@@ -1251,22 +1292,63 @@ export class QuestionnaireEngine {
             honeypot_phone: null
         };
         
-        // Extract data from each module using their getDatabaseFields method
+        // Track completed and skipped modules
+        const completedModules = [];
+        const skippedModules = [];
+        
+        // Process each module using getDatabaseFields method
         for (const module of this.modules) {
             const moduleResponse = this.responses[module.id];
-            if (!moduleResponse) continue;
             
-            // Use the module's getDatabaseFields if available
-            if (module.getDatabaseFields) {
+            // Track module completion status
+            if (moduleResponse) {
+                completedModules.push(module.id);
+                console.log(`✅ Module ${module.id} has response`);
+            } else if (!this.shouldShowModule(module)) {
+                skippedModules.push(module.id);
+                console.log(`⏭️ Module ${module.id} was skipped`);
+            } else {
+                console.log(`⚠️ Module ${module.id} has no response`);
+            }
+            
+            // Use the module's getDatabaseFields if available - THIS IS THE PREFERRED METHOD
+            if (module.getDatabaseFields && typeof module.getDatabaseFields === 'function') {
                 try {
                     const dbFields = module.getDatabaseFields();
-                    Object.assign(submissionData, dbFields);
                     console.log(`💾 Database fields from ${module.id}:`, dbFields);
+                    
+                    // Merge the fields, giving priority to getDatabaseFields
+                    Object.keys(dbFields).forEach(key => {
+                        if (dbFields[key] !== undefined) {
+                            submissionData[key] = dbFields[key];
+                        }
+                    });
                 } catch (error) {
                     console.warn(`⚠️ Error getting database fields from module ${module.id}:`, error);
                 }
             }
         }
+        
+        // Set completion tracking data
+        submissionData.modules_completed = completedModules;
+        submissionData.skipped_modules = skippedModules;
+        
+        // Add completion time if available
+        if (this.startTime) {
+            const completionTimeMs = Date.now() - this.startTime;
+            submissionData.total_completion_time_seconds = Math.round(completionTimeMs / 1000);
+        }
+        
+        console.log('📦 Final submission data prepared:', {
+            ...submissionData,
+            // Mask sensitive fields for logging
+            email: submissionData.email ? '[MASKED]' : null,
+            phone: submissionData.phone ? '[MASKED]' : null,
+            full_name: submissionData.full_name ? '[MASKED]' : null,
+            // Show counts for arrays
+            modules_completed_count: submissionData.modules_completed.length,
+            skipped_modules_count: submissionData.skipped_modules.length
+        });
         
         return submissionData;
     }
