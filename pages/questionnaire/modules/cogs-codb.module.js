@@ -362,12 +362,18 @@ export class CogsCodbModule {
         return true; // Always show COGS-CODB module
     }
 
-    getDatabaseFields() {
-    const isGeneric = this.isGenericModeSelected();
-    
+   getDatabaseFields() {
+    const convertToYesNo = (value) => {
+        if (value === 'active' || value === true || value === 'yes') {
+            return 'yes';
+        } else if (value === 'inactive' || value === false || value === 'no') {
+            return 'no';
+        }
+        return value || 'no';
+    };
+
     return {
-        // TEXT: 'yes'/'no'/'active'/'inactive' (schema allows all these values)
-        manufactures_products: this.responses.manufacturesProducts
+        manufactures_products: convertToYesNo(this.responses.manufacturesProducts) // FIX: Convert to yes/no
     };
 }
 

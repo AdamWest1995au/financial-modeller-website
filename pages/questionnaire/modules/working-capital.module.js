@@ -637,14 +637,30 @@ getDatabaseFields() {
 // Replace the getDatabaseFields method in modeling-approach.module.js
 
 getDatabaseFields() {
-    return {
-        // JSONB array or null
-        model_purpose_selected: this.responses.selectedPurposes.length > 0 ? this.responses.selectedPurposes : null,
-        // TEXT field - not used in this implementation 
-        model_purpose_freetext: null,
-        // TEXT field
-        modeling_approach: this.responses.modelingApproach
+    console.log('🔍 Working Capital getDatabaseFields called');
+    console.log('🔍 Working Capital responses:', this.responses);
+    
+    const isGeneric = this.isGenericModeSelected();
+    
+    // Helper function to convert toggle values to yes/no
+    const convertToYesNo = (value) => {
+        if (value === 'active' || value === true || value === 'yes') {
+            return 'yes';
+        } else if (value === 'inactive' || value === false || value === 'no') {
+            return 'no';
+        }
+        return value || 'no'; // Default to 'no' if undefined
     };
+    
+    const fields = {
+        // TEXT: 'yes'/'no' - these match the exact database schema constraints
+        multiple_inventory_methods: convertToYesNo(this.responses.multipleInventoryMethods),
+        inventory_days_outstanding: convertToYesNo(this.responses.inventoryDaysOutstanding), 
+        prepaid_expenses_days: convertToYesNo(this.responses.prepaidExpensesDays)
+    };
+    
+    console.log('🔍 Working Capital database fields:', fields);
+    return fields;
 }
 
     destroy() {

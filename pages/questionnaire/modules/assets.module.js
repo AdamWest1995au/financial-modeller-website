@@ -536,18 +536,21 @@ export class AssetsModule {
         return true;
     }
 
-    getDatabaseFields() {
-    const isGeneric = this.isGenericModeSelected();
-    
+   getDatabaseFields() {
+    const convertToYesNo = (value) => {
+        if (value === 'active' || value === true || value === 'yes') {
+            return 'yes';
+        } else if (value === 'inactive' || value === false || value === 'no') {
+            return 'no';
+        }
+        return value || 'no';
+    };
+
     return {
-        // JSONB array or null
         asset_types_selected: this.responses.selectedAssets.length > 0 ? this.responses.selectedAssets : null,
-        // TEXT field - custom assets are included in the selected array, so this can be null
         asset_types_freetext: null, 
-        // TEXT: 'yes'/'no'
-        multiple_depreciation_methods: this.responses.multipleDepreciationMethods,
-        // TEXT: 'yes'/'no'
-        units_of_production_depreciation: this.responses.unitsOfProductionDepreciation
+        multiple_depreciation_methods: convertToYesNo(this.responses.multipleDepreciationMethods), // FIX: Convert to yes/no
+        units_of_production_depreciation: convertToYesNo(this.responses.unitsOfProductionDepreciation) // FIX: Convert to yes/no
     };
 }
 

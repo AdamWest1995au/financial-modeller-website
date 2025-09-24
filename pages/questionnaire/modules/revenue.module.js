@@ -623,24 +623,24 @@ export class RevenueModule {
         return true; // Always show revenue module
     }
 
-    getDatabaseFields() {
+   getDatabaseFields() {
+    const convertToYesNo = (value) => {
+        if (value === 'active' || value === true || value === 'yes') {
+            return 'yes';
+        } else if (value === 'inactive' || value === false || value === 'no') {
+            return 'no';
+        }
+        return value || 'no';
+    };
+
     return {
-        // JSONB array or null
         revenue_generation_selected: this.responses.selectedRevenues.length > 0 ? this.responses.selectedRevenues : null,
-        // TEXT - not in schema, remove this line if it exists
-        // revenue_generation_freetext: null,
-        // JSONB object or null
         charging_models: Object.keys(this.responses.chargingModels).length > 0 ? this.responses.chargingModels : null,
-        // JSONB array or null  
         product_procurement_selected: this.responses.procurement.length > 0 ? this.responses.procurement : null,
-        // TEXT - for custom procurement methods
         product_procurement_freetext: null,
-        // JSONB array or null
         sales_channels_selected: this.responses.salesChannels.length > 0 ? this.responses.salesChannels : null,
-        // TEXT - for custom sales channels  
         sales_channels_freetext: null,
-        // TEXT: 'yes'/'no'
-        revenue_staff: this.responses.revenueStaff
+        revenue_staff: convertToYesNo(this.responses.revenueStaff) // FIX: Convert to yes/no
     };
 }
 

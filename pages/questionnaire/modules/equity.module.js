@@ -236,15 +236,19 @@ export class EquityModule {
         return true; // Always show Equity Financing module
     }
 
-    getDatabaseFields() {
-    const isGeneric = this.isGenericModeSelected();
-    
+   getDatabaseFields() {
+    const convertToYesNo = (value) => {
+        if (value === 'active' || value === true || value === 'yes') {
+            return 'yes';
+        } else if (value === 'inactive' || value === false || value === 'no') {
+            return 'no';
+        }
+        return value || 'no';
+    };
+
     return {
-        // TEXT field
-        equity_financing_approach: this.responses.dividendsPaidWhenDeclared,
-        // TEXT field - for custom approach
+        equity_financing_approach: convertToYesNo(this.responses.dividendsPaidWhenDeclared), // FIX: Convert to yes/no
         equity_financing_custom: null,
-        // JSONB field - for detailed equity info
         equity_financing_details: null
     };
 }
