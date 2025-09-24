@@ -1189,15 +1189,21 @@ export class TaxesModule {
     }
 
     getDatabaseFields() {
-        return {
-            corporate_tax_enabled: this.responses.corporateTax === 'yes',
-            value_tax_enabled: this.responses.valueTax === 'yes',
-            corporate_tax_model: this.responses.corporateTaxModel.length > 0 ? this.responses.corporateTaxModel : null,
-            corporate_tax_model_custom: this.responses.corporateTaxModelFreeText || null,
-            value_tax_model: this.responses.valueTaxModel.length > 0 ? this.responses.valueTaxModel : null,
-            value_tax_model_custom: this.responses.valueTaxModelFreeText || null
-        };
-    }
+    return {
+        // BOOLEAN fields
+        corporate_tax_enabled: this.responses.corporateTax === 'yes',
+        value_tax_enabled: this.responses.valueTax === 'yes',
+        
+        // TEXT fields (not arrays!) - join array to single string if needed
+        corporate_tax_model: this.responses.corporateTaxModel.length > 0 ? 
+            this.responses.corporateTaxModel.join(', ') : null,
+        corporate_tax_model_custom: null,
+        
+        value_tax_model: this.responses.valueTaxModel.length > 0 ? 
+            this.responses.valueTaxModel.join(', ') : null,
+        value_tax_model_custom: null
+    };
+}
 
     destroy() {
         // Remove event listeners

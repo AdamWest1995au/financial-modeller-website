@@ -1,4 +1,4 @@
-// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH FIXED SECURITY VERIFICATION FLOW
+// /pages/questionnaire/core/engine.js - COMPLETE ENGINE WITH FIXED SUBMISSION DATA MAPPING
 
 export class QuestionnaireEngine {
     constructor(config = {}) {
@@ -599,7 +599,6 @@ export class QuestionnaireEngine {
         }
     }
 
-    // FIXED WITH EXTENSIVE DEBUG LOGGING AND PROPER COMPLETION DETECTION
     handleNext() {
         console.log('🔍 DEBUG: handleNext called');
         console.log('🔍 DEBUG: isProcessingNavigation:', this.isProcessingNavigation);
@@ -624,8 +623,9 @@ export class QuestionnaireEngine {
             console.log('🔍 DEBUG: Current module index:', this.currentModuleIndex);
             console.log('🔍 DEBUG: Total modules:', this.modules.length);
             
-            if (!currentModule) {
-                console.log('🔍 DEBUG: No current module - COMPLETING QUESTIONNAIRE');
+            // FIXED: Better completion detection
+            if (!currentModule || this.currentModuleIndex >= this.modules.length) {
+                console.log('🎉 DEBUG: No current module or beyond bounds - COMPLETING QUESTIONNAIRE');
                 this.isProcessingNavigation = false;
                 this.completeQuestionnaire();
                 return;
@@ -655,31 +655,27 @@ export class QuestionnaireEngine {
                 }
             }
             
-            // CRITICAL FIX: Check if we're at the last visible module
+            // FIXED: Improved next module detection
             console.log('🔍 DEBUG: Looking for next visible module...');
             const nextModuleIndex = this.findNextVisibleModule();
             console.log('🔍 DEBUG: Next module index:', nextModuleIndex);
             
-            // Additional check: if we're at the last module and no next visible module
-            const isCurrentLastModule = this.currentModuleIndex === this.modules.length - 1;
-            console.log('🔍 DEBUG: Is current last module:', isCurrentLastModule);
-            
-            if (nextModuleIndex !== -1) {
-                console.log('🔍 DEBUG: Found next module, navigating to index:', nextModuleIndex);
-                this.currentModuleIndex = nextModuleIndex;
-                setTimeout(() => {
-                    this.isProcessingNavigation = false;
-                    this.showCurrentModule();
-                }, 10);
-            } else {
-                console.log('🔍 DEBUG: No next module found - CALLING COMPLETE QUESTIONNAIRE');
+            // CRITICAL: Better completion detection
+            if (nextModuleIndex === -1) {
+                console.log('🎉 DEBUG: No next visible module found - COMPLETING QUESTIONNAIRE');
                 this.isProcessingNavigation = false;
-                
-                // FORCE COMPLETION - don't call showCurrentModule
-                console.log('🎉 FORCING COMPLETION - All modules processed');
                 this.completeQuestionnaire();
-                return; // Important: return here to prevent any further processing
+                return;
             }
+            
+            // Move to next module
+            console.log('🔍 DEBUG: Moving to next module at index:', nextModuleIndex);
+            this.currentModuleIndex = nextModuleIndex;
+            
+            setTimeout(() => {
+                this.isProcessingNavigation = false;
+                this.showCurrentModule();
+            }, 10);
             
         } catch (error) {
             console.error('🔍 DEBUG: Error in handleNext:', error);
@@ -688,36 +684,43 @@ export class QuestionnaireEngine {
     }
 
     handleBack() {
-        if (this.isProcessingNavigation) {
-            console.log('⏸️ Already processing navigation, ignoring handleBack');
-            return;
-        }
+        if (this.isProcessingNavigation) return;
         
-        const previousIndex = this.findPreviousVisibleModule();
-        if (previousIndex !== -1) {
-            this.isProcessingNavigation = true;
-            this.currentModuleIndex = previousIndex;
-            setTimeout(() => {
+        this.isProcessingNavigation = true;
+        
+        try {
+            // Find previous visible module
+            const previousModuleIndex = this.findPreviousVisibleModule();
+            
+            if (previousModuleIndex !== -1) {
+                this.currentModuleIndex = previousModuleIndex;
+                
+                setTimeout(() => {
+                    this.isProcessingNavigation = false;
+                    this.showCurrentModule();
+                }, 10);
+            } else {
                 this.isProcessingNavigation = false;
-                this.showCurrentModule();
-            }, 10);
+            }
+        } catch (error) {
+            console.error('❌ Error in handleBack:', error);
+            this.isProcessingNavigation = false;
         }
     }
 
-    // FIXED COMPLETION FLOW - SHOWS SECURITY VERIFICATION MODAL DIRECTLY
+    // Enhanced completeQuestionnaire method
     completeQuestionnaire() {
-        console.log('🎉 DEBUG: completeQuestionnaire called!');
-        console.log('🎉 DEBUG: Questionnaire completed! Responses:', this.responses);
+        console.log('🎉 QUESTIONNAIRE COMPLETION STARTED');
         
         // CRITICAL: Stop any further module processing
         this.isProcessingNavigation = true;
         
-        // CRITICAL: Force current module index to beyond bounds to prevent any module from showing
-        this.currentModuleIndex = this.modules.length;
+        // Force current module index beyond bounds to prevent any module from showing
+        this.currentModuleIndex = this.modules.length + 1;
         
         // Update progress to 100%
         this.updateProgress(100);
-        console.log('🎉 DEBUG: Progress updated to 100%');
+        console.log('🎉 Progress updated to 100%');
         
         // Hide all module-related elements
         if (this.titleRowHeader) {
@@ -729,27 +732,19 @@ export class QuestionnaireEngine {
         if (this.questionDescription) {
             this.questionDescription.style.display = 'none';
         }
-        
-        // Hide navigation buttons for completion
         if (this.backBtn) {
             this.backBtn.style.display = 'none';
-            console.log('🎉 DEBUG: Back button hidden');
         }
         if (this.nextBtn) {
             this.nextBtn.style.display = 'none';
-            console.log('🎉 DEBUG: Next button hidden');
         }
-        
-        // Hide skip text for completion page
         if (this.skipTextContainer) {
             this.skipTextContainer.style.display = 'none';
-            console.log('🎉 DEBUG: Skip text hidden');
         }
         
-        // Show security verification modal directly (matching your second image)
+        // Show security verification modal
+        console.log('🎉 Showing security verification modal...');
         this.showSecurityVerificationModal();
-        
-        console.log('🎉 DEBUG: completeQuestionnaire finished - processing stopped');
     }
 
     /**
@@ -1136,56 +1131,6 @@ export class QuestionnaireEngine {
         }
     }
 
-    // OLD COMPATIBILITY METHODS FOR BACKWARDS COMPATIBILITY
-    proceedWithSubmission(recaptchaToken) {
-        console.log('📤 Proceeding with submission...');
-        
-        // Store the submission reCAPTCHA token
-        this.submissionRecaptchaToken = recaptchaToken;
-        
-        // Submit responses
-        this.submitResponses();
-    }
-
-    showSubmissionStatus() {
-        if (this.questionContent) {
-            this.questionContent.innerHTML = `
-                <div style="text-align: center; padding: 60px 40px;">
-                    <div style="font-size: 3rem; margin-bottom: 20px;">📤</div>
-                    <h3 style="color: #8b5cf6; margin-bottom: 20px; font-size: 1.8rem;">Submitting Your Responses</h3>
-                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 1.1rem; line-height: 1.6;">
-                        We're now submitting your responses and our team will create your custom financial model.
-                        You'll receive an email within 24-48 hours with your model and instructions for next steps.
-                    </p>
-                    <div id="submission-status" style="margin-top: 20px;">
-                        <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #8b5cf6; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                        <p style="margin-top: 10px; color: rgba(255,255,255,0.6);">Submitting your responses...</p>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Add CSS for spinner if not already added
-        if (!document.getElementById('spinner-styles')) {
-            const style = document.createElement('style');
-            style.id = 'spinner-styles';
-            style.textContent = `
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        // Hide back button, disable next button during submission
-        if (this.backBtn) this.backBtn.style.display = 'none';
-        if (this.nextBtn) {
-            this.nextBtn.disabled = true;
-            this.nextBtn.textContent = 'Submitting...';
-        }
-    }
-
     // reCAPTCHA verification
     async verifyRecaptcha() {
         // Use the submission reCAPTCHA token if available
@@ -1204,23 +1149,25 @@ export class QuestionnaireEngine {
         return null;
     }
 
-    // Prepare submission data in the format your API expects
+    // CRITICAL FIX: Complete prepareSubmissionData method with ALL database fields and proper module mapping
     prepareSubmissionData() {
-        // Initialize with default structure matching your API schema
+        console.log('📦 CRITICAL FIX: Preparing submission data with ALL fields...');
+        
+        // Initialize with complete structure matching your database schema
         const submissionData = {
-            // Required fields
-            full_name: '',
-            company_name: '',
-            email: '',
-            phone: '',
-            country_name: '',
-            country_code: '',
+            // Required fields - will be populated by modules
+            full_name: null,
+            company_name: null,
+            email: null,
+            phone: null,
+            country_name: null,
+            country_code: null,
             country_flag: null,
             industry_dropdown: null,
             industry_freetext: null,
             
             // Optional parameters
-            quick_parameters_choice: 'no',
+            quick_parameters_choice: null,
             model_periodicity: null,
             historical_start_date: null,
             forecast_years: null,
@@ -1230,18 +1177,56 @@ export class QuestionnaireEngine {
             model_purpose_freetext: null,
             modeling_approach: null,
             revenue_generation_selected: null,
-            revenue_generation_freetext: null,
+            revenue_staff: null,
+            
+            // CRITICAL: Revenue-related fields that were missing
             charging_models: null,
             product_procurement_selected: null,
             product_procurement_freetext: null,
             sales_channels_selected: null,
             sales_channels_freetext: null,
-            revenue_staff: null,
+            manufactures_products: null,
             
-            // Assets fields
+            // Asset fields
             asset_types_selected: null,
             asset_types_freetext: null,
-            multiple_depreciation_methods: 'no',
+            multiple_depreciation_methods: null,
+            units_of_production_depreciation: null,
+            
+            // Working capital fields
+            multiple_inventory_methods: null,
+            inventory_days_outstanding: null,
+            prepaid_expenses_days: null,
+            
+            // Tax fields
+            corporate_tax_enabled: null,
+            value_tax_enabled: null,
+            corporate_tax_model: null,
+            corporate_tax_model_custom: null,
+            value_tax_model: null,
+            value_tax_model_custom: null,
+            
+            // Customization preferences
+            customization_revenue: null,
+            customization_cogs: null,
+            customization_expenses: null,
+            customization_assets: null,
+            customization_working_capital: null,
+            customization_taxes: null,
+            customization_debt: null,
+            customization_equity: null,
+            customization_summary: null,
+            
+            // Equity financing fields
+            equity_financing_approach: null,
+            equity_financing_custom: null,
+            equity_financing_details: null,
+            
+            // Completion tracking
+            questionnaire_completion_status: 'completed',
+            total_completion_time_seconds: null,
+            modules_completed: [],
+            skipped_modules: [],
             
             // Metadata
             ip_address: null,
@@ -1251,47 +1236,85 @@ export class QuestionnaireEngine {
             honeypot_phone: null
         };
         
-        // Extract data from each module using their getDatabaseFields method
+        // Track completed and skipped modules
+        const completedModules = [];
+        const skippedModules = [];
+        
+        console.log('🔍 CRITICAL: Processing each module for database fields...');
+        
+        // CRITICAL FIX: Process each module using getDatabaseFields method
         for (const module of this.modules) {
             const moduleResponse = this.responses[module.id];
-            if (!moduleResponse) continue;
             
-            // Use the module's getDatabaseFields if available
-            if (module.getDatabaseFields) {
+            // Track module completion status
+            if (moduleResponse) {
+                completedModules.push(module.id);
+                console.log(`✅ Module ${module.id} has response`);
+            } else if (!this.shouldShowModule(module)) {
+                skippedModules.push(module.id);
+                console.log(`⏭️ Module ${module.id} was skipped`);
+            } else {
+                console.log(`⚠️ Module ${module.id} has no response`);
+            }
+            
+            // CRITICAL: Use the module's getDatabaseFields method - THIS IS THE KEY FIX
+            if (module.getDatabaseFields && typeof module.getDatabaseFields === 'function') {
                 try {
+                    console.log(`🔍 CRITICAL: Getting database fields from ${module.id}...`);
                     const dbFields = module.getDatabaseFields();
-                    Object.assign(submissionData, dbFields);
-                    console.log(`💾 Database fields from ${module.id}:`, dbFields);
+                    console.log(`💾 CRITICAL: Database fields from ${module.id}:`, dbFields);
+                    
+                    // CRITICAL: Merge the fields, ensuring proper data types and no undefined values
+                    Object.keys(dbFields).forEach(key => {
+                        const value = dbFields[key];
+                        if (value !== undefined) {
+                            // Convert undefined to null for database compatibility
+                            submissionData[key] = value === undefined ? null : value;
+                            console.log(`📝 CRITICAL: Set ${key} = ${JSON.stringify(submissionData[key])}`);
+                        }
+                    });
                 } catch (error) {
-                    console.warn(`⚠️ Error getting database fields from module ${module.id}:`, error);
+                    console.error(`❌ CRITICAL: Error getting database fields from module ${module.id}:`, error);
+                    // Continue processing other modules
                 }
+            } else {
+                console.warn(`⚠️ CRITICAL: Module ${module.id} does not have getDatabaseFields method!`);
             }
         }
         
-        return submissionData;
-    }
-
-    // Show error message
-    showErrorMessage(errorMessage) {
-        const statusDiv = document.getElementById('submission-status');
-        if (statusDiv) {
-            statusDiv.innerHTML = `
-                <div style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px; padding: 20px; margin-top: 20px;">
-                    <h4 style="color: #fca5a5; margin-bottom: 10px;">Submission Failed</h4>
-                    <p style="color: #fca5a5; margin-bottom: 15px;">${errorMessage}</p>
-                    <button onclick="window.questionnaireEngine.retrySubmission()" style="background: #dc2626; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer;">
-                        Try Again
-                    </button>
-                </div>
-            `;
+        // Set completion tracking data
+        submissionData.modules_completed = completedModules;
+        submissionData.skipped_modules = skippedModules;
+        
+        // Add completion time if available
+        if (this.startTime) {
+            const completionTimeMs = Date.now() - this.startTime;
+            submissionData.total_completion_time_seconds = Math.round(completionTimeMs / 1000);
         }
         
-        // Re-enable next button for retry
-        if (this.nextBtn) {
-            this.nextBtn.disabled = false;
-            this.nextBtn.textContent = 'Try Again';
-            this.nextBtn.onclick = () => this.retrySubmission();
-        }
+        // CRITICAL: Final validation to ensure no undefined values
+        Object.keys(submissionData).forEach(key => {
+            if (submissionData[key] === undefined) {
+                console.warn(`⚠️ CRITICAL: Converting undefined ${key} to null`);
+                submissionData[key] = null;
+            }
+        });
+        
+        console.log('📦 CRITICAL FIX: Final submission data prepared with field count:', Object.keys(submissionData).length);
+        console.log('📦 CRITICAL: Submission data preview:', {
+            // Show structure without sensitive data
+            field_count: Object.keys(submissionData).length,
+            modules_completed_count: submissionData.modules_completed.length,
+            skipped_modules_count: submissionData.skipped_modules.length,
+            has_user_info: !!(submissionData.full_name && submissionData.email),
+            has_customization: !!submissionData.customization_summary,
+            has_revenue_data: !!(submissionData.revenue_generation_selected || submissionData.charging_models),
+            has_asset_data: !!submissionData.asset_types_selected,
+            has_tax_data: !!(submissionData.corporate_tax_enabled || submissionData.value_tax_enabled),
+            completion_time_seconds: submissionData.total_completion_time_seconds
+        });
+        
+        return submissionData;
     }
 
     // Show success message and redirect to loading page
@@ -1340,6 +1363,29 @@ export class QuestionnaireEngine {
         }, 2000);
     }
 
+    // Show error message
+    showErrorMessage(errorMessage) {
+        const statusDiv = document.getElementById('submission-status');
+        if (statusDiv) {
+            statusDiv.innerHTML = `
+                <div style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px; padding: 20px; margin-top: 20px;">
+                    <h4 style="color: #fca5a5; margin-bottom: 10px;">Submission Failed</h4>
+                    <p style="color: #fca5a5; margin-bottom: 15px;">${errorMessage}</p>
+                    <button onclick="window.questionnaireEngine.retrySubmission()" style="background: #dc2626; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer;">
+                        Try Again
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Re-enable next button for retry
+        if (this.nextBtn) {
+            this.nextBtn.disabled = false;
+            this.nextBtn.textContent = 'Try Again';
+            this.nextBtn.onclick = () => this.retrySubmission();
+        }
+    }
+
     // Retry submission
     retrySubmission() {
         console.log('🔄 Retrying submission...');
@@ -1366,12 +1412,12 @@ export class QuestionnaireEngine {
     // Main submission method
     async submitResponses() {
         try {
-            console.log('📤 Submitting responses...');
+            console.log('📤 CRITICAL: Starting submission process...');
             
             // Verify reCAPTCHA if configured
             const recaptchaToken = await this.verifyRecaptcha();
             
-            // Prepare submission data
+            // CRITICAL: Use the fixed prepareSubmissionData method
             const submissionData = this.prepareSubmissionData();
             
             // Add reCAPTCHA token if available
@@ -1384,7 +1430,7 @@ export class QuestionnaireEngine {
                 submissionData.completion_time = Date.now() - this.startTime;
             }
             
-            console.log('📦 Submission data prepared:', submissionData);
+            console.log('📦 CRITICAL: Final submission payload ready with', Object.keys(submissionData).length, 'fields');
             
             // Make the HTTP request to your API
             const response = await fetch(this.config.apiEndpoint, {
@@ -1402,14 +1448,14 @@ export class QuestionnaireEngine {
             }
             
             const result = await response.json();
-            console.log('✅ Submission successful:', result);
+            console.log('✅ CRITICAL: Submission successful:', result);
             
             // Store the submission ID for the redirect
             if (result.submission_id) {
                 this.submissionId = result.submission_id;
-                console.log('✅ Submission ID stored:', this.submissionId);
+                console.log('✅ CRITICAL: Submission ID stored:', this.submissionId);
             } else {
-                console.error('❌ No submission_id in response:', result);
+                console.error('❌ CRITICAL: No submission_id in response:', result);
             }
             
             // Show success message (which will now redirect)
@@ -1418,7 +1464,7 @@ export class QuestionnaireEngine {
             return result;
             
         } catch (error) {
-            console.error('❌ Submission failed:', error);
+            console.error('❌ CRITICAL: Submission failed:', error);
             
             // Show user-friendly error message
             let errorMessage = 'An unexpected error occurred. Please try again.';

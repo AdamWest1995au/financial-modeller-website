@@ -624,14 +624,25 @@ export class RevenueModule {
     }
 
     getDatabaseFields() {
-        return {
-            revenue_generation_selected: this.responses.selectedRevenues.length > 0 ? this.responses.selectedRevenues : null,
-            charging_models: Object.keys(this.responses.chargingModels).length > 0 ? this.responses.chargingModels : null,
-            product_procurement_selected: this.responses.procurement.length > 0 ? this.responses.procurement : null,
-            sales_channels_selected: this.responses.salesChannels.length > 0 ? this.responses.salesChannels : null,
-            revenue_staff: this.responses.revenueStaff
-        };
-    }
+    return {
+        // JSONB array or null
+        revenue_generation_selected: this.responses.selectedRevenues.length > 0 ? this.responses.selectedRevenues : null,
+        // TEXT - not in schema, remove this line if it exists
+        // revenue_generation_freetext: null,
+        // JSONB object or null
+        charging_models: Object.keys(this.responses.chargingModels).length > 0 ? this.responses.chargingModels : null,
+        // JSONB array or null  
+        product_procurement_selected: this.responses.procurement.length > 0 ? this.responses.procurement : null,
+        // TEXT - for custom procurement methods
+        product_procurement_freetext: null,
+        // JSONB array or null
+        sales_channels_selected: this.responses.salesChannels.length > 0 ? this.responses.salesChannels : null,
+        // TEXT - for custom sales channels  
+        sales_channels_freetext: null,
+        // TEXT: 'yes'/'no'
+        revenue_staff: this.responses.revenueStaff
+    };
+}
 
     destroy() {
         // Clean up event listeners

@@ -686,19 +686,24 @@ export class UserInfoModule {
     }
 
     getDatabaseFields() {
-        return {
-            full_name: this.responses.userName || '',
-            company_name: this.responses.companyName || '',
-            email: this.responses.email || '',
-            phone: this.responses.phone || '',
-            country_name: this.responses.country?.name || '',
-            country_code: this.responses.country?.code || null,
-            country_flag: this.responses.country?.flag || null,
-            industry_dropdown: this.responses.industry?.dropdown || null,
-            industry_freetext: this.responses.industry?.freeText || null,
-            quick_parameters_choice: this.responses.parameterToggle ? 'yes' : 'no'
-        };
-    }
+    return {
+        // Required TEXT fields
+        full_name: this.responses.userName || '',
+        company_name: this.responses.companyName || '',
+        email: this.responses.email || '',
+        phone: this.responses.phone || '',
+        country_name: this.responses.country?.name || '',
+        
+        // Optional TEXT fields
+        country_code: this.responses.country?.code || null,
+        country_flag: this.responses.country?.flag || null,
+        industry_dropdown: this.responses.industry?.dropdown || null,
+        industry_freetext: this.responses.industry?.freeText || null,
+        
+        // TEXT: 'yes'/'no'
+        quick_parameters_choice: this.responses.parameterToggle ? 'yes' : 'no'
+    };
+}
 
     destroy() {
         Object.values(this.components).forEach(component => {

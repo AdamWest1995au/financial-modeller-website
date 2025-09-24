@@ -369,18 +369,20 @@ export class CustomizationModule {
     }
 
     getDatabaseFields() {
-        return {
-            customization_revenue: this.responses.revenueCustomization,
-            customization_cogs: this.responses.cogsCustomization,
-            customization_expenses: this.responses.expensesCustomization,
-            customization_assets: this.responses.assetsCustomization,
-            customization_working_capital: this.responses.workingCapitalCustomization,
-            customization_taxes: this.responses.taxesCustomization,
-            customization_debt: this.responses.debtCustomization,
-            customization_equity: this.responses.equityCustomization,
-            customization_summary: JSON.stringify(this.getCustomizationSummary())
-        };
-    }
+    return {
+        // All BOOLEAN fields
+        customization_revenue: this.responses.revenueCustomization,
+        customization_cogs: this.responses.cogsCustomization,
+        customization_expenses: this.responses.expensesCustomization,
+        customization_assets: this.responses.assetsCustomization,
+        customization_working_capital: this.responses.workingCapitalCustomization,
+        customization_taxes: this.responses.taxesCustomization,
+        customization_debt: this.responses.debtCustomization,
+        customization_equity: this.responses.equityCustomization,
+        // JSONB field
+        customization_summary: this.getCustomizationSummary()
+    };
+}
 
     destroy() {
         Object.values(this.components).forEach(component => {

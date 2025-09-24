@@ -469,16 +469,183 @@ export class WorkingCapitalModule {
         return true; // Always show Working Capital module
     }
 
-    getDatabaseFields() {
-        const isGeneric = this.isGenericModeSelected();
+    // WORKING CAPITAL MODULE - Fix getDatabaseFields()
+// Replace the getDatabaseFields method in working-capital.module.js
+
+getDatabaseFields() {
+    const isGeneric = this.isGenericModeSelected();
+    
+    return {
+        // CORRECTED: Match exact schema field names
+        multiple_inventory_methods: this.responses.multipleInventoryMethods, // TEXT: 'yes'/'no'
+        inventory_days_outstanding: this.responses.inventoryDaysOutstanding, // TEXT: 'yes'/'no' 
+        prepaid_expenses_days: this.responses.prepaidExpensesDays, // TEXT: 'yes'/'no'
+        is_generic_working_capital: isGeneric
+    };
+}
+
+// ASSETS MODULE - Fix getDatabaseFields()  
+// Replace the getDatabaseFields method in assets.module.js
+
+getDatabaseFields() {
+    const isGeneric = this.isGenericModeSelected();
+    
+    return {
+        // JSONB array or null
+        asset_types_selected: this.responses.selectedAssets.length > 0 ? this.responses.selectedAssets : null,
+        // TEXT field - custom assets are included in the selected array, so this can be null
+        asset_types_freetext: null, 
+        // TEXT: 'yes'/'no'
+        multiple_depreciation_methods: this.responses.multipleDepreciationMethods,
+        // TEXT: 'yes'/'no'
+        units_of_production_depreciation: this.responses.unitsOfProductionDepreciation
+    };
+}
+
+// REVENUE MODULE - Fix getDatabaseFields()
+// Replace the getDatabaseFields method in revenue.module.js
+
+getDatabaseFields() {
+    return {
+        // JSONB array or null
+        revenue_generation_selected: this.responses.selectedRevenues.length > 0 ? this.responses.selectedRevenues : null,
+        // TEXT - not in schema, remove this line if it exists
+        // revenue_generation_freetext: null,
+        // JSONB object or null
+        charging_models: Object.keys(this.responses.chargingModels).length > 0 ? this.responses.chargingModels : null,
+        // JSONB array or null  
+        product_procurement_selected: this.responses.procurement.length > 0 ? this.responses.procurement : null,
+        // TEXT - for custom procurement methods
+        product_procurement_freetext: null,
+        // JSONB array or null
+        sales_channels_selected: this.responses.salesChannels.length > 0 ? this.responses.salesChannels : null,
+        // TEXT - for custom sales channels  
+        sales_channels_freetext: null,
+        // TEXT: 'yes'/'no'
+        revenue_staff: this.responses.revenueStaff
+    };
+}
+
+// COGS MODULE - Fix getDatabaseFields()
+// Replace the getDatabaseFields method in cogs-codb.module.js
+
+getDatabaseFields() {
+    const isGeneric = this.isGenericModeSelected();
+    
+    return {
+        // TEXT: 'yes'/'no'/'active'/'inactive' (schema allows all these values)
+        manufactures_products: this.responses.manufacturesProducts
+    };
+}
+
+// TAXES MODULE - Fix getDatabaseFields() 
+// Replace the getDatabaseFields method in taxes.module.js
+
+getDatabaseFields() {
+    return {
+        // BOOLEAN fields
+        corporate_tax_enabled: this.responses.corporateTax === 'yes',
+        value_tax_enabled: this.responses.valueTax === 'yes',
         
-        return {
-            multiple_inventory_methods: this.responses.multipleInventoryMethods,
-            inventory_days_outstanding_method: this.responses.inventoryDaysOutstanding,
-            prepaid_expenses_days_method: this.responses.prepaidExpensesDays,
-            is_generic_working_capital: isGeneric
-        };
-    }
+        // TEXT fields (not arrays!) - join array to single string if needed
+        corporate_tax_model: this.responses.corporateTaxModel.length > 0 ? 
+            this.responses.corporateTaxModel.join(', ') : null,
+        corporate_tax_model_custom: null,
+        
+        value_tax_model: this.responses.valueTaxModel.length > 0 ? 
+            this.responses.valueTaxModel.join(', ') : null,
+        value_tax_model_custom: null
+    };
+}
+
+// EQUITY MODULE - Fix getDatabaseFields()
+// Replace the getDatabaseFields method in equity.module.js  
+
+getDatabaseFields() {
+    const isGeneric = this.isGenericModeSelected();
+    
+    return {
+        // TEXT field
+        equity_financing_approach: this.responses.dividendsPaidWhenDeclared,
+        // TEXT field - for custom approach
+        equity_financing_custom: null,
+        // JSONB field - for detailed equity info
+        equity_financing_details: null
+    };
+}
+
+// CUSTOMIZATION MODULE - Fix getDatabaseFields()
+// Replace the getDatabaseFields method in customization.module.js
+
+getDatabaseFields() {
+    return {
+        // All BOOLEAN fields
+        customization_revenue: this.responses.revenueCustomization,
+        customization_cogs: this.responses.cogsCustomization,
+        customization_expenses: this.responses.expensesCustomization,
+        customization_assets: this.responses.assetsCustomization,
+        customization_working_capital: this.responses.workingCapitalCustomization,
+        customization_taxes: this.responses.taxesCustomization,
+        customization_debt: this.responses.debtCustomization,
+        customization_equity: this.responses.equityCustomization,
+        // JSONB field
+        customization_summary: this.getCustomizationSummary()
+    };
+}
+
+// USER INFO MODULE - Fix getDatabaseFields()
+// Replace the getDatabaseFields method in user-info.module.js
+
+getDatabaseFields() {
+    return {
+        // Required TEXT fields
+        full_name: this.responses.userName || '',
+        company_name: this.responses.companyName || '',
+        email: this.responses.email || '',
+        phone: this.responses.phone || '',
+        country_name: this.responses.country?.name || '',
+        
+        // Optional TEXT fields
+        country_code: this.responses.country?.code || null,
+        country_flag: this.responses.country?.flag || null,
+        industry_dropdown: this.responses.industry?.dropdown || null,
+        industry_freetext: this.responses.industry?.freeText || null,
+        
+        // TEXT: 'yes'/'no'
+        quick_parameters_choice: this.responses.parameterToggle ? 'yes' : 'no'
+    };
+}
+
+// COMBINED PARAMETERS MODULE - Fix getDatabaseFields()
+// Replace the getDatabaseFields method in combined-parameters.module.js
+
+getDatabaseFields() {
+    const fullDate = (this.responses.month && this.responses.year) ? 
+                    `${this.responses.month} ${this.responses.year}` : null;
+
+    return {
+        // TEXT: must be 'quarter', 'half-year', or 'annual'
+        model_periodicity: this.responses.periodicity || null,
+        // TEXT: formatted date string
+        historical_start_date: fullDate,
+        // INTEGER: must be between 1 and 20
+        forecast_years: this.responses.forecastYears ? parseInt(this.responses.forecastYears) : null
+    };
+}
+
+// MODELING APPROACH MODULE - Fix getDatabaseFields()
+// Replace the getDatabaseFields method in modeling-approach.module.js
+
+getDatabaseFields() {
+    return {
+        // JSONB array or null
+        model_purpose_selected: this.responses.selectedPurposes.length > 0 ? this.responses.selectedPurposes : null,
+        // TEXT field - not used in this implementation 
+        model_purpose_freetext: null,
+        // TEXT field
+        modeling_approach: this.responses.modelingApproach
+    };
+}
 
     destroy() {
         // Clean up event listeners

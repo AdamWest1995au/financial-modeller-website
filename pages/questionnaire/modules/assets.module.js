@@ -537,16 +537,19 @@ export class AssetsModule {
     }
 
     getDatabaseFields() {
-        const isGeneric = this.isGenericModeSelected();
-        
-        return {
-            asset_types_selected: this.responses.selectedAssets.length > 0 ? this.responses.selectedAssets : null,
-            asset_types_freetext: null, // Custom assets are included in the selected array
-            multiple_depreciation_methods: this.responses.multipleDepreciationMethods,
-            units_of_production_depreciation: this.responses.unitsOfProductionDepreciation,
-            is_generic_assets: isGeneric // Track if generic mode was used
-        };
-    }
+    const isGeneric = this.isGenericModeSelected();
+    
+    return {
+        // JSONB array or null
+        asset_types_selected: this.responses.selectedAssets.length > 0 ? this.responses.selectedAssets : null,
+        // TEXT field - custom assets are included in the selected array, so this can be null
+        asset_types_freetext: null, 
+        // TEXT: 'yes'/'no'
+        multiple_depreciation_methods: this.responses.multipleDepreciationMethods,
+        // TEXT: 'yes'/'no'
+        units_of_production_depreciation: this.responses.unitsOfProductionDepreciation
+    };
+}
 
     destroy() {
         // Clean up event listeners

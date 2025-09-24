@@ -110,38 +110,129 @@ function checkSpam(formData) {
 }
 
 /**
- * Prepare data for database insertion
+ * Prepare data for database insertion - FIXED to include ALL fields
  */
 function prepareDbData(formData, clientIP, userAgent) {
+  // Helper function to safely extract value
+  const safeExtract = (value) => {
+    if (value === undefined || value === null || value === '') {
+      return null
+    }
+    return value
+  }
+
+  // Helper function to safely extract boolean
+  const safeBool = (value) => {
+    if (typeof value === 'boolean') return value
+    if (value === 'true') return true
+    if (value === 'false') return false
+    return null
+  }
+
+  // Helper function to safely extract integer
+  const safeInt = (value) => {
+    if (value === undefined || value === null || value === '') return null
+    const parsed = parseInt(value)
+    return isNaN(parsed) ? null : parsed
+  }
+
+  // Helper function to safely extract JSONB
+  const safeJsonb = (value) => {
+    if (value === undefined || value === null || value === '') return null
+    // If it's already an object/array, return as is
+    if (typeof value === 'object') return value
+    // If it's a string, try to parse it
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value)
+      } catch {
+        return null
+      }
+    }
+    return null
+  }
+
   return {
     // Required fields
-    full_name: formData.full_name.trim(),
-    company_name: formData.company_name.trim(),
-    email: formData.email.trim().toLowerCase(),
+    full_name: formData.full_name ? formData.full_name.trim() : '',
+    company_name: formData.company_name ? formData.company_name.trim() : '',
+    email: formData.email ? formData.email.trim().toLowerCase() : '',
     phone: formData.phone ? formData.phone.trim() : null,
     country_name: formData.country_name ? formData.country_name.trim() : null,
     
     // Optional location data
-    country_code: formData.country_code ? formData.country_code.trim() : null,
-    country_flag: formData.country_flag || null,
+    country_code: safeExtract(formData.country_code?.trim()),
+    country_flag: safeExtract(formData.country_flag),
     
     // Industry information
-    industry_dropdown: formData.industry_dropdown || null,
-    industry_freetext: formData.industry_freetext || null,
+    industry_dropdown: safeExtract(formData.industry_dropdown),
+    industry_freetext: safeExtract(formData.industry_freetext),
     
-    // NEW: Conditional question fields
-    quick_parameters_choice: formData.quick_parameters_choice || null,
-    model_periodicity: formData.model_periodicity || null,
-    historical_start_date: formData.historical_start_date || null,
-    forecast_years: formData.forecast_years || null,
+    // Conditional question fields
+    quick_parameters_choice: safeExtract(formData.quick_parameters_choice),
+    model_periodicity: safeExtract(formData.model_periodicity),
+    historical_start_date: safeExtract(formData.historical_start_date),
+    forecast_years: safeInt(formData.forecast_years),
     
     // Business model questions (JSONB fields)
-    model_purpose_selected: formData.model_purpose_selected || null,
-    model_purpose_freetext: formData.model_purpose_freetext || null,
-    modeling_approach: formData.modeling_approach || null,
-    revenue_generation_selected: formData.revenue_generation_selected || null,
-    revenue_generation_freetext: formData.revenue_generation_freetext || null,
-    revenue_staff: formData.revenue_staff || null,
+    model_purpose_selected: safeJsonb(formData.model_purpose_selected),
+    model_purpose_freetext: safeExtract(formData.model_purpose_freetext),
+    modeling_approach: safeExtract(formData.modeling_approach),
+    revenue_generation_selected: safeJsonb(formData.revenue_generation_selected),
+    revenue_generation_freetext: safeExtract(formData.revenue_generation_freetext),
+    revenue_staff: safeExtract(formData.revenue_staff),
+    
+    // FIXED: Added all missing revenue-related fields
+    charging_models: safeJsonb(formData.charging_models),
+    product_procurement_selected: safeJsonb(formData.product_procurement_selected),
+    product_procurement_freetext: safeExtract(formData.product_procurement_freetext),
+    sales_channels_selected: safeJsonb(formData.sales_channels_selected),
+    sales_channels_freetext: safeExtract(formData.sales_channels_freetext),
+    
+    // FIXED: Added manufacturing field
+    manufactures_products: safeExtract(formData.manufactures_products),
+    
+    // FIXED: Added all asset-related fields
+    asset_types_selected: safeJsonb(formData.asset_types_selected),
+    asset_types_freetext: safeExtract(formData.asset_types_freetext),
+    multiple_depreciation_methods: safeExtract(formData.multiple_depreciation_methods),
+    units_of_production_depreciation: safeExtract(formData.units_of_production_depreciation),
+    
+    // FIXED: Added inventory and working capital fields
+    multiple_inventory_methods: safeExtract(formData.multiple_inventory_methods),
+    inventory_days_outstanding: safeExtract(formData.inventory_days_outstanding),
+    prepaid_expenses_days: safeExtract(formData.prepaid_expenses_days),
+    
+    // FIXED: Added tax-related fields
+    corporate_tax_enabled: safeBool(formData.corporate_tax_enabled),
+    value_tax_enabled: safeBool(formData.value_tax_enabled),
+    corporate_tax_model: safeExtract(formData.corporate_tax_model),
+    corporate_tax_model_custom: safeExtract(formData.corporate_tax_model_custom),
+    value_tax_model: safeExtract(formData.value_tax_model),
+    value_tax_model_custom: safeExtract(formData.value_tax_model_custom),
+    
+    // FIXED: Added customization preferences
+    customization_revenue: safeBool(formData.customization_revenue),
+    customization_cogs: safeBool(formData.customization_cogs),
+    customization_expenses: safeBool(formData.customization_expenses),
+    customization_assets: safeBool(formData.customization_assets),
+    customization_working_capital: safeBool(formData.customization_working_capital),
+    customization_taxes: safeBool(formData.customization_taxes),
+    customization_debt: safeBool(formData.customization_debt),
+    customization_equity: safeBool(formData.customization_equity),
+    customization_summary: safeJsonb(formData.customization_summary),
+    
+    // FIXED: Added equity financing fields
+    equity_financing_approach: safeExtract(formData.equity_financing_approach),
+    equity_financing_custom: safeExtract(formData.equity_financing_custom),
+    equity_financing_details: safeJsonb(formData.equity_financing_details),
+    
+    // FIXED: Added completion tracking fields
+    questionnaire_completion_status: safeExtract(formData.questionnaire_completion_status) || 'completed',
+    total_completion_time_seconds: safeInt(formData.total_completion_time_seconds) || 
+                                   (formData.completion_time ? Math.round(formData.completion_time / 1000) : null),
+    modules_completed: safeJsonb(formData.modules_completed),
+    skipped_modules: safeJsonb(formData.skipped_modules),
     
     // Metadata
     ip_address: clientIP,
@@ -149,8 +240,8 @@ function prepareDbData(formData, clientIP, userAgent) {
     submission_count: 1,
     
     // Honeypot fields for spam detection
-    honeypot_website: formData.honeypot_website || null,
-    honeypot_phone: formData.honeypot_phone || null
+    honeypot_website: safeExtract(formData.honeypot_website),
+    honeypot_phone: safeExtract(formData.honeypot_phone)
     
     // Note: created_at and updated_at will be automatically added by Supabase if they exist in the schema
   }
@@ -226,26 +317,50 @@ export default async function handler(req, res) {
       })
     }
 
-    console.log('📝 Form data received:', {
+    console.log('📝 Form data received - field check:', {
+      // Required fields
       full_name: formData.full_name ? '✓' : '✗',
       company_name: formData.company_name ? '✓' : '✗',
       email: formData.email ? '✓' : '✗',
       phone: formData.phone ? '✓' : '✗',
       country_name: formData.country_name ? '✓' : '✗',
-      // NEW: Log conditional question fields
+      
+      // Conditional fields
       quick_parameters_choice: formData.quick_parameters_choice ? '✓' : '✗',
       model_periodicity: formData.model_periodicity ? '✓' : '✗',
       historical_start_date: formData.historical_start_date ? '✓' : '✗',
       forecast_years: formData.forecast_years ? '✓' : '✗',
+      
+      // Revenue fields
+      charging_models: formData.charging_models ? '✓' : '✗',
+      product_procurement_selected: formData.product_procurement_selected ? '✓' : '✗',
+      sales_channels_selected: formData.sales_channels_selected ? '✓' : '✗',
+      
+      // Asset fields
+      asset_types_selected: formData.asset_types_selected ? '✓' : '✗',
+      multiple_depreciation_methods: formData.multiple_depreciation_methods ? '✓' : '✗',
+      
+      // Tax fields
+      corporate_tax_enabled: formData.corporate_tax_enabled !== undefined ? '✓' : '✗',
+      value_tax_enabled: formData.value_tax_enabled !== undefined ? '✓' : '✗',
+      
+      // Customization fields
+      customization_summary: formData.customization_summary ? '✓' : '✗',
+      
+      // Completion tracking
+      modules_completed: formData.modules_completed ? '✓' : '✗',
+      
+      // Security
       hasRecaptchaToken: !!formData.recaptchaToken
     })
     
-    // NEW: Debug log for conditional question values
-    console.log('🔧 Conditional question values:', {
-      quick_parameters_choice: formData.quick_parameters_choice,
-      model_periodicity: formData.model_periodicity,
-      historical_start_date: formData.historical_start_date,
-      forecast_years: formData.forecast_years
+    // FIXED: Debug log for all received values
+    console.log('🔧 All received field values:', {
+      ...formData,
+      // Mask sensitive data
+      email: formData.email ? '[MASKED]' : null,
+      phone: formData.phone ? '[MASKED]' : null,
+      full_name: formData.full_name ? '[MASKED]' : null
     })
     
     // Check for spam
@@ -293,16 +408,22 @@ export default async function handler(req, res) {
     }
     console.log('✅ Email validation passed')
 
-    // Prepare data for database insertion
+    // Prepare data for database insertion with ALL fields
     const dbData = prepareDbData(formData, clientIP, userAgent)
-    console.log('📦 Database data prepared')
+    console.log('📦 Database data prepared with all fields')
     
-    // NEW: Debug log for database data being inserted
-    console.log('💾 Database data being inserted:', {
+    // FIXED: Enhanced debug log showing all fields being inserted
+    console.log('💾 Complete database data being inserted:', {
       ...dbData,
-      // Don't log sensitive data, just show structure
-      email: dbData.email ? '[EMAIL]' : null,
-      phone: dbData.phone ? '[PHONE]' : null
+      // Mask sensitive fields
+      email: '[MASKED]',
+      phone: '[MASKED]',
+      full_name: '[MASKED]',
+      ip_address: '[MASKED]',
+      // Show field counts for JSONB fields
+      charging_models_count: Array.isArray(dbData.charging_models) ? dbData.charging_models.length : 'N/A',
+      asset_types_count: Array.isArray(dbData.asset_types_selected) ? dbData.asset_types_selected.length : 'N/A',
+      modules_completed_count: Array.isArray(dbData.modules_completed) ? dbData.modules_completed.length : 'N/A'
     })
 
     // Insert data into Supabase
@@ -315,6 +436,8 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('❌ Supabase error:', error)
+      console.error('❌ Error details:', error.details)
+      console.error('❌ Error hint:', error.hint)
       return res.status(500).json({ 
         error: 'Database error',
         message: 'Failed to save your submission. Please try again.',
@@ -343,11 +466,13 @@ export default async function handler(req, res) {
         full_name: data.full_name,
         company_name: data.company_name,
         email: data.email,
-        // NEW: Include conditional question fields in response
+        // Include all submitted fields in response for confirmation
         quick_parameters_choice: data.quick_parameters_choice,
         model_periodicity: data.model_periodicity,
         historical_start_date: data.historical_start_date,
-        forecast_years: data.forecast_years
+        forecast_years: data.forecast_years,
+        questionnaire_completion_status: data.questionnaire_completion_status,
+        modules_completed: data.modules_completed
       }
     })
 

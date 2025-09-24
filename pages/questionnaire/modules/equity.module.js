@@ -237,13 +237,17 @@ export class EquityModule {
     }
 
     getDatabaseFields() {
-        const isGeneric = this.isGenericModeSelected();
-        
-        return {
-            dividends_paid_when_declared: this.responses.dividendsPaidWhenDeclared,
-            is_generic_equity_financing: isGeneric
-        };
-    }
+    const isGeneric = this.isGenericModeSelected();
+    
+    return {
+        // TEXT field
+        equity_financing_approach: this.responses.dividendsPaidWhenDeclared,
+        // TEXT field - for custom approach
+        equity_financing_custom: null,
+        // JSONB field - for detailed equity info
+        equity_financing_details: null
+    };
+}
 
     destroy() {
         // Clean up event listeners

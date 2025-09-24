@@ -363,13 +363,13 @@ export class CogsCodbModule {
     }
 
     getDatabaseFields() {
-        const isGeneric = this.isGenericModeSelected();
-        
-        return {
-            manufactures_products: this.responses.manufacturesProducts,
-            is_generic_cogs_codb: isGeneric
-        };
-    }
+    const isGeneric = this.isGenericModeSelected();
+    
+    return {
+        // TEXT: 'yes'/'no'/'active'/'inactive' (schema allows all these values)
+        manufactures_products: this.responses.manufacturesProducts
+    };
+}
 
     destroy() {
         // Clean up event listeners

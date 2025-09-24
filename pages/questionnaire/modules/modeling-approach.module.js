@@ -364,12 +364,15 @@ export class ModelingApproachModule {
     }
 
     getDatabaseFields() {
-        return {
-            model_purpose_selected: this.responses.selectedPurposes.length > 0 ? this.responses.selectedPurposes : null,
-            model_purpose_freetext: null,
-            modeling_approach: this.responses.modelingApproach
-        };
-    }
+    return {
+        // JSONB array or null
+        model_purpose_selected: this.responses.selectedPurposes.length > 0 ? this.responses.selectedPurposes : null,
+        // TEXT field - not used in this implementation 
+        model_purpose_freetext: null,
+        // TEXT field
+        modeling_approach: this.responses.modelingApproach
+    };
+}
 
     destroy() {
         Object.values(this.components).forEach(component => {

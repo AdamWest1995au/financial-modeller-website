@@ -267,15 +267,18 @@ export class CombinedParametersModule {
     }
 
     getDatabaseFields() {
-        const fullDate = (this.responses.month && this.responses.year) ? 
-                        `${this.responses.month} ${this.responses.year}` : null;
+    const fullDate = (this.responses.month && this.responses.year) ? 
+                    `${this.responses.month} ${this.responses.year}` : null;
 
-        return {
-            model_periodicity: this.responses.periodicity || null,
-            historical_start_date: fullDate,
-            forecast_years: this.responses.forecastYears ? parseInt(this.responses.forecastYears) : null
-        };
-    }
+    return {
+        // TEXT: must be 'quarter', 'half-year', or 'annual'
+        model_periodicity: this.responses.periodicity || null,
+        // TEXT: formatted date string
+        historical_start_date: fullDate,
+        // INTEGER: must be between 1 and 20
+        forecast_years: this.responses.forecastYears ? parseInt(this.responses.forecastYears) : null
+    };
+}
 
     destroy() {
         Object.values(this.components).forEach(component => {
