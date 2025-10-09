@@ -1173,20 +1173,20 @@
         </select>
     </div>
 
-    <!-- Header -->
+    <!-- Header - UPDATED TO MATCH MODEL PREVIEW PAGE -->
     <header class="header">
         <nav class="nav-container">
-            <a href="#" class="logo" id="logo">
+            <a href="../index.html" class="logo" id="logo">
                 <div class="dot-grid" id="dotGrid"></div>
                 <span>The Financial Modeller</span>
             </a>
             <ul class="nav-links">
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Build a Model</a></li>
-                <li><a href="#">Model Templates</a></li>
-                <li><a href="#">How it works</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#" class="book-call-btn">Contact us</a></li>
+                <li><a href="questionnaire/questionnaire.html">Build a Model</a></li>
+                <li><a href="browse-models.html">Model Templates</a></li>
+                <li><a href="#" data-modal="how-it-works" onclick="showModal('how-it-works'); return false;">How it works</a></li>
+                <li><a href="#" data-modal="pricing" onclick="showModal('pricing'); return false;">Pricing</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="contact.html" class="book-call-btn">Contact us</a></li>
             </ul>
         </nav>
     </header>
@@ -1442,11 +1442,11 @@
         </div>
 
         <div class="custom-feeds-cta-container">
-            <button class="custom-feeds-cta-button">Chat with Our Team</button>
+            <button class="custom-feeds-cta-button" onclick="showModal('contact')">Chat with Our Team</button>
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- Footer - UPDATED TO MATCH MODEL PREVIEW PAGE -->
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-section">
@@ -1456,25 +1456,43 @@
             <div class="footer-section">
                 <h3>Quick Links</h3>
                 <ul class="footer-links">
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">Model Templates</a></li>
-                    <li><a href="#">How it works</a></li>
-                    <li><a href="#">About</a></li>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="browse-models.html">Model Templates</a></li>
+                    <li><a href="#" data-modal="how-it-works" onclick="showModal('how-it-works'); return false;">How it works</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="#" data-modal="pricing" onclick="showModal('pricing'); return false;">Pricing</a></li>
                 </ul>
             </div>
             <div class="footer-section">
                 <h3>Contact</h3>
-                <p>📧 info@thefinancialmodeller.com</p>
-                <p>📞 TBC</p>
+                <p>📧 <a href="mailto:info@thefinancialmodeller.com" style="color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.5)'">info@thefinancialmodeller.com</a></p>
+                <p>📞 <a href="tel:TBC" style="color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.5)'">TBC</a></p>
                 <p>🏢 Sydney, Australia</p>
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2025 The Financial Modeller. All rights reserved. | Privacy Policy | Terms of Service</p>
+            <p>&copy; 2025 The Financial Modeller. All rights reserved. | <a href="#privacy-policy" style="color: rgba(255, 255, 255, 0.4); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.4)'">Privacy Policy</a> | <a href="#terms-of-service" style="color: rgba(255, 255, 255, 0.4); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.4)'">Terms of Service</a></p>
         </div>
     </footer>
 
     <script>
+        // GLOBAL MODAL FUNCTIONS - Matching model preview page
+        function showModal(type) {
+            const messages = {
+                'templates': 'Our model templates library is coming soon',
+                'how-it-works': 'Stay tuned for our in-depth tutorial',
+                'pricing': 'You are currently viewing the pricing page!',
+                'about': 'TBC',
+                'contact': 'Coming soon - contact form will be available here'
+            };
+            
+            alert(messages[type] || 'Coming soon!');
+        }
+
+        function closeModal() {
+            // Not needed for browser alerts, but keeping for compatibility
+        }
+
         // Logo initialization
         function initializeLogo() {
             const dotGrid = document.getElementById('dotGrid');
