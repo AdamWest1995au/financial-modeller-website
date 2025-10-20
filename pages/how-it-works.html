@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works - The Financial Modeller</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #ffffff;
+            background: #000000;
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+            background-size: 3.8px 3.8px;
+            overflow-x: hidden;
+        }
+
+        /* Mouse illumination effect */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background: radial-gradient(circle 180px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                        rgba(139, 92, 246, 0.4) 0%, 
+                        rgba(139, 92, 246, 0.25) 3%, 
+                        rgba(139, 92, 246, 0.12) 8%, 
+                        rgba(139, 92, 246, 0.06) 15%, 
+                        rgba(139, 92, 246, 0.02) 25%, 
+                        rgba(139, 92, 246, 0.005) 40%, 
+                        transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            filter: blur(6px);
+        }
+
+        body.mouse-active::after {
+            opacity: 1;
+        }
+
+        /* WAVE LOGO STYLES */
+        .logo::before {
+            display: none !important;
+            content: none !important;
+        }
+
+        .logo {
+            font-size: 1.5rem !important;
+            font-weight: 400 !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 16px !important;
+            letter-spacing: -0.03em !important;
+            cursor: pointer !important;
+        }
+
+        .logo:hover, 
+        .logo:focus, 
+        .logo:active,
+        .logo:visited {
+            text-decoration: none !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .dot-grid {
+            width: 48px;
+            height: 36px;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 0.5px;
+            position: relative;
+            transform: perspective(200px) rotateY(-15deg);
+        }
+
+        .dot {
+            width: 2px;
+            height: 2px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+        }
+
+        /* Wave pattern - each column has different heights */
+        .dot-grid .dot:nth-child(12n+1) { opacity: 0.2; transform: scale(0.5); }
+        .dot-grid .dot:nth-child(12n+2) { opacity: 0.3; transform: scale(0.6); }
+        .dot-grid .dot:nth-child(12n+3) { opacity: 0.4; transform: scale(0.7); }
+        .dot-grid .dot:nth-child(12n+4) { opacity: 0.5; transform: scale(0.8); }
+        .dot-grid .dot:nth-child(12n+5) { opacity: 0.6; transform: scale(0.9); }
+        .dot-grid .dot:nth-child(12n+6) { opacity: 0.8; transform: scale(1.1); }
+        .dot-grid .dot:nth-child(12n+7) { opacity: 0.9; transform: scale(1.2); }
+        .dot-grid .dot:nth-child(12n+8) { opacity: 1; transform: scale(1.3); }
+        .dot-grid .dot:nth-child(12n+9) { opacity: 0.9; transform: scale(1.2); }
+        .dot-grid .dot:nth-child(12n+10) { opacity: 0.7; transform: scale(1); }
+        .dot-grid .dot:nth-child(12n+11) { opacity: 0.5; transform: scale(0.8); }
+        .dot-grid .dot:nth-child(12n+12) { opacity: 0.3; transform: scale(0.6); }
+
+        .dot {
+            background: linear-gradient(90deg, #6d28d9 0%, #8b5cf6 50%, #a78bfa 100%);
+        }
+
+        .logo span {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: -0.03em;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .logo:hover .dot-grid {
+            transform: perspective(200px) rotateY(-10deg) scale(1.05);
+        }
+
+        .logo:hover .dot {
+            animation: wave 2s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% {
+                transform: scale(var(--scale, 1)) translateY(0);
+                opacity: var(--opacity, 0.6);
+            }
+            50% {
+                transform: scale(calc(var(--scale, 1) * 1.3)) translateY(-2px);
+                opacity: calc(var(--opacity, 0.6) * 1.2);
+            }
+        }
+
+        .logo:hover .dot { animation-delay: calc(var(--delay, 0) * 1s); }
+
+        .logo:hover .dot-grid {
+            filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.3));
+        }
+
+        /* Header Styles */
+        .header {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        .book-call-btn {
+            background: #8b5cf6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            border: 1px solid #8b5cf6;
+        }
+
+        .book-call-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Progress Bar Section */
+        .progress-bar-section {
+            position: sticky;
+            top: 80px;
+            background: rgba(139, 92, 246, 0.03);
+            backdrop-filter: blur(20px);
+            padding: 10px 0;
+            z-index: 999;
+        }
+
+        .progress-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+            position: relative;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            position: relative;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 3px;
+        }
+
+        .progress-dot {
+            width: 2.4px;
+            height: 2.4px;
+            background: rgba(139, 92, 246, 0.15);
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: all 0.15s ease-out;
+        }
+
+        .progress-dot.center {
+            background: linear-gradient(135deg, #ec4899, #f472b6);
+            box-shadow: 0 0 12px rgba(236, 72, 153, 0.9);
+            transform: scale(2.5);
+        }
+
+        .progress-dot.trail-1 {
+            background: rgba(236, 72, 153, 0.6);
+            box-shadow: 0 0 8px rgba(236, 72, 153, 0.5);
+            transform: scale(2.0);
+        }
+
+        .progress-dot.trail-2 {
+            background: rgba(236, 72, 153, 0.45);
+            box-shadow: 0 0 6px rgba(236, 72, 153, 0.4);
+            transform: scale(1.7);
+        }
+
+        .progress-dot.trail-3 {
+            background: rgba(236, 72, 153, 0.3);
+            box-shadow: 0 0 5px rgba(236, 72, 153, 0.3);
+            transform: scale(1.4);
+        }
+
+        .progress-dot.trail-4 {
+            background: rgba(236, 72, 153, 0.2);
+            box-shadow: 0 0 4px rgba(236, 72, 153, 0.2);
+            transform: scale(1.2);
+        }
+
+        .progress-dot.trail-5 {
+            background: rgba(236, 72, 153, 0.1);
+            box-shadow: 0 0 3px rgba(236, 72, 153, 0.15);
+            transform: scale(1.1);
+        }
+
+        .progress-dot.trail-6 {
+            background: rgba(236, 72, 153, 0.05);
+            box-shadow: 0 0 2px rgba(236, 72, 153, 0.1);
+            transform: scale(1.05);
+        }
+
+        .progress-circles {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0;
+            z-index: 10;
+        }
+
+        .progress-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #000;
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            color: rgba(139, 92, 246, 0.25);
+        }
+
+        .progress-circle::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(139, 92, 246, 0.2);
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+        }
+
+        .progress-circle.active {
+            border-color: #8b5cf6;
+            color: #ffffff;
+            background: rgba(139, 92, 246, 0.1);
+            animation: pulsate 2s ease-in-out infinite;
+        }
+
+        .progress-circle.active::before {
+            opacity: 1;
+            transform: scale(1.2);
+            animation: ripple 2s ease-in-out infinite;
+        }
+
+        .progress-circle.completed {
+            background: rgba(139, 92, 246, 0.05);
+            border-color: rgba(139, 92, 246, 0.2);
+            border-width: 1px;
+            color: rgba(139, 92, 246, 0.3);
+        }
+
+        @keyframes pulsate {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 10px 3px rgba(139, 92, 246, 0.4);
+            }
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        .progress-circle:hover:not(.active) {
+            border-color: rgba(139, 92, 246, 0.4);
+            color: rgba(139, 92, 246, 0.6);
+            transform: scale(1.15);
+        }
+
+        /* Main Content Sections */
+        .content-section {
+            min-height: 60vh;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        #section-1 {
+            padding-bottom: 180px;
+            min-height: auto;
+        }
+
+        /* Section 2 specific - fly in from bottom */
+        #section-2 {
+            padding-top: 200px;
+            padding-bottom: 80px;
+        }
+        
+        #section-2 .section-header {
+            margin-bottom: 40px;
+            transform: translateY(200px);
+            transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        #section-2 .placeholder-content {
+            transform: translateY(200px);
+            transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #section-2 .section-header.visible,
+        #section-2 .placeholder-content.visible {
+            transform: translateY(0);
+        }
+
+        /* Section 3 specific */
+        #section-3 {
+            padding-top: 100px;
+            padding-bottom: 180px;
+        }
+
+        /* Section 4 specific */
+        #section-4 {
+            padding-top: 200px;
+            padding-bottom: 180px;
+        }
+
+        /* Section 5 specific */
+        #section-5 {
+            padding-top: 200px;
+        }
+
+        .section-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 80px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        .section-header.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-header h2 {
+            font-size: 3rem;
+            color: #ffffff;
+            margin-bottom: 16px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        /* Section 1: Questionnaire */
+        .questionnaire-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            align-items: stretch;
+            height: 225px;
+        }
+
+        .left-pane, .right-pane {
+            position: relative;
+            padding: 30px;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateX(0);
+        }
+
+        .left-pane {
+            border-right: 1px solid rgba(139, 92, 246, 0.2);
+            transform: translateX(-50px);
+        }
+
+        .right-pane {
+            transform: translateX(50px);
+        }
+
+        .left-pane.visible, .right-pane.visible {
+            opacity: 0.6;
+            transform: translateX(0);
+        }
+
+        .questionnaire-content:hover .left-pane:not(:hover),
+        .questionnaire-content:hover .right-pane:not(:hover) {
+            opacity: 0.2;
+        }
+
+        .left-pane:hover, .right-pane:hover {
+            opacity: 1 !important;
+        }
+
+        .left-pane:hover .box-header,
+        .right-pane:hover .ai-box-header {
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.4);
+        }
+
+        .animation-box {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            height: 180px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .box-header, .ai-box-header {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .typing-container {
+            font-family: 'Courier New', monospace;
+            color: #8b5cf6;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            position: relative;
+        }
+
+        .question-line {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 14px;
+            background: #8b5cf6;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        @keyframes fadeInScale {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.9); 
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+        }
+
+        /* Data integration animation styles */
+        @keyframes dataPulse {
+            0%, 100% { 
+                transform: scale(1); 
+                opacity: 0.85; 
+            }
+            50% { 
+                transform: scale(1.1); 
+                opacity: 1; 
+            }
+        }
+
+        @keyframes hubPulse {
+            0%, 100% { 
+                transform: scale(1); 
+            }
+            50% { 
+                transform: scale(1.05); 
+            }
+        }
+
+        @keyframes ringRotate {
+            0% { 
+                transform: rotate(0deg); 
+            }
+            100% { 
+                transform: rotate(360deg); 
+            }
+        }
+
+        @keyframes lineFlow {
+            0% { 
+                stroke-dashoffset: 0; 
+                opacity: 0.6; 
+            }
+            50% { 
+                opacity: 1; 
+            }
+            100% { 
+                stroke-dashoffset: -20; 
+                opacity: 0.6; 
+            }
+        }
+
+        .data-hub {
+            animation: hubPulse 2s ease-in-out infinite;
+            transform-origin: center;
+        }
+
+        .hub-ring {
+            animation: ringRotate 8s linear infinite;
+            transform-origin: center;
+        }
+
+        .data-source {
+            animation: dataPulse 3s ease-in-out infinite;
+            transform-origin: center;
+        }
+
+        .source-1 { animation-delay: 0s; }
+        .source-2 { animation-delay: 0.5s; }
+        .source-3 { animation-delay: 1s; }
+        .source-4 { animation-delay: 1.5s; }
+        .source-5 { animation-delay: 2s; }
+        .source-6 { animation-delay: 2.5s; }
+
+        .data-line {
+            stroke-dasharray: 10 5;
+            animation: lineFlow 2s ease-in-out infinite;
+        }
+
+        .line-1 { animation-delay: 0s; }
+        .line-2 { animation-delay: 0.3s; }
+        .line-3 { animation-delay: 0.6s; }
+        .line-4 { animation-delay: 0.9s; }
+        .line-5 { animation-delay: 1.2s; }
+        .line-6 { animation-delay: 1.5s; }
+
+        /* Accordion Styles */
+        .accordion-item {
+            background: rgba(139, 92, 246, 0.03);
+            border: none;
+            border-radius: 0;
+            margin-bottom: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: none;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.08);
+        }
+
+        .accordion-item:hover {
+            box-shadow: none;
+            background: rgba(139, 92, 246, 0.03);
+        }
+
+        .accordion-item.active {
+            background: rgba(139, 92, 246, 0.03);
+        }
+
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 40px;
+            cursor: pointer;
+            user-select: none;
+            background: transparent;
+            transition: background 0.2s ease;
+        }
+
+        .accordion-header:hover {
+            background: transparent;
+        }
+
+        .accordion-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+            flex: 1;
+            letter-spacing: -0.01em;
+        }
+
+        .accordion-toggle {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.9);
+            width: 36px;
+            height: 36px;
+        }
+
+        .accordion-toggle:hover {
+            transform: scale(1.1);
+            color: rgba(255, 255, 255, 1);
+        }
+
+        .accordion-icon {
+            width: 24px;
+            height: 24px;
+            transition: transform 0.3s ease;
+            stroke-width: 2.5;
+        }
+
+        .accordion-item.active .accordion-icon {
+            transform: rotate(45deg);
+        }
+
+        .icon-horizontal {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .accordion-item.active .icon-horizontal {
+            opacity: 0;
+            transform: rotate(90deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0 40px;
+            background: transparent;
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 500px;
+            padding: 0 40px 24px 40px;
+        }
+
+        .accordion-content p {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .section-2-features {
+            margin-top: 40px;
+            width: 100vw;
+            max-width: none;
+            margin-left: calc(-50vw + 50%);
+            margin-right: 0;
+            padding: 0;
+        }
+
+        .feature-list {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .left-pane .feature-list {
+            margin-top: 30px;
+        }
+
+        .right-pane .feature-list {
+            margin-top: 60px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            opacity: 0;
+            transform: translateX(-200px);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .feature-item.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .right-pane .feature-item {
+            transform: translateX(200px);
+        }
+
+        .right-pane .feature-item.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .feature-tick {
+            width: 5px;
+            height: 5px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+        }
+
+        .pane-title {
+            font-size: 1.8rem;
+            color: #ffffff;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        /* AI Visualization */
+        .ai-visualization {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            height: 150px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-nodes-container {
+            position: relative;
+            width: 100%;
+            height: 90px;
+        }
+
+        .ai-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .ai-node {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.7);
+            opacity: 0;
+            animation: nodeAppear 0.5s ease forwards, nodePulse 2s ease-in-out infinite;
+            z-index: 2;
+        }
+
+        @keyframes nodeAppear {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes nodePulse {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(139, 92, 246, 0.7);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 18px rgba(139, 92, 246, 0.9);
+                transform: scale(1.1);
+            }
+        }
+
+        .ai-path {
+            stroke: #8b5cf6;
+            stroke-width: 1.5;
+            fill: none;
+            opacity: 0;
+            stroke-dasharray: 500;
+            stroke-dashoffset: 500;
+            filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.7));
+        }
+
+        .ai-path.animated {
+            animation: drawPath 2.5s ease forwards;
+        }
+
+        @keyframes drawPath {
+            to {
+                stroke-dashoffset: 0;
+                opacity: var(--base-opacity, 0.7);
+            }
+        }
+
+        @keyframes flowPulse {
+            0%, 100% {
+                opacity: var(--base-opacity, 0.7);
+                filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.7));
+            }
+            50% {
+                opacity: calc(var(--base-opacity, 0.7) * 1.3);
+                filter: drop-shadow(0 0 12px rgba(139, 92, 246, 1));
+            }
+        }
+
+        .ai-path.pulsing {
+            animation: flowPulse 2.5s ease-in-out infinite;
+        }
+
+        .ai-description {
+            margin-top: 30px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Placeholder sections */
+        .placeholder-content {
+            background: rgba(139, 92, 246, 0.05);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 60px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        .placeholder-content.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Section 2 numbers animation - no box, full width */
+        #section-2 .placeholder-content {
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            max-width: 100%;
+        }
+
+        /* Section 3 spindle animation */
+        #section-3 .placeholder-content {
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            height: 500px;
+            position: relative;
+        }
+
+        .spindle-animation {
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+            display: block;
+        }
+
+        .placeholder-text {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+
+        /* Numbers Animation */
+        .numbers-animation {
+            position: relative;
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            height: 100px;
+            overflow: hidden;
+        }
+
+        /* Section 2 Features */
+        .section-2-features {
+            margin-top: 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            max-width: 1000px;
+            margin-left: 0;
+            margin-right: auto;
+            text-align: left;
+        }
+
+        .section-2-features .feature-item span {
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        .section-2-right {
+            transform: translateX(200px);
+            opacity: 0;
+        }
+
+        .section-2-left {
+            transform: translateX(-200px);
+            opacity: 0;
+        }
+
+        .section-2-right.visible,
+        .section-2-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Fix for section 3 and 4 feature items - make them visible and animate on scroll */
+        #section-3 .feature-item.section-2-right,
+        #section-3 .feature-item.section-2-left,
+        #section-4 .feature-item.section-2-right,
+        #section-4 .feature-item.section-2-left {
+            opacity: 0;
+        }
+
+        #section-3 .feature-item.section-2-right.visible,
+        #section-3 .feature-item.section-2-left.visible,
+        #section-4 .feature-item.section-2-right.visible,
+        #section-4 .feature-item.section-2-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        #section-3 .feature-item span,
+        #section-4 .feature-item span {
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+
+        @keyframes flyAcross {
+            0% {
+                left: -100px;
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                left: calc(100% + 100px);
+                opacity: 0;
+            }
+        }
+
+        .flying-number {
+            position: absolute;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #8b5cf6;
+            opacity: 0.8;
+            white-space: nowrap;
+            animation: flyAcross 1s linear;
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+        }
+
+        /* Footer */
+        .footer {
+            background: rgba(0, 0, 0, 0.5);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 60px 20px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 20px;
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .footer-section p {
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            color: #8b5cf6;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+            padding-top: 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.85rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            .questionnaire-content {
+                grid-template-columns: 1fr;
+                gap: 60px;
+            }
+
+            .section-header h2 {
+                font-size: 2rem;
+            }
+
+            .pane-title {
+                font-size: 1.5rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .progress-circle {
+                width: 20px;
+                height: 20px;
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .progress-container {
+                padding: 0 20px;
+            }
+
+            .content-section {
+                padding: 60px 20px;
+            }
+        }
+    </style>
+    <!-- Three.js and GSAP for 3D animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo" id="logo">
+                <div class="dot-grid" id="dotGrid"></div>
+                <span>The Financial Modeller</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="questionnaire/questionnaire.html">Build a Model</a></li>
+                <li><a href="#" onclick="showModal('templates'); return false;">Model Templates</a></li>
+                <li><a href="#">How it works</a></li>
+                <li><a href="pricing.html">Pricing</a></li>
+                <li><a href="#" onclick="showModal('about'); return false;">About</a></li>
+                <li><a href="contact.html" class="book-call-btn">Contact us</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar-section">
+        <div class="progress-container">
+            <div class="progress-track" id="progressTrack">
+                <!-- Dots will be generated by JavaScript -->
+            </div>
+            <div class="progress-circles">
+                <div class="progress-circle active" data-section="1" onclick="scrollToSection(1)">1</div>
+                <div class="progress-circle" data-section="2" onclick="scrollToSection(2)">2</div>
+                <div class="progress-circle" data-section="3" onclick="scrollToSection(3)">3</div>
+                <div class="progress-circle" data-section="4" onclick="scrollToSection(4)">4</div>
+                <div class="progress-circle" data-section="5" onclick="scrollToSection(5)">5</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 1: Answer our Questionnaire -->
+    <section class="content-section" id="section-1">
+        <div class="section-container">
+            <div class="section-header">
+                <h2>Step 1: Questionnaire</h2>
+            </div>
+            
+            <div class="questionnaire-content">
+                <!-- Left Pane -->
+                <div class="left-pane">
+                    <div class="animation-box">
+                        <div class="box-header">Fill out the questionnaire</div>
+                        <div class="typing-container" id="typingContainer"></div>
+                    </div>
+                    
+                    <div class="feature-list">
+                        <div class="feature-item" data-index="0">
+                            <div class="feature-tick"></div>
+                            <span>Complete our intuitive questionnaire, this provides us with a base to build your model</span>
+                        </div>
+                        <div class="feature-item" data-index="2">
+                            <div class="feature-tick"></div>
+                            <span>Call out any additional features you would like in your model. If not available in our suite, our dedicated team of experts will have you the new module with a quick turnaround</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Pane -->
+                <div class="right-pane">
+                    
+                    <div class="ai-visualization">
+                        <div class="ai-box-header">Use our AI to produce your financial model in seconds</div>
+                        <div class="ai-nodes-container" id="aiContainer">
+                            <svg class="ai-svg" id="aiSvg"></svg>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-list">
+                        <div class="feature-item" data-index="1">
+                            <div class="feature-tick"></div>
+                            <span>Upload your financial statements and/or links to your website</span>
+                        </div>
+                        <div class="feature-item" data-index="3">
+                            <div class="feature-tick"></div>
+                            <span>Tell us your business model in your own words</span>
+                        </div>
+                        <div class="feature-item" data-index="4">
+                            <div class="feature-tick"></div>
+                            <span>Our AI will do the heavy lifting to build you a detailed and calibrated model</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Placeholder -->
+    <section class="content-section" id="section-2">
+        <div class="section-container">
+            <div class="section-header">
+                <h2>Step 2: We'll build your model in minutes</h2>
+            </div>
+            <div class="placeholder-content">
+                <div class="numbers-animation" id="numbersAnimation"></div>
+                
+                <div class="section-2-features">
+                    <!-- Accordion 1: Model in minutes -->
+                    <div class="accordion-item" data-index="5">
+                        <div class="accordion-header">
+                            <h3 class="accordion-title">Model in minutes</h3>
+                            <button class="accordion-toggle" aria-label="Toggle accordion">
+                                <svg class="accordion-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <line class="icon-horizontal" x1="12" y1="7" x2="12" y2="17"></line>
+                                    <line class="icon-vertical" x1="7" y1="12" x2="17" y2="12"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="accordion-content">
+                            <p>Our proprietary technology will take your responses or work with the AI bot to craft your fully functional institutional grade model in a matter of minutes</p>
+                        </div>
+                    </div>
+
+                    <!-- Accordion 2: Easy updates -->
+                    <div class="accordion-item" data-index="6">
+                        <div class="accordion-header">
+                            <h3 class="accordion-title">Easy updates and wholesale changes</h3>
+                            <button class="accordion-toggle" aria-label="Toggle accordion">
+                                <svg class="accordion-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <line class="icon-horizontal" x1="12" y1="7" x2="12" y2="17"></line>
+                                    <line class="icon-vertical" x1="7" y1="12" x2="17" y2="12"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="accordion-content">
+                            <p>With our dedicated Excel plugin, you have ongoing access to our modelling library so you can build your model out as your business grows without the need for expensive consultants.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Customization & Refinement -->
+    <section class="content-section" id="section-3">
+        <div class="section-container">
+            <div class="section-header">
+                <h2>Step 3: Customization & Refinement</h2>
+            </div>
+            <div class="placeholder-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; padding: 60px 40px;">
+                <div style="display: flex; justify-content: center; align-items: center; z-index: 10; height: 450px;">
+                    <canvas id="step3-chart" style="width: 100%; height: 100%; border-radius: 16px; background: rgba(0, 0, 0, 0.3);"></canvas>
+                </div>
+                <div style="color: rgba(255, 255, 255, 0.85); line-height: 1.8; z-index: 10;">
+                    <div class="feature-item section-2-right" data-index="7" style="margin-bottom: 30px;">
+                        <div class="feature-tick"></div>
+                        <div>
+                            <strong style="color: #8b5cf6; font-size: 1.1rem; display: block; margin-bottom: 8px;">Recut and reshape your modelling in model or online</strong>
+                            <span>Using our state of the art excel plugin you can update your model live with new modules, or integrate your own. Our Modelling database allows you to use our AI plugins and modelling tools online to recut your template in minutes.</span>
+                        </div>
+                    </div>
+                    <div class="feature-item section-2-left" data-index="8" style="margin-bottom: 30px;">
+                        <div class="feature-tick"></div>
+                        <div>
+                            <strong style="color: #8b5cf6; font-size: 1.1rem; display: block; margin-bottom: 8px;">Upload historical financials and craft forecasts in real time with minimal input</strong>
+                            <span>Using our uploader spliced with AI you can simply upload your historical financials and we can provide you a first cut of your forecast drivers based on your companies performance, strategy and macro economic outlooks in your markets.</span>
+                        </div>
+                    </div>
+                    <div class="feature-item section-2-right" data-index="9">
+                        <div class="feature-tick"></div>
+                        <div>
+                            <strong style="color: #8b5cf6; font-size: 1.1rem; display: block; margin-bottom: 8px;">Refine and recut with live data</strong>
+                            <span>Our uploading and feed tools allow you to feed your model with your live financials or upload in minutes when published.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Integration & Data Feeds -->
+    <section class="content-section" id="section-4">
+        <div class="section-container">
+            <div class="section-header">
+                <h2>Step 4: Integration & Data Feeds</h2>
+            </div>
+            <div class="placeholder-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; padding: 60px 40px;">
+                <!-- Text on LEFT -->
+                <div style="color: rgba(255, 255, 255, 0.85); line-height: 1.8; z-index: 10;">
+                    <div class="feature-item section-2-left" data-index="10" style="margin-bottom: 30px;">
+                        <div class="feature-tick"></div>
+                        <span><strong>Seamless data connectivity:</strong> Connect your model to live data sources including ERP systems, accounting software, and market data feeds. Automatic synchronization ensures your projections are always based on the latest information.</span>
+                    </div>
+                    <div class="feature-item section-2-right" data-index="11" style="margin-bottom: 30px;">
+                        <div class="feature-tick"></div>
+                        <span><strong>API integrations:</strong> Leverage our extensive API library to integrate with popular business tools like QuickBooks, Xero, Salesforce, and more. Build custom integrations for your proprietary systems with our developer-friendly documentation.</span>
+                    </div>
+                    <div class="feature-item section-2-left" data-index="12">
+                        <div class="feature-tick"></div>
+                        <span><strong>Real-time updates:</strong> Set up automated data refresh schedules or trigger updates on-demand. Watch your financial model update in real-time as new data flows in, enabling agile decision-making and responsive planning.</span>
+                    </div>
+                </div>
+                
+                <!-- Animation on RIGHT -->
+                <div id="integration-animation" style="display: flex; justify-content: center; align-items: center; z-index: 10; min-height: 400px;">
+                    <svg width="100%" height="400" viewBox="0 0 500 400" style="max-width: 500px;">
+                        <defs>
+                            <linearGradient id="dataGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="dataGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#9333ea;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="dataGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#a855f7;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#c084fc;stop-opacity:1" />
+                            </linearGradient>
+                            
+                            <filter id="dataGlow">
+                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        
+                        <!-- Central hub -->
+                        <circle class="data-hub" cx="250" cy="200" r="40" fill="url(#dataGrad1)" filter="url(#dataGlow)" opacity="0.9"/>
+                        <circle cx="250" cy="200" r="30" fill="none" stroke="url(#dataGrad1)" stroke-width="2" opacity="0.5" class="hub-ring"/>
+                        
+                        <!-- Data source nodes -->
+                        <!-- Top -->
+                        <g class="data-source source-1">
+                            <circle cx="250" cy="60" r="25" fill="url(#dataGrad2)" opacity="0.85"/>
+                            <text x="250" y="67" text-anchor="middle" fill="white" font-size="12" font-weight="bold">API</text>
+                        </g>
+                        
+                        <!-- Top Right -->
+                        <g class="data-source source-2">
+                            <circle cx="400" cy="120" r="25" fill="url(#dataGrad3)" opacity="0.85"/>
+                            <text x="400" y="127" text-anchor="middle" fill="white" font-size="11" font-weight="bold">ERP</text>
+                        </g>
+                        
+                        <!-- Bottom Right -->
+                        <g class="data-source source-3">
+                            <circle cx="400" cy="280" r="25" fill="url(#dataGrad2)" opacity="0.85"/>
+                            <text x="400" y="287" text-anchor="middle" fill="white" font-size="10" font-weight="bold">Cloud</text>
+                        </g>
+                        
+                        <!-- Bottom -->
+                        <g class="data-source source-4">
+                            <circle cx="250" cy="340" r="25" fill="url(#dataGrad3)" opacity="0.85"/>
+                            <text x="250" y="347" text-anchor="middle" fill="white" font-size="11" font-weight="bold">SQL</text>
+                        </g>
+                        
+                        <!-- Bottom Left -->
+                        <g class="data-source source-5">
+                            <circle cx="100" cy="280" r="25" fill="url(#dataGrad2)" opacity="0.85"/>
+                            <text x="100" y="287" text-anchor="middle" fill="white" font-size="10" font-weight="bold">Excel</text>
+                        </g>
+                        
+                        <!-- Top Left -->
+                        <g class="data-source source-6">
+                            <circle cx="100" cy="120" r="25" fill="url(#dataGrad3)" opacity="0.85"/>
+                            <text x="100" y="127" text-anchor="middle" fill="white" font-size="11" font-weight="bold">CSV</text>
+                        </g>
+                        
+                        <!-- Connection lines with animation -->
+                        <line class="data-line line-1" x1="250" y1="85" x2="250" y2="160" stroke="url(#dataGrad1)" stroke-width="2" opacity="0.6"/>
+                        <line class="data-line line-2" x1="380" y1="135" x2="280" y2="180" stroke="url(#dataGrad1)" stroke-width="2" opacity="0.6"/>
+                        <line class="data-line line-3" x1="380" y1="265" x2="280" y2="220" stroke="url(#dataGrad1)" stroke-width="2" opacity="0.6"/>
+                        <line class="data-line line-4" x1="250" y1="315" x2="250" y2="240" stroke="url(#dataGrad1)" stroke-width="2" opacity="0.6"/>
+                        <line class="data-line line-5" x1="120" y1="265" x2="220" y2="220" stroke="url(#dataGrad1)" stroke-width="2" opacity="0.6"/>
+                        <line class="data-line line-6" x1="120" y1="135" x2="220" y2="180" stroke="url(#dataGrad1)" stroke-width="2" opacity="0.6"/>
+                        
+                        <!-- Data flow particles -->
+                        <circle class="data-particle particle-1" r="4" fill="#a855f7" opacity="0.8">
+                            <animateMotion dur="3s" repeatCount="indefinite">
+                                <mpath href="#path1"/>
+                            </animateMotion>
+                        </circle>
+                        <circle class="data-particle particle-2" r="4" fill="#8b5cf6" opacity="0.8">
+                            <animateMotion dur="3s" repeatCount="indefinite" begin="0.5s">
+                                <mpath href="#path2"/>
+                            </animateMotion>
+                        </circle>
+                        <circle class="data-particle particle-3" r="4" fill="#c084fc" opacity="0.8">
+                            <animateMotion dur="3s" repeatCount="indefinite" begin="1s">
+                                <mpath href="#path3"/>
+                            </animateMotion>
+                        </circle>
+                        
+                        <!-- Hidden paths for particle animation -->
+                        <path id="path1" d="M 250 85 L 250 160" fill="none" opacity="0"/>
+                        <path id="path2" d="M 380 135 L 280 180" fill="none" opacity="0"/>
+                        <path id="path3" d="M 380 265 L 280 220" fill="none" opacity="0"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Placeholder -->
+    <section class="content-section" id="section-5">
+        <div class="section-container">
+            <div class="section-header">
+                <h2>Download & Deploy</h2>
+            </div>
+            <div class="placeholder-content">
+                <p class="placeholder-text">Section 5 - Placeholder Content</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About The Financial Modeller</h3>
+                <p>We're a team of financial analysts and Excel experts dedicated to providing high-quality financial models that save you time and improve your analysis.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="#" onclick="showModal('templates'); return false;">Model Templates</a></li>
+                    <li><a href="#">How it works</a></li>
+                    <li><a href="#" onclick="showModal('about'); return false;">About</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📧 <a href="mailto:info@thefinancialmodeller.com" style="color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.5)'">info@thefinancialmodeller.com</a></p>
+                <p>📞 <a href="tel:TBC" style="color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.5)'">TBC</a></p>
+                <p>🏢 Sydney, Australia</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 The Financial Modeller. All rights reserved. | <a href="#privacy-policy" style="color: rgba(255, 255, 255, 0.4); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.4)'">Privacy Policy</a> | <a href="#terms-of-service" style="color: rgba(255, 255, 255, 0.4); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='rgba(255, 255, 255, 0.4)'">Terms of Service</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // Modal functions
+        function showModal(type) {
+            const messages = {
+                'templates': 'Our model templates library is coming soon',
+                'about': 'TBC'
+            };
+            alert(messages[type] || 'Coming soon!');
+        }
+
+        // Logo initialization
+        function initializeLogo() {
+            const dotGrid = document.getElementById('dotGrid');
+            const logo = document.getElementById('logo');
+            if (!dotGrid || !logo) return;
+            dotGrid.innerHTML = '';
+            const rows = 8;
+            const cols = 12;
+            for (let i = 0; i < rows * cols; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                const row = Math.floor(i / cols);
+                const col = i % cols;
+                const wavePosition = col / cols;
+                const rowOffset = row / rows;
+                const waveHeight = Math.sin(wavePosition * Math.PI) * Math.sin(rowOffset * Math.PI);
+                const scale = 0.5 + (waveHeight * 0.8);
+                const opacity = 0.2 + (waveHeight * 0.8);
+                if (col < cols / 3) {
+                    dot.style.background = '#6d28d9';
+                } else if (col < (cols * 2) / 3) {
+                    dot.style.background = '#8b5cf6';
+                } else {
+                    dot.style.background = '#a78bfa';
+                }
+                dot.style.setProperty('--scale', scale);
+                dot.style.setProperty('--opacity', opacity);
+                dot.style.setProperty('--delay', (col * 0.05 + row * 0.02));
+                if (waveHeight < 0.2) {
+                    dot.style.opacity = '0.1';
+                    dot.style.transform = 'scale(0.3)';
+                }
+                dotGrid.appendChild(dot);
+            }
+        }
+
+        // Initialize progress dots
+        function initializeProgressDots() {
+            const progressTrack = document.getElementById('progressTrack');
+            if (!progressTrack) return;
+            
+            const dotCount = 100;
+            
+            for (let i = 0; i < dotCount; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'progress-dot';
+                progressTrack.appendChild(dot);
+            }
+            
+            // Start the animation
+            animateProgressDots();
+        }
+
+        // Animate dots with gradient illumination
+        function animateProgressDots() {
+            const dots = document.querySelectorAll('.progress-dot');
+            if (dots.length === 0) return;
+            
+            // Start from the right side of circle 1 (approximately 10% into the dots)
+            let currentIndex = Math.floor(dots.length * 0.1);
+            const speed = 30; // milliseconds between each step
+            
+            function updateDots() {
+                // Clear all classes first
+                dots.forEach(dot => {
+                    dot.classList.remove('center', 'trail-1', 'trail-2', 'trail-3', 'trail-4', 'trail-5', 'trail-6');
+                });
+                
+                // Set the center dot (pink - brightest, only one lit)
+                if (currentIndex >= 0 && currentIndex < dots.length) {
+                    dots[currentIndex].classList.add('center');
+                }
+                
+                // Set trailing fade BEHIND the moving dot (to the left)
+                if (currentIndex - 1 >= 0) dots[currentIndex - 1].classList.add('trail-1');
+                if (currentIndex - 2 >= 0) dots[currentIndex - 2].classList.add('trail-2');
+                if (currentIndex - 3 >= 0) dots[currentIndex - 3].classList.add('trail-3');
+                if (currentIndex - 4 >= 0) dots[currentIndex - 4].classList.add('trail-4');
+                if (currentIndex - 5 >= 0) dots[currentIndex - 5].classList.add('trail-5');
+                if (currentIndex - 6 >= 0) dots[currentIndex - 6].classList.add('trail-6');
+                
+                // Move to next dot (left to right)
+                currentIndex++;
+                if (currentIndex >= dots.length) {
+                    // Reset to starting position (right of circle 1)
+                    currentIndex = Math.floor(dots.length * 0.1);
+                }
+            }
+            
+            // Start immediately
+            updateDots();
+            
+            // Run the animation
+            setInterval(updateDots, speed);
+        }
+        
+        // Mouse illumination
+        let mouseTimeout;
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            document.documentElement.style.setProperty('--mouse-x', x + '%');
+            document.documentElement.style.setProperty('--mouse-y', y + '%');
+            document.body.classList.add('mouse-active');
+            clearTimeout(mouseTimeout);
+            mouseTimeout = setTimeout(() => { document.body.classList.remove('mouse-active'); }, 500);
+        });
+
+        // Progress bar functionality
+        let currentSection = 1;
+
+        function updateProgressBar() {
+            const windowHeight = window.innerHeight;
+            
+            // Update active circle based on visible section (operates independently)
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach((section, index) => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= windowHeight / 2 && rect.bottom >= windowHeight / 2) {
+                    currentSection = index + 1;
+                    updateCircles(currentSection);
+                }
+            });
+        }
+
+        function updateCircles(activeSection) {
+            const circles = document.querySelectorAll('.progress-circle');
+            circles.forEach((circle, index) => {
+                circle.classList.remove('active', 'completed');
+                if (index + 1 < activeSection) {
+                    circle.classList.add('completed');
+                } else if (index + 1 === activeSection) {
+                    circle.classList.add('active');
+                }
+            });
+        }
+
+        function scrollToSection(sectionNum) {
+            const section = document.getElementById(`section-${sectionNum}`);
+            if (section) {
+                const offsetTop = section.offsetTop - 140; // Account for sticky header and progress bar
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        window.addEventListener('scroll', updateProgressBar);
+
+        // Typing animation for questionnaire
+        const questions = [
+            "What is your business model?",
+            "What industry are you in?",
+            "What is your revenue structure?",
+            "How many employees do you have?",
+            "What are your growth projections?",
+            "What are your main cost drivers?"
+        ];
+
+        let typingInterval = null;
+        let isTypingActive = true;
+
+        function startTypingAnimation() {
+            const container = document.getElementById('typingContainer');
+            const leftPane = document.querySelector('.left-pane');
+            if (!container || !leftPane) return;
+            
+            let questionIndex = 0;
+            let charIndex = 0;
+            let currentLine = null;
+            let typingSpeed = 40;
+            let pauseBetweenQuestions = 600;
+            
+            isTypingActive = true;
+            
+            function typeCharacter() {
+                if (!isTypingActive) return;
+                
+                if (questionIndex >= questions.length) {
+                    setTimeout(() => {
+                        container.innerHTML = '';
+                        questionIndex = 0;
+                        charIndex = 0;
+                        currentLine = null;
+                        if (isTypingActive) typeCharacter();
+                    }, 2000);
+                    return;
+                }
+                
+                if (charIndex === 0) {
+                    currentLine = document.createElement('div');
+                    currentLine.className = 'question-line';
+                    currentLine.style.opacity = '1';
+                    currentLine.style.transform = 'translateY(0)';
+                    currentLine.textContent = 'Q: ';
+                    container.appendChild(currentLine);
+                }
+                
+                if (charIndex < questions[questionIndex].length) {
+                    currentLine.textContent += questions[questionIndex][charIndex];
+                    charIndex++;
+                    
+                    if (questionIndex === questions.length - 1 && charIndex === questions[questionIndex].length) {
+                        const cursor = document.createElement('span');
+                        cursor.className = 'cursor';
+                        currentLine.appendChild(cursor);
+                    }
+                    
+                    typingInterval = setTimeout(typeCharacter, typingSpeed);
+                } else {
+                    charIndex = 0;
+                    questionIndex++;
+                    typingInterval = setTimeout(typeCharacter, pauseBetweenQuestions);
+                }
+            }
+            
+            // Start typing immediately
+            typeCharacter();
+        }
+
+        // AI Visualization
+        let aiAnimationTimeout = null;
+        let isAIActive = true;
+
+        // Numbers Animation for Section 2
+        function createNumbersAnimation() {
+            const container = document.getElementById('numbersAnimation');
+            if (!container) return;
+
+            const numberTypes = [
+                '$1,234,567', '$45.67', '89%', '2024', '3.5x', '+127%',
+                '1,234', '$890K', '456', '78.9%', '2025', '99.99',
+                '12,345', '$1.2M', '67%', '4.8x', '+234%', '5,678'
+            ];
+
+            function createNumber() {
+                const number = document.createElement('div');
+                number.className = 'flying-number';
+                number.textContent = numberTypes[Math.floor(Math.random() * numberTypes.length)];
+                
+                // Random vertical position
+                const randomTop = Math.random() * 80 + 10; // 10% to 90% of container height
+                number.style.top = randomTop + '%';
+                
+                // Random speed variation (0.8s to 1.5s for high speed)
+                const duration = Math.random() * 0.7 + 0.8;
+                number.style.animationDuration = duration + 's';
+                
+                container.appendChild(number);
+                
+                // Remove element after animation completes
+                setTimeout(() => {
+                    if (number.parentNode) {
+                        number.parentNode.removeChild(number);
+                    }
+                }, duration * 1000);
+            }
+
+            // Create numbers at random intervals
+            function startAnimation() {
+                createNumber();
+                const nextDelay = Math.random() * 150 + 50; // 50ms to 200ms between numbers (very frequent)
+                setTimeout(startAnimation, nextDelay);
+            }
+
+            startAnimation();
+        }
+
+        // 3D Spindle Animation for Section 3
+        function createAIVisualization() {
+            const container = document.getElementById('aiContainer');
+            const svg = document.getElementById('aiSvg');
+            const rightPane = document.querySelector('.right-pane');
+            if (!container || !svg || !rightPane) return;
+            
+            // Clear any existing content
+            container.innerHTML = '';
+            svg.innerHTML = '';
+            container.appendChild(svg);
+            
+            const containerWidth = container.offsetWidth;
+            const containerHeight = container.offsetHeight;
+            
+            // Set SVG viewBox
+            svg.setAttribute('viewBox', `0 0 ${containerWidth} ${containerHeight}`);
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            
+            const nodes = [];
+            const leftNodes = 6;
+            const rightNodes = 6;
+            const leftX = containerWidth * 0.15;
+            const rightX = containerWidth * 0.85;
+            const nodeRadius = 3; // Half of node size (6px / 2)
+            
+            // Create left nodes
+            for (let i = 0; i < leftNodes; i++) {
+                const node = document.createElement('div');
+                node.className = 'ai-node';
+                const y = containerHeight * 0.15 + (i * containerHeight * 0.14);
+                node.style.left = leftX + 'px';
+                node.style.top = y + 'px';
+                node.style.animationDelay = `${i * 0.15}s, ${Math.random() * 2}s`;
+                container.appendChild(node);
+                nodes.push({x: leftX + nodeRadius, y: y + nodeRadius, side: 'left'});
+            }
+            
+            // Create right nodes
+            for (let i = 0; i < rightNodes; i++) {
+                const node = document.createElement('div');
+                node.className = 'ai-node';
+                const y = containerHeight * 0.15 + (i * containerHeight * 0.14);
+                node.style.left = rightX + 'px';
+                node.style.top = y + 'px';
+                node.style.animationDelay = `${(leftNodes + i) * 0.15}s, ${Math.random() * 2}s`;
+                container.appendChild(node);
+                nodes.push({x: rightX + nodeRadius, y: y + nodeRadius, side: 'right'});
+            }
+            
+            let currentPaths = [];
+            let sparklers = [];
+            let direction = 'forward'; // 'forward' (left to right) or 'backward' (right to left)
+            
+            function showExpandingConnections() {
+                if (!isAIActive) return;
+                
+                // Clear previous paths and sparklers
+                currentPaths.forEach(path => path.remove());
+                sparklers.forEach(sparkler => sparkler.element.remove());
+                currentPaths = [];
+                sparklers = [];
+                
+                if (direction === 'forward') {
+                    // Draw from left to right
+                    const numSources = Math.floor(Math.random() * 2) + 2;
+                    const sourceIndices = [];
+                    while (sourceIndices.length < numSources) {
+                        const randomIndex = Math.floor(Math.random() * leftNodes);
+                        if (!sourceIndices.includes(randomIndex)) {
+                            sourceIndices.push(randomIndex);
+                        }
+                    }
+                    
+                    sourceIndices.forEach((leftNodeIndex, sourceIdx) => {
+                        const sourceNode = nodes[leftNodeIndex];
+                        
+                        const numTargets = Math.floor(Math.random() * 3) + 2;
+                        const targetIndices = [];
+                        while (targetIndices.length < numTargets) {
+                            const randomIndex = Math.floor(Math.random() * rightNodes);
+                            if (!targetIndices.includes(randomIndex)) {
+                                targetIndices.push(randomIndex);
+                            }
+                        }
+                        
+                        const branchX = sourceNode.x + (containerWidth * 0.25);
+                        const branchY = sourceNode.y;
+                        
+                        // Create trunk
+                        const trunkOpacity = 0.5 + Math.random() * 0.4;
+                        const trunkPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        const trunkD = `M ${sourceNode.x} ${sourceNode.y} L ${branchX} ${branchY}`;
+                        trunkPath.setAttribute('d', trunkD);
+                        trunkPath.setAttribute('stroke', '#8b5cf6');
+                        trunkPath.setAttribute('stroke-width', '1.5');
+                        trunkPath.setAttribute('fill', 'none');
+                        trunkPath.style.filter = 'drop-shadow(0 0 5px rgba(139, 92, 246, 0.7))';
+                        trunkPath.style.opacity = '0';
+                        
+                        svg.appendChild(trunkPath);
+                        currentPaths.push(trunkPath);
+                        
+                        const trunkLength = trunkPath.getTotalLength();
+                        trunkPath.style.strokeDasharray = trunkLength;
+                        trunkPath.style.strokeDashoffset = trunkLength;
+                        
+                        // Trunk sparkler
+                        const trunkSparkler = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        trunkSparkler.setAttribute('r', '3');
+                        trunkSparkler.setAttribute('fill', '#ec4899');
+                        trunkSparkler.style.filter = 'drop-shadow(0 0 8px rgba(236, 72, 153, 1))';
+                        trunkSparkler.style.opacity = '0';
+                        svg.appendChild(trunkSparkler);
+                        sparklers.push({ element: trunkSparkler, path: trunkPath, length: trunkLength });
+                        
+                        // Animate trunk drawing
+                        setTimeout(() => {
+                            if (!isAIActive) return;
+                            trunkPath.style.opacity = trunkOpacity;
+                            trunkPath.style.transition = 'stroke-dashoffset 0.5s ease-out';
+                            trunkPath.style.strokeDashoffset = '0';
+                            
+                            // Animate sparkler
+                            trunkSparkler.style.opacity = '1';
+                            const animateTrunkSparkler = (progress) => {
+                                if (!isAIActive || progress > 1) {
+                                    trunkSparkler.style.opacity = '0';
+                                    return;
+                                }
+                                const point = trunkPath.getPointAtLength(progress * trunkLength);
+                                trunkSparkler.setAttribute('cx', point.x);
+                                trunkSparkler.setAttribute('cy', point.y);
+                                requestAnimationFrame(() => animateTrunkSparkler(progress + 0.02));
+                            };
+                            animateTrunkSparkler(0);
+                        }, 50 + (sourceIdx * 150));
+                        
+                        // Create branches
+                        targetIndices.forEach((targetIndex, i) => {
+                            const targetNode = nodes[leftNodes + targetIndex];
+                            
+                            const branchOpacity = 0.3 + Math.random() * 0.5;
+                            const branchPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                            
+                            const control1X = branchX + (containerWidth * 0.15);
+                            const control1Y = branchY;
+                            const control2X = targetNode.x - (containerWidth * 0.15);
+                            const control2Y = targetNode.y;
+                            
+                            const branchD = `M ${branchX} ${branchY} C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${targetNode.x} ${targetNode.y}`;
+                            branchPath.setAttribute('d', branchD);
+                            branchPath.setAttribute('stroke', '#8b5cf6');
+                            branchPath.setAttribute('stroke-width', '1.2');
+                            branchPath.setAttribute('fill', 'none');
+                            branchPath.style.filter = 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.6))';
+                            branchPath.style.opacity = '0';
+                            
+                            svg.appendChild(branchPath);
+                            currentPaths.push(branchPath);
+                            
+                            const branchLength = branchPath.getTotalLength();
+                            branchPath.style.strokeDasharray = branchLength;
+                            branchPath.style.strokeDashoffset = branchLength;
+                            
+                            // Branch sparkler
+                            const branchSparkler = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            branchSparkler.setAttribute('r', '2.5');
+                            branchSparkler.setAttribute('fill', '#a855f7');
+                            branchSparkler.style.filter = 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.9))';
+                            branchSparkler.style.opacity = '0';
+                            svg.appendChild(branchSparkler);
+                            sparklers.push({ element: branchSparkler, path: branchPath, length: branchLength, isLast: i === targetIndices.length - 1 && sourceIdx === sourceIndices.length - 1 });
+                            
+                            // Animate branch drawing
+                            setTimeout(() => {
+                                if (!isAIActive) return;
+                                branchPath.style.opacity = branchOpacity;
+                                branchPath.style.transition = 'stroke-dashoffset 0.6s ease-out';
+                                branchPath.style.strokeDashoffset = '0';
+                                
+                                // Animate sparkler
+                                branchSparkler.style.opacity = '1';
+                                const animateBranchSparkler = (progress) => {
+                                    if (!isAIActive || progress > 1) {
+                                        branchSparkler.style.opacity = '0';
+                                        
+                                        // If last sparkler, switch direction and restart
+                                        if (sparklers.find(s => s.element === branchSparkler)?.isLast) {
+                                            setTimeout(() => {
+                                                if (isAIActive) {
+                                                    direction = 'backward';
+                                                    showExpandingConnections();
+                                                }
+                                            }, 200);
+                                        }
+                                        return;
+                                    }
+                                    const point = branchPath.getPointAtLength(progress * branchLength);
+                                    branchSparkler.setAttribute('cx', point.x);
+                                    branchSparkler.setAttribute('cy', point.y);
+                                    requestAnimationFrame(() => animateBranchSparkler(progress + 0.015));
+                                };
+                                animateBranchSparkler(0);
+                            }, 550 + (sourceIdx * 150) + (i * 100));
+                        });
+                    });
+                } else {
+                    // Draw from right to left (new random connections)
+                    const numSources = Math.floor(Math.random() * 2) + 2;
+                    const sourceIndices = [];
+                    while (sourceIndices.length < numSources) {
+                        const randomIndex = Math.floor(Math.random() * rightNodes);
+                        if (!sourceIndices.includes(randomIndex)) {
+                            sourceIndices.push(randomIndex);
+                        }
+                    }
+                    
+                    sourceIndices.forEach((rightNodeIndex, sourceIdx) => {
+                        const sourceNode = nodes[leftNodes + rightNodeIndex];
+                        
+                        const numTargets = Math.floor(Math.random() * 3) + 2;
+                        const targetIndices = [];
+                        while (targetIndices.length < numTargets) {
+                            const randomIndex = Math.floor(Math.random() * leftNodes);
+                            if (!targetIndices.includes(randomIndex)) {
+                                targetIndices.push(randomIndex);
+                            }
+                        }
+                        
+                        const branchX = sourceNode.x - (containerWidth * 0.25);
+                        const branchY = sourceNode.y;
+                        
+                        // Create trunk
+                        const trunkOpacity = 0.5 + Math.random() * 0.4;
+                        const trunkPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        const trunkD = `M ${sourceNode.x} ${sourceNode.y} L ${branchX} ${branchY}`;
+                        trunkPath.setAttribute('d', trunkD);
+                        trunkPath.setAttribute('stroke', '#8b5cf6');
+                        trunkPath.setAttribute('stroke-width', '1.5');
+                        trunkPath.setAttribute('fill', 'none');
+                        trunkPath.style.filter = 'drop-shadow(0 0 5px rgba(139, 92, 246, 0.7))';
+                        trunkPath.style.opacity = '0';
+                        
+                        svg.appendChild(trunkPath);
+                        currentPaths.push(trunkPath);
+                        
+                        const trunkLength = trunkPath.getTotalLength();
+                        trunkPath.style.strokeDasharray = trunkLength;
+                        trunkPath.style.strokeDashoffset = trunkLength;
+                        
+                        // Trunk sparkler
+                        const trunkSparkler = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        trunkSparkler.setAttribute('r', '3');
+                        trunkSparkler.setAttribute('fill', '#ec4899');
+                        trunkSparkler.style.filter = 'drop-shadow(0 0 8px rgba(236, 72, 153, 1))';
+                        trunkSparkler.style.opacity = '0';
+                        svg.appendChild(trunkSparkler);
+                        sparklers.push({ element: trunkSparkler, path: trunkPath, length: trunkLength });
+                        
+                        // Animate trunk drawing
+                        setTimeout(() => {
+                            if (!isAIActive) return;
+                            trunkPath.style.opacity = trunkOpacity;
+                            trunkPath.style.transition = 'stroke-dashoffset 0.5s ease-out';
+                            trunkPath.style.strokeDashoffset = '0';
+                            
+                            // Animate sparkler
+                            trunkSparkler.style.opacity = '1';
+                            const animateTrunkSparkler = (progress) => {
+                                if (!isAIActive || progress > 1) {
+                                    trunkSparkler.style.opacity = '0';
+                                    return;
+                                }
+                                const point = trunkPath.getPointAtLength(progress * trunkLength);
+                                trunkSparkler.setAttribute('cx', point.x);
+                                trunkSparkler.setAttribute('cy', point.y);
+                                requestAnimationFrame(() => animateTrunkSparkler(progress + 0.02));
+                            };
+                            animateTrunkSparkler(0);
+                        }, 50 + (sourceIdx * 150));
+                        
+                        // Create branches
+                        targetIndices.forEach((targetIndex, i) => {
+                            const targetNode = nodes[targetIndex];
+                            
+                            const branchOpacity = 0.3 + Math.random() * 0.5;
+                            const branchPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                            
+                            const control1X = branchX - (containerWidth * 0.15);
+                            const control1Y = branchY;
+                            const control2X = targetNode.x + (containerWidth * 0.15);
+                            const control2Y = targetNode.y;
+                            
+                            const branchD = `M ${branchX} ${branchY} C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${targetNode.x} ${targetNode.y}`;
+                            branchPath.setAttribute('d', branchD);
+                            branchPath.setAttribute('stroke', '#8b5cf6');
+                            branchPath.setAttribute('stroke-width', '1.2');
+                            branchPath.setAttribute('fill', 'none');
+                            branchPath.style.filter = 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.6))';
+                            branchPath.style.opacity = '0';
+                            
+                            svg.appendChild(branchPath);
+                            currentPaths.push(branchPath);
+                            
+                            const branchLength = branchPath.getTotalLength();
+                            branchPath.style.strokeDasharray = branchLength;
+                            branchPath.style.strokeDashoffset = branchLength;
+                            
+                            // Branch sparkler
+                            const branchSparkler = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            branchSparkler.setAttribute('r', '2.5');
+                            branchSparkler.setAttribute('fill', '#a855f7');
+                            branchSparkler.style.filter = 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.9))';
+                            branchSparkler.style.opacity = '0';
+                            svg.appendChild(branchSparkler);
+                            sparklers.push({ element: branchSparkler, path: branchPath, length: branchLength, isLast: i === targetIndices.length - 1 && sourceIdx === sourceIndices.length - 1 });
+                            
+                            // Animate branch drawing
+                            setTimeout(() => {
+                                if (!isAIActive) return;
+                                branchPath.style.opacity = branchOpacity;
+                                branchPath.style.transition = 'stroke-dashoffset 0.6s ease-out';
+                                branchPath.style.strokeDashoffset = '0';
+                                
+                                // Animate sparkler
+                                branchSparkler.style.opacity = '1';
+                                const animateBranchSparkler = (progress) => {
+                                    if (!isAIActive || progress > 1) {
+                                        branchSparkler.style.opacity = '0';
+                                        
+                                        // If last sparkler, switch direction and restart
+                                        if (sparklers.find(s => s.element === branchSparkler)?.isLast) {
+                                            setTimeout(() => {
+                                                if (isAIActive) {
+                                                    direction = 'forward';
+                                                    showExpandingConnections();
+                                                }
+                                            }, 200);
+                                        }
+                                        return;
+                                    }
+                                    const point = branchPath.getPointAtLength(progress * branchLength);
+                                    branchSparkler.setAttribute('cx', point.x);
+                                    branchSparkler.setAttribute('cy', point.y);
+                                    requestAnimationFrame(() => animateBranchSparkler(progress + 0.015));
+                                };
+                                animateBranchSparkler(0);
+                            }, 550 + (sourceIdx * 150) + (i * 100));
+                        });
+                    });
+                }
+            }
+            
+            // Start animation automatically
+            isAIActive = true;
+            setTimeout(showExpandingConnections, 500);
+        }
+
+        // Intersection Observer for section headers and panes
+        const sectionObserverOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    
+                    // Start typing animation when left pane is visible
+                    if (entry.target.classList.contains('left-pane') && !entry.target.dataset.animated) {
+                        entry.target.dataset.animated = 'true';
+                        setTimeout(startTypingAnimation, 500);
+                    }
+                    
+                    // Start AI visualization when right pane is visible
+                    if (entry.target.classList.contains('right-pane') && !entry.target.dataset.animated) {
+                        entry.target.dataset.animated = 'true';
+                        setTimeout(createAIVisualization, 500);
+                    }
+                    
+                    // Start numbers animation when section 2 becomes visible
+                    if (entry.target.id === 'section-2' && !entry.target.dataset.animated) {
+                        entry.target.dataset.animated = 'true';
+                        setTimeout(createNumbersAnimation, 800);
+                    }
+                }
+            });
+        }, sectionObserverOptions);
+
+        // Separate observer for feature items with sequenced animation
+        const featureObserverOptions = {
+            threshold: 0.3,
+            rootMargin: '-20% 0px -40% 0px'
+        };
+
+        let animatedFeatures = new Set();
+        let currentAnimatingIndex = 0;
+
+        const featureObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const index = parseInt(entry.target.getAttribute('data-index'));
+                    
+                    // Animate in sequence based on index
+                    if (index === currentAnimatingIndex && !animatedFeatures.has(index)) {
+                        setTimeout(() => {
+                            entry.target.classList.add('visible');
+                            animatedFeatures.add(index);
+                            currentAnimatingIndex++;
+                        }, 0);
+                    } else if (index > currentAnimatingIndex && !animatedFeatures.has(index)) {
+                        // Store for later if we're not ready yet
+                        const checkSequence = setInterval(() => {
+                            if (currentAnimatingIndex === index && !animatedFeatures.has(index)) {
+                                entry.target.classList.add('visible');
+                                animatedFeatures.add(index);
+                                currentAnimatingIndex++;
+                                clearInterval(checkSequence);
+                            }
+                        }, 100);
+                    }
+                }
+            });
+        }, featureObserverOptions);
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeLogo();
+            initializeProgressDots();
+            
+            // Observe section headers, panes, and placeholder content with section observer
+            const animatedElements = document.querySelectorAll('.section-header, .left-pane, .right-pane, .placeholder-content, #section-2');
+            animatedElements.forEach(el => sectionObserver.observe(el));
+            
+            // Observe each feature item individually with feature observer
+            const featureItems = document.querySelectorAll('.feature-item');
+            featureItems.forEach(item => featureObserver.observe(item));
+            
+            // Initialize accordion functionality
+            const accordionItems = document.querySelectorAll('.accordion-item');
+            
+            accordionItems.forEach((item) => {
+                const header = item.querySelector('.accordion-header');
+                const toggle = item.querySelector('.accordion-toggle');
+                
+                const toggleAccordion = (e) => {
+                    e.stopPropagation();
+                    
+                    // Close other accordions (optional - remove if you want multiple open at once)
+                    // accordionItems.forEach(otherItem => {
+                    //     if (otherItem !== item && otherItem.classList.contains('active')) {
+                    //         otherItem.classList.remove('active');
+                    //     }
+                    // });
+                    
+                    // Toggle current accordion
+                    item.classList.toggle('active');
+                };
+                
+                header.addEventListener('click', toggleAccordion);
+                toggle.addEventListener('click', toggleAccordion);
+            });
+            
+            // Initialize progress bar
+            updateProgressBar();
+        });
+    </script>
+
+    
+
+
+<!-- Interactive Chart - Smooth Continuous Motion -->
+    <script>
+        (function() {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initChart);
+            } else {
+                initChart();
+            }
+
+            function initChart() {
+                const canvas = document.getElementById('step3-chart');
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                let isHovered = false;
+                let animationFrame = null;
+                let time = 0;
+
+                function resizeCanvas() {
+                    const rect = canvas.getBoundingClientRect();
+                    canvas.width = rect.width * window.devicePixelRatio;
+                    canvas.height = rect.height * window.devicePixelRatio;
+                    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                }
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                
+                // Base values for each month
+                const baseValues = [70, 85, 75, 90, 80, 95, 85, 100, 90, 95, 85, 80];
+
+                function animate() {
+                    time += isHovered ? 0.03 : 0.01; // Faster when hovered
+                    drawChart();
+                    animationFrame = requestAnimationFrame(animate);
+                }
+
+                function drawChart() {
+                    const rect = canvas.getBoundingClientRect();
+                    const width = rect.width;
+                    const height = rect.height;
+
+                    ctx.clearRect(0, 0, width, height);
+
+                    const padding = 40;
+                    const chartWidth = width - padding * 2;
+                    const chartHeight = height - padding * 2;
+
+                    // Draw grid
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i <= 5; i++) {
+                        const y = padding + (chartHeight / 5) * i;
+                        ctx.beginPath();
+                        ctx.moveTo(padding, y);
+                        ctx.lineTo(width - padding, y);
+                        ctx.stroke();
+                    }
+
+                    const pointSpacing = chartWidth / (baseValues.length - 1);
+                    const maxValue = 150;
+
+                    // Calculate smooth continuous wave motion
+                    const data = baseValues.map((baseValue, i) => {
+                        // Create smooth wave motion that's synchronized across all points
+                        const wave1 = Math.sin(time + i * 0.5) * 8;
+                        const wave2 = Math.sin(time * 1.5 + i * 0.3) * 5;
+                        const wave3 = Math.cos(time * 0.7 + i * 0.4) * 6;
+                        return baseValue + wave1 + wave2 + wave3;
+                    });
+
+                    // Calculate smooth curve points
+                    const points = data.map((value, i) => ({
+                        x: padding + pointSpacing * i,
+                        y: height - padding - (value / maxValue) * chartHeight
+                    }));
+
+                    // Create gradient
+                    const gradient = ctx.createLinearGradient(0, padding, 0, height - padding);
+                    gradient.addColorStop(0, 'rgba(139, 92, 246, 0.8)');
+                    gradient.addColorStop(1, 'rgba(139, 92, 246, 0.1)');
+
+                    // Draw filled area with smooth curve
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.moveTo(padding, height - padding);
+                    ctx.lineTo(points[0].x, points[0].y);
+                    
+                    // Draw smooth bezier curve through points
+                    for (let i = 0; i < points.length - 1; i++) {
+                        const xc = (points[i].x + points[i + 1].x) / 2;
+                        const yc = (points[i].y + points[i + 1].y) / 2;
+                        ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+                    }
+                    
+                    // Last point
+                    const lastPoint = points[points.length - 1];
+                    ctx.lineTo(lastPoint.x, lastPoint.y);
+                    ctx.lineTo(width - padding, height - padding);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Draw smooth line (NO DOTS)
+                    ctx.strokeStyle = '#8b5cf6';
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = 'rgba(139, 92, 246, 0.5)';
+                    ctx.beginPath();
+                    ctx.moveTo(points[0].x, points[0].y);
+                    
+                    for (let i = 0; i < points.length - 1; i++) {
+                        const xc = (points[i].x + points[i + 1].x) / 2;
+                        const yc = (points[i].y + points[i + 1].y) / 2;
+                        ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+                    }
+                    
+                    ctx.lineTo(lastPoint.x, lastPoint.y);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+
+                    // NO DOTS - removed the point drawing code
+
+                    // Draw axis labels
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.font = '10px sans-serif';
+                    ctx.textAlign = 'center';
+                    months.forEach((month, i) => {
+                        const x = padding + pointSpacing * i;
+                        ctx.fillText(month, x, height - padding + 20);
+                    });
+
+                    // Draw "Live Data" indicator
+                    if (isHovered) {
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                        ctx.fillRect(width - 90, 10, 80, 25);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                        ctx.font = '12px sans-serif';
+                        ctx.textAlign = 'left';
+                        ctx.fillText('Live Data', width - 85, 27);
+                    }
+                }
+
+                canvas.addEventListener('mouseenter', () => {
+                    isHovered = true;
+                    canvas.style.cursor = 'pointer';
+                });
+
+                canvas.addEventListener('mouseleave', () => {
+                    isHovered = false;
+                    canvas.style.cursor = 'default';
+                });
+
+                animate();
+            }
+        })();
+    </script>
+</body>
+</html>
