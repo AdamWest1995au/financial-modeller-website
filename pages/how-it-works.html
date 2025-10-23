@@ -1158,12 +1158,19 @@
             cursor: pointer;
             backdrop-filter: blur(10px);
             z-index: 10;
+            outline: none;
         }
 
         .data-source-card:hover {
             background: rgba(139, 92, 246, 0.15);
             transform: translateY(-4px);
             box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+        }
+
+        .data-source-card:focus,
+        .data-source-card:active {
+            outline: none;
+            border: none;
         }
 
         .card-icon {
@@ -1177,6 +1184,16 @@
             color: rgba(255, 255, 255, 0.9);
             font-size: 1rem;
             font-weight: 500;
+            text-align: center;
+        }
+
+        .card-description {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            font-weight: 400;
+            text-align: center;
+            line-height: 1.4;
+            margin-top: 4px;
         }
 
         .card-indicator {
@@ -1695,7 +1712,7 @@
                     
                                         <!-- Data Packets Canvas -->
                     <canvas id="dataPacketsCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100;"></canvas>
-                        <!-- Left Column - Spreadsheets -->
+                        <!-- Left Column - Excel Models/files -->
                         <div class="data-source-card card-1" style="grid-column: 2; grid-row: 1;">
                             <div class="card-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1703,11 +1720,12 @@
                                     <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
                                 </svg>
                             </div>
-                            <div class="card-label">Spreadsheets</div>
+                            <div class="card-label">Excel Models/files</div>
+                            <div class="card-description">Connect and sync your Excel models and spreadsheets directly</div>
                             <div class="card-indicator"></div>
                         </div>
                         
-                        <!-- Middle Column - Cloud Storage -->
+                        <!-- Middle Column - External data feeds -->
                         <div class="data-source-card card-2" style="grid-column: 4; grid-row: 1;">
                             <div class="card-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1715,11 +1733,12 @@
                                     <path d="M12 18v-6M9 15l3 3 3-3"/>
                                 </svg>
                             </div>
-                            <div class="card-label">Cloud Storage</div>
+                            <div class="card-label">External data feeds</div>
+                            <div class="card-description">Integrate market data, economic indicators, and third-party feeds</div>
                             <div class="card-indicator"></div>
                         </div>
                         
-                        <!-- Right Column - SQL Database -->
+                        <!-- Right Column - Custom data feeds -->
                         <div class="data-source-card card-3" style="grid-column: 6; grid-row: 1;">
                             <div class="card-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1728,7 +1747,8 @@
                                     <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/>
                                 </svg>
                             </div>
-                            <div class="card-label">SQL Database</div>
+                            <div class="card-label">Custom data feeds</div>
+                            <div class="card-description">Build tailored data connections for your specific requirements</div>
                             <div class="card-indicator"></div>
                         </div>
                         
@@ -1755,7 +1775,7 @@
                             </div>
                         </div>
                         
-                        <!-- Left Column - Market Data -->
+                        <!-- Left Column - SAAS and ERP systems -->
                         <div class="data-source-card card-4" style="grid-column: 2; grid-row: 3;">
                             <div class="card-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1764,11 +1784,12 @@
                                     <path d="M18 12a2 2 0 100 4 2 2 0 000-4z"/>
                                 </svg>
                             </div>
-                            <div class="card-label">Market Data</div>
+                            <div class="card-label">SAAS and ERP systems</div>
+                            <div class="card-description">Link with enterprise platforms like SAP, Oracle, and Salesforce</div>
                             <div class="card-indicator"></div>
                         </div>
                         
-                        <!-- Middle Column - Web APIs -->
+                        <!-- Middle Column - Bespoke systems -->
                         <div class="data-source-card card-5" style="grid-column: 4; grid-row: 3;">
                             <div class="card-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1776,11 +1797,12 @@
                                     <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
                                 </svg>
                             </div>
-                            <div class="card-label">Web APIs</div>
+                            <div class="card-label">Bespoke systems</div>
+                            <div class="card-description">Connect proprietary systems and internal databases seamlessly</div>
                             <div class="card-indicator"></div>
                         </div>
                         
-                        <!-- Right Column - ERP Systems -->
+                        <!-- Right Column - Unstructured data -->
                         <div class="data-source-card card-6" style="grid-column: 6; grid-row: 3;">
                             <div class="card-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1788,7 +1810,8 @@
                                     <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>
                                 </svg>
                             </div>
-                            <div class="card-label">ERP Systems</div>
+                            <div class="card-label">Unstructured data</div>
+                            <div class="card-description">Extract insights from PDFs, emails, and documents using AI</div>
                             <div class="card-indicator"></div>
                         </div>
                     </div>
@@ -3162,35 +3185,35 @@
     <script>
         // Modal functionality
         const cardData = {
-            'Spreadsheets': {
+            'Excel Models/files': {
                 icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>',
-                title: 'Spreadsheets',
-                description: '<p>Import data directly from Excel, Google Sheets, and other spreadsheet formats. Our intelligent parser automatically recognizes data structures and formats them for your financial model.</p><ul><li>Support for .xlsx, .xls, .csv, and .ods formats</li><li>Automatic data type detection</li><li>Real-time synchronization</li><li>Version control and audit trails</li></ul>'
+                title: 'Excel Models/files',
+                description: '<p>Connect and sync your Excel models and spreadsheets directly. Our platform seamlessly integrates with your existing Excel files, maintaining formulas and formatting while enabling real-time collaboration.</p><ul><li>Direct Excel file integration and synchronization</li><li>Preserve complex formulas and macros</li><li>Real-time collaboration across teams</li><li>Version control and change tracking</li></ul>'
             },
-            'Cloud Storage': {
+            'External data feeds': {
                 icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l5 5v9a2 2 0 01-2 2z"/><path d="M12 18v-6M9 15l3 3 3-3"/></svg>',
-                title: 'Cloud Storage',
-                description: '<p>Seamlessly connect to your cloud storage providers including Google Drive, Dropbox, OneDrive, and Box. Access your financial documents from anywhere.</p><ul><li>Direct integration with major cloud providers</li><li>Automatic file discovery</li><li>Secure OAuth authentication</li><li>Collaborative file sharing</li></ul>'
+                title: 'External data feeds',
+                description: '<p>Integrate market data, economic indicators, and third-party data feeds. Access comprehensive financial data from leading providers to enhance your models with real-time insights.</p><ul><li>Real-time market data from major providers</li><li>Economic indicators and macro data</li><li>Industry benchmarks and trends</li><li>Automated data refreshes</li></ul>'
             },
-            'SQL Database': {
+            'Custom data feeds': {
                 icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>',
-                title: 'SQL Database',
-                description: '<p>Connect directly to your SQL databases including MySQL, PostgreSQL, SQL Server, and Oracle. Query and import financial data in real-time.</p><ul><li>Support for all major SQL databases</li><li>Custom query builder</li><li>Scheduled data refreshes</li><li>Encrypted connections</li></ul>'
+                title: 'Custom data feeds',
+                description: '<p>Build tailored data connections for your specific requirements. Our flexible API framework allows you to create custom integrations that fit your unique data architecture and business needs.</p><ul><li>Flexible API configuration</li><li>Custom data transformation pipelines</li><li>Support for any data format or protocol</li><li>Dedicated integration support</li></ul>'
             },
-            'Market Data': {
+            'SAAS and ERP systems': {
                 icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 01 0-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 100 4 2 2 0 000-4z"/></svg>',
-                title: 'Market Data',
-                description: '<p>Access real-time and historical market data including stock prices, currency rates, commodities, and economic indicators from leading data providers.</p><ul><li>Real-time market data feeds</li><li>Historical data analysis</li><li>Multiple data providers</li><li>Currency conversion</li></ul>'
+                title: 'SAAS and ERP systems',
+                description: '<p>Link with enterprise platforms like SAP, Oracle, Salesforce, NetSuite, and Microsoft Dynamics. Seamlessly import financial and operational data from your core business systems.</p><ul><li>Pre-built connectors for major platforms</li><li>Multi-entity and multi-currency support</li><li>Automated field mapping and validation</li><li>Secure enterprise-grade connections</li></ul>'
             },
-            'Web APIs': {
+            'Bespoke systems': {
                 icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>',
-                title: 'Web APIs',
-                description: '<p>Integrate with thousands of web APIs to pull data from CRM systems, payment processors, analytics platforms, and more into your financial models.</p><ul><li>RESTful API integration</li><li>Custom webhook support</li><li>Rate limiting and caching</li><li>Error handling and retry logic</li></ul>'
+                title: 'Bespoke systems',
+                description: '<p>Connect proprietary systems and internal databases seamlessly. Our team works with you to build custom integrations for your unique internal systems and legacy applications.</p><ul><li>Custom integration development</li><li>Legacy system compatibility</li><li>Secure on-premise connections</li><li>Ongoing integration maintenance</li></ul>'
             },
-            'ERP Systems': {
+            'Unstructured data': {
                 icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>',
-                title: 'ERP Systems',
-                description: '<p>Connect to enterprise resource planning systems like SAP, Oracle ERP, NetSuite, and Microsoft Dynamics. Import financial data directly from your core business systems.</p><ul><li>Pre-built ERP connectors</li><li>Custom field mapping</li><li>Multi-entity support</li><li>Automated data validation</li></ul>'
+                title: 'Unstructured data',
+                description: '<p>Extract insights from PDFs, emails, and documents using AI. Our advanced AI-powered extraction tools automatically identify and extract financial data from unstructured sources.</p><ul><li>AI-powered document parsing</li><li>Automatic data extraction from PDFs and emails</li><li>Intelligent table and figure recognition</li><li>Multi-format support with high accuracy</li></ul>'
             }
         };
 
