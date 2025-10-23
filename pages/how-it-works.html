@@ -1328,9 +1328,50 @@
             
             #section-4 > div > div {
                 padding: 40px 20px !important;
+
+
+
+        /* Connection Lines Animation */
+        .connection-line {
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.8));
+            stroke-dasharray: 800;
+            stroke-dashoffset: 800;
+        }
+
+        /* Individual line animations with delays - animate on page load */
+        .line-1 { animation: drawLine 1.5s ease-out 1s forwards; }
+        .line-2 { animation: drawLine 1.5s ease-out 1.6s forwards; }
+        .line-3 { animation: drawLine 1.5s ease-out 2.2s forwards; }
+        .line-4 { animation: drawLine 1.5s ease-out 2.8s forwards; }
+        .line-5 { animation: drawLine 1.5s ease-out 3.4s forwards; }
+        .line-6 { animation: drawLine 1.5s ease-out 4.0s forwards; }
+
+        @keyframes drawLine {
+            from {
+                stroke-dashoffset: 800;
+                opacity: 0;
+            }
+            to {
+                stroke-dashoffset: 0;
+                opacity: 0.85;
             }
         }
-</style>
+
+        /* Data Packets Canvas */
+        #dataPacketsCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            display: block;
+        }
+        }
+    }
+    </style>
     <!-- Three.js and GSAP for 3D animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -1476,6 +1517,7 @@
 
     <!-- Section 3: Customization & Refinement -->
         <section class="content-section" id="section-3">
+                    
         <div class="section-container">
             <div class="section-header">
                 <h2>Step 3: Customization & Refinement</h2>
@@ -1518,9 +1560,36 @@
             <!-- Full Width Animation -->
             <div style="width: 100%; padding: 80px 40px; background: transparent;">
                 <div style="max-width: 1400px; margin: 0 auto;">
-                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 40px; width: 100%; justify-items: center;">
-                        <!-- Top Row -->
-                        <div class="data-source-card card-1">
+                    <div style="position: relative; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto auto auto; gap: 40px; width: 100%; justify-items: center;">
+                    
+                                        <!-- Data Packets Canvas -->
+                    <canvas id="dataPacketsCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100;"></canvas>
+                        <!-- Left Column - Spreadsheets -->
+                        <div class="data-source-card card-1" style="grid-column: 2; grid-row: 1;">
+                            <div class="card-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                    <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+                                </svg>
+                            </div>
+                            <div class="card-label">Spreadsheets</div>
+                            <div class="card-indicator"></div>
+                        </div>
+                        
+                        <!-- Middle Column - Cloud Storage -->
+                        <div class="data-source-card card-2" style="grid-column: 4; grid-row: 1;">
+                            <div class="card-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l5 5v9a2 2 0 01-2 2z"/>
+                                    <path d="M12 18v-6M9 15l3 3 3-3"/>
+                                </svg>
+                            </div>
+                            <div class="card-label">Cloud Storage</div>
+                            <div class="card-indicator"></div>
+                        </div>
+                        
+                        <!-- Right Column - SQL Database -->
+                        <div class="data-source-card card-3" style="grid-column: 6; grid-row: 1;">
                             <div class="card-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <ellipse cx="12" cy="5" rx="9" ry="3"/>
@@ -1532,36 +1601,14 @@
                             <div class="card-indicator"></div>
                         </div>
                         
-                        <div class="data-source-card card-2">
-                            <div class="card-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l5 5v9a2 2 0 01-2 2z"/>
-                                    <path d="M12 18v-6M9 15l3 3 3-3"/>
-                                </svg>
-                            </div>
-                            <div class="card-label">Cloud Storage</div>
-                            <div class="card-indicator"></div>
-                        </div>
-                        
-                        <div class="data-source-card card-3">
-                            <div class="card-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                                    <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
-                                </svg>
-                            </div>
-                            <div class="card-label">Spreadsheets</div>
-                            <div class="card-indicator"></div>
-                        </div>
-                        
-                        <!-- Center Row - Financial Model (spans all 3 columns) -->
-                        <div class="financial-model-card" style="grid-column: 2 / 7; max-width: 900px;">
+                        <!-- Center Row - Financial Model -->
+                        <div class="financial-model-card" style="grid-column: 3 / 6; grid-row: 2; max-width: 600px;">
                             <div style="display: flex; align-items: flex-start; justify-content: space-between; width: 100%;">
                                 <div>
                                     <div class="model-title">Financial Model</div>
                                     <div class="model-subtitle">Unified data processing engine</div>
                                 </div>
-                                <div style="display: flex; gap: 40px; align-items: center;">
+                                <div style="display: flex; gap: 24px; align-items: center;">
                                     <div style="text-align: right;">
                                         <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Status</div>
                                         <div class="status-indicator">
@@ -1577,8 +1624,8 @@
                             </div>
                         </div>
                         
-                        <!-- Bottom Row -->
-                        <div class="data-source-card card-4">
+                        <!-- Left Column - Market Data -->
+                        <div class="data-source-card card-4" style="grid-column: 2; grid-row: 3;">
                             <div class="card-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M21 12V7H5a2 2 0 01 0-4h14v4"/>
@@ -1590,18 +1637,8 @@
                             <div class="card-indicator"></div>
                         </div>
                         
-                        <div class="data-source-card card-5">
-                            <div class="card-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                                    <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>
-                                </svg>
-                            </div>
-                            <div class="card-label">ERP Systems</div>
-                            <div class="card-indicator"></div>
-                        </div>
-                        
-                        <div class="data-source-card card-6">
+                        <!-- Middle Column - Web APIs -->
+                        <div class="data-source-card card-5" style="grid-column: 4; grid-row: 3;">
                             <div class="card-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"/>
@@ -1609,6 +1646,18 @@
                                 </svg>
                             </div>
                             <div class="card-label">Web APIs</div>
+                            <div class="card-indicator"></div>
+                        </div>
+                        
+                        <!-- Right Column - ERP Systems -->
+                        <div class="data-source-card card-6" style="grid-column: 6; grid-row: 3;">
+                            <div class="card-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                    <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>
+                                </svg>
+                            </div>
+                            <div class="card-label">ERP Systems</div>
                             <div class="card-indicator"></div>
                         </div>
                     </div>
@@ -2585,5 +2634,199 @@
             }
         })();
     </script>
-</body>
+
+
+
+        <!-- Data Packets Canvas Animation -->
+    <script>
+        (function() {
+            const section4 = document.getElementById('section-4');
+            let canvas, ctx;
+            let particles = [];
+            let animationFrame;
+            let isAnimating = false;
+
+            class Particle {
+                constructor(startX, startY, endX, endY, delay) {
+                    this.startX = startX;
+                    this.startY = startY;
+                    this.endX = endX;
+                    this.endY = endY;
+                    this.x = startX;
+                    this.y = startY;
+                    this.delay = delay;
+                    this.progress = 0;
+                    this.speed = 0.015;
+                    this.size = 6;
+                    this.active = false;
+                    this.startTime = Date.now() + delay;
+                    this.trail = [];
+                }
+
+                update() {
+                    const now = Date.now();
+                    if (now < this.startTime) return;
+                    
+                    this.active = true;
+                    this.progress += this.speed;
+                    
+                    if (this.progress >= 1) {
+                        this.progress = 0;
+                        this.startTime = now + 3000;
+                        this.trail = [];
+                        return;
+                    }
+
+                    const easeProgress = 1 - Math.pow(1 - this.progress, 3);
+                    this.x = this.startX + (this.endX - this.startX) * easeProgress;
+                    this.y = this.startY + (this.endY - this.startY) * easeProgress;
+                    
+                    this.trail.push({ x: this.x, y: this.y });
+                    if (this.trail.length > 15) this.trail.shift();
+                }
+
+                draw(ctx) {
+                    if (!this.active || this.progress === 0) return;
+
+                    this.trail.forEach((point, index) => {
+                        const alpha = (index / this.trail.length) * 0.3;
+                        const size = (index / this.trail.length) * this.size * 0.5;
+                        ctx.beginPath();
+                        ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(139, 92, 246, ${alpha})`;
+                        ctx.fill();
+                    });
+
+                    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 3);
+                    gradient.addColorStop(0, 'rgba(139, 92, 246, 0.9)');
+                    gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.4)');
+                    gradient.addColorStop(1, 'rgba(139, 92, 246, 0)');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = '#a78bfa';
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fill();
+                }
+            }
+
+            function initCanvas() {
+                canvas = document.getElementById('dataPacketsCanvas');
+                if (!canvas) {
+                    console.log('Canvas not found');
+                    return false;
+                }
+
+                ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                
+                console.log('Canvas initialized:', canvas.width, 'x', canvas.height);
+                return true;
+            }
+
+            function createParticles() {
+                particles = [];
+                
+                const gridContainer = canvas.closest('[style*="display: grid"]');
+                if (!gridContainer) {
+                    console.log('Grid not found');
+                    return;
+                }
+
+                const canvasRect = canvas.getBoundingClientRect();
+                const centerCard = document.querySelector('.financial-model-card');
+                if (!centerCard) {
+                    console.log('Center card not found');
+                    return;
+                }
+
+                const centerRect = centerCard.getBoundingClientRect();
+                const centerX = centerRect.left + centerRect.width / 2 - canvasRect.left;
+                const centerY = centerRect.top + centerRect.height / 2 - canvasRect.top;
+
+                for (let cardNum = 1; cardNum <= 6; cardNum++) {
+                    const card = document.querySelector(`.card-${cardNum}`);
+                    if (!card) continue;
+
+                    const cardRect = card.getBoundingClientRect();
+                    const startX = cardRect.left + cardRect.width / 2 - canvasRect.left;
+                    const startY = cardRect.top + cardRect.height / 2 - canvasRect.top;
+
+                    for (let i = 0; i < 3; i++) {
+                        const delay = (cardNum - 1) * 500 + i * 1000;
+                        particles.push(new Particle(startX, startY, centerX, centerY, delay));
+                    }
+                }
+                console.log('Created', particles.length, 'particles');
+            }
+
+            function animate() {
+                if (!ctx || !canvas) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => { p.update(); p.draw(ctx); });
+                if (isAnimating) animationFrame = requestAnimationFrame(animate);
+            }
+
+            function startAnimation() {
+                if (isAnimating) return;
+                isAnimating = true;
+                animate();
+            }
+
+            function stopAnimation() {
+                isAnimating = false;
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+            }
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        if (!isAnimating) {
+                            setTimeout(() => {
+                                if (initCanvas()) {
+                                    createParticles();
+                                    startAnimation();
+                                }
+                            }, 300);
+                        }
+                    } else {
+                        stopAnimation();
+                    }
+                });
+            }, { threshold: 0.2 });
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    if (section4) observer.observe(section4);
+                });
+            } else {
+                if (section4) observer.observe(section4);
+            }
+
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    if (isAnimating) {
+                        stopAnimation();
+                        if (initCanvas()) {
+                            createParticles();
+                            startAnimation();
+                        }
+                    }
+                }, 250);
+            });
+        })();
+    </script>
 </html>
