@@ -1141,25 +1141,30 @@
     
         /* Figma Data Source Cards */
         .data-source-card {
-            background: rgba(15, 15, 25, 0.8);
+            background: rgba(15, 15, 25, 0.98);
             border: 1px solid rgba(139, 92, 246, 0.2);
             border-radius: 12px;
             padding: 20px 16px;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
+            justify-content: center;
             gap: 10px;
             transition: all 0.3s ease;
             position: relative;
             min-height: 100px;
             max-width: 180px;
             width: 100%;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            z-index: 10;
         }
 
         .data-source-card:hover {
-            border-color: rgba(139, 92, 246, 0.5);
-            background: rgba(139, 92, 246, 0.05);
-            transform: translateY(-2px);
+            border-color: rgba(139, 92, 246, 0.6);
+            background: rgba(139, 92, 246, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
         }
 
         .card-icon {
@@ -1371,6 +1376,133 @@
         }
         }
     }
+
+        /* Modal/Popup Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(20, 20, 35, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%);
+            border: 2px solid rgba(139, 92, 246, 0.4);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.3);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            background: rgba(139, 92, 246, 0.4);
+            color: #ffffff;
+            transform: rotate(90deg);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .modal-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(139, 92, 246, 0.2);
+            border: 2px solid rgba(139, 92, 246, 0.4);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b5cf6;
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .modal-body {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+
+        .modal-body p {
+            margin-bottom: 16px;
+        }
+
+        .modal-body ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .modal-body ul li {
+            padding-left: 28px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .modal-body ul li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #8b5cf6;
+            font-weight: bold;
+        }
     </style>
     <!-- Three.js and GSAP for 3D animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -1618,7 +1750,7 @@
                                     </div>
                                     <div style="text-align: right;">
                                         <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Sources</div>
-                                        <div style="font-size: 1rem; color: #8b5cf6; font-weight: 600;">1 Connected</div>
+                                        <div style="font-size: 1rem; color: #8b5cf6; font-weight: 600;" id="sources-counter">0 Connected</div>
                                     </div>
                                 </div>
                             </div>
@@ -2645,77 +2777,126 @@
             let particles = [];
             let animationFrame;
             let isAnimating = false;
+            
+            let currentParticleIndex = 0;
+            let particleQueue = [];
+            let connectedCount = 0;
+            
+            function onSnakeHit(cardNum) {
+                console.log('Snake hit! From card:', cardNum);
+                
+                connectedCount++;
+                if (connectedCount > 999) {
+                    connectedCount = 0;
+                }
+                
+                const counterElement = document.getElementById('sources-counter');
+                if (counterElement) {
+                    counterElement.textContent = connectedCount + ' Connected';
+                } else {
+                    console.error('Counter element not found!');
+                }
+                
+                setTimeout(() => {
+                    currentParticleIndex++;
+                    if (currentParticleIndex >= particleQueue.length) {
+                        currentParticleIndex = 0;
+                    }
+                    
+                    const nextParticle = particleQueue[currentParticleIndex];
+                    if (nextParticle) {
+                        nextParticle.startTime = Date.now();
+                        console.log('Starting next particle:', currentParticleIndex);
+                    }
+                }, 500);
+            }
 
-            class Particle {
-                constructor(startX, startY, endX, endY, delay) {
-                    this.startX = startX;
-                    this.startY = startY;
-                    this.endX = endX;
-                    this.endY = endY;
-                    this.x = startX;
-                    this.y = startY;
+            class SnakeParticle {
+                constructor(pathPoints, delay, cardNum, onHit) {
+                    this.pathPoints = pathPoints;
                     this.delay = delay;
-                    this.progress = 0;
-                    this.speed = 0.015;
-                    this.size = 6;
+                    this.cardNum = cardNum;
+                    this.onHit = onHit;
+                    this.currentIndex = 0;
+                    this.trail = [];
+                    this.maxTrailLength = 30;
                     this.active = false;
                     this.startTime = Date.now() + delay;
-                    this.trail = [];
+                    this.speed = 0.3;
+                    this.finished = false;
+                    this.dotSize = 3;
+                    this.hasHit = false;
                 }
 
                 update() {
                     const now = Date.now();
                     if (now < this.startTime) return;
                     
-                    this.active = true;
-                    this.progress += this.speed;
-                    
-                    if (this.progress >= 1) {
-                        this.progress = 0;
-                        this.startTime = now + 3000;
-                        this.trail = [];
+                    if (this.finished) {
+                        if (now - this.finishTime > 2000) {
+                            this.reset();
+                        }
                         return;
                     }
-
-                    const easeProgress = 1 - Math.pow(1 - this.progress, 3);
-                    this.x = this.startX + (this.endX - this.startX) * easeProgress;
-                    this.y = this.startY + (this.endY - this.startY) * easeProgress;
                     
-                    this.trail.push({ x: this.x, y: this.y });
-                    if (this.trail.length > 15) this.trail.shift();
+                    this.active = true;
+                    this.currentIndex += this.speed;
+                    
+                    const progressPercentage = this.currentIndex / this.pathPoints.length;
+                    
+                    if (progressPercentage >= 0.95) {
+                        this.finished = true;
+                        this.finishTime = now;
+                        this.trail = [];
+                        
+                        if (!this.hasHit && this.onHit) {
+                            this.hasHit = true;
+                            this.onHit(this.cardNum);
+                        }
+                        return;
+                    }
+                    
+                    if (this.currentIndex >= this.pathPoints.length) {
+                        this.finished = true;
+                        this.finishTime = now;
+                        return;
+                    }
+                    
+                    const point = this.pathPoints[Math.floor(this.currentIndex)];
+                    if (point) {
+                        this.trail.push({ ...point, age: 0 });
+                    }
+                    
+                    this.trail = this.trail.map(p => ({ ...p, age: p.age + 1 }))
+                                         .filter(p => p.age < this.maxTrailLength);
+                }
+
+                reset() {
+                    this.currentIndex = 0;
+                    this.trail = [];
+                    this.active = false;
+                    this.finished = false;
+                    this.hasHit = false;
+                    this.startTime = Date.now() + Math.random() * 2000 + 500;
                 }
 
                 draw(ctx) {
-                    if (!this.active || this.progress === 0) return;
-
+                    if (!this.active) return;
+                    
+                    // Draw uniform-width trail that fades to background
                     this.trail.forEach((point, index) => {
-                        const alpha = (index / this.trail.length) * 0.3;
-                        const size = (index / this.trail.length) * this.size * 0.5;
-                        ctx.beginPath();
-                        ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
-                        ctx.fillStyle = `rgba(139, 92, 246, ${alpha})`;
-                        ctx.fill();
+                        const age = point.age;
+                        const alpha = 1 - (age / this.maxTrailLength); // Smooth fade
+                        
+                        // Uniform size dots - no arrow taper
+                        ctx.fillStyle = `rgba(139, 92, 246, ${alpha * 0.7})`;
+                        ctx.fillRect(
+                            point.x - this.dotSize/2, 
+                            point.y - this.dotSize/2, 
+                            this.dotSize, 
+                            this.dotSize
+                        );
                     });
-
-                    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 3);
-                    gradient.addColorStop(0, 'rgba(139, 92, 246, 0.9)');
-                    gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.4)');
-                    gradient.addColorStop(1, 'rgba(139, 92, 246, 0)');
-                    
-                    ctx.fillStyle = gradient;
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fillStyle = '#a78bfa';
-                    ctx.fill();
-                    
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fill();
                 }
             }
 
@@ -2735,8 +2916,126 @@
                 return true;
             }
 
+            function createLPath(startX, startY, endX, endY, horizontalFirst) {
+                // Create an L-shaped path with corner at outer box position (outer L)
+                const points = [];
+                const step = 3; // Distance between points
+                
+                if (horizontalFirst) {
+                    // Go horizontal first, then vertical
+                    // Corner is at (startX, endY) - outer box's X position
+                    const cornerX = startX;
+                    const cornerY = endY;
+                    
+                    // Horizontal segment
+                    const dx = cornerX - startX;
+                    const steps = Math.abs(Math.floor(dx / step));
+                    const xDir = dx > 0 ? 1 : -1;
+                    
+                    for (let i = 0; i <= steps; i++) {
+                        points.push({ 
+                            x: startX + (i * step * xDir), 
+                            y: startY 
+                        });
+                    }
+                    
+                    // Vertical segment
+                    const dy = endY - startY;
+                    const vSteps = Math.abs(Math.floor(dy / step));
+                    const yDir = dy > 0 ? 1 : -1;
+                    
+                    for (let i = 1; i <= vSteps; i++) {
+                        points.push({ 
+                            x: startX, 
+                            y: startY + (i * step * yDir) 
+                        });
+                    }
+                    
+                    // Final horizontal segment to reach end
+                    const dx2 = endX - cornerX;
+                    const hSteps = Math.abs(Math.floor(dx2 / step));
+                    const xDir2 = dx2 > 0 ? 1 : -1;
+                    
+                    for (let i = 1; i <= hSteps; i++) {
+                        points.push({ 
+                            x: cornerX + (i * step * xDir2), 
+                            y: endY 
+                        });
+                    }
+                } else {
+                    // Go vertical first, then horizontal
+                    // Corner is at (endX, startY) - outer box's Y position
+                    const cornerX = endX;
+                    const cornerY = startY;
+                    
+                    // Vertical segment
+                    const dy = cornerY - startY;
+                    const steps = Math.abs(Math.floor(dy / step));
+                    const yDir = dy > 0 ? 1 : -1;
+                    
+                    for (let i = 0; i <= steps; i++) {
+                        points.push({ 
+                            x: startX, 
+                            y: startY + (i * step * yDir) 
+                        });
+                    }
+                    
+                    // Horizontal segment
+                    const dx = endX - startX;
+                    const hSteps = Math.abs(Math.floor(dx / step));
+                    const xDir = dx > 0 ? 1 : -1;
+                    
+                    for (let i = 1; i <= hSteps; i++) {
+                        points.push({ 
+                            x: startX + (i * step * xDir), 
+                            y: startY 
+                        });
+                    }
+                    
+                    // Final vertical segment to reach end
+                    const dy2 = endY - cornerY;
+                    const vSteps = Math.abs(Math.floor(dy2 / step));
+                    const yDir2 = dy2 > 0 ? 1 : -1;
+                    
+                    for (let i = 1; i <= vSteps; i++) {
+                        points.push({ 
+                            x: endX, 
+                            y: cornerY + (i * step * yDir2) 
+                        });
+                    }
+                }
+                
+                // Add final point
+                points.push({ x: endX, y: endY });
+                
+                return points;
+            }
+
+            function getEdgePoint(rect, canvasRect, direction) {
+                // Get a point on the edge of a rectangle
+                const relativeRect = {
+                    left: rect.left - canvasRect.left,
+                    right: rect.right - canvasRect.left,
+                    top: rect.top - canvasRect.top,
+                    bottom: rect.bottom - canvasRect.top,
+                    centerX: (rect.left + rect.right) / 2 - canvasRect.left,
+                    centerY: (rect.top + rect.bottom) / 2 - canvasRect.top
+                };
+                
+                // Return edge point based on direction
+                if (direction === 'bottom') return { x: relativeRect.centerX, y: relativeRect.bottom };
+                if (direction === 'top') return { x: relativeRect.centerX, y: relativeRect.top };
+                if (direction === 'right') return { x: relativeRect.right, y: relativeRect.centerY };
+                if (direction === 'left') return { x: relativeRect.left, y: relativeRect.centerY };
+                
+                return { x: relativeRect.centerX, y: relativeRect.centerY };
+            }
+
             function createParticles() {
                 particles = [];
+                particleQueue = [];
+                currentParticleIndex = 0;
+                connectedCount = 0;
                 
                 const gridContainer = canvas.closest('[style*="display: grid"]');
                 if (!gridContainer) {
@@ -2752,23 +3051,42 @@
                 }
 
                 const centerRect = centerCard.getBoundingClientRect();
-                const centerX = centerRect.left + centerRect.width / 2 - canvasRect.left;
-                const centerY = centerRect.top + centerRect.height / 2 - canvasRect.top;
+                
+                const cardConfig = [
+                    { num: 1, fromEdge: 'bottom', toEdge: 'left', horizontalFirst: true },
+                    { num: 2, fromEdge: 'bottom', toEdge: 'top', horizontalFirst: false },
+                    { num: 3, fromEdge: 'bottom', toEdge: 'right', horizontalFirst: true },
+                    { num: 4, fromEdge: 'top', toEdge: 'left', horizontalFirst: true },
+                    { num: 5, fromEdge: 'top', toEdge: 'bottom', horizontalFirst: false },
+                    { num: 6, fromEdge: 'top', toEdge: 'right', horizontalFirst: true }
+                ];
 
-                for (let cardNum = 1; cardNum <= 6; cardNum++) {
-                    const card = document.querySelector(`.card-${cardNum}`);
-                    if (!card) continue;
+                cardConfig.forEach((config, index) => {
+                    const card = document.querySelector(`.card-${config.num}`);
+                    if (!card) {
+                        console.log('Card not found:', config.num);
+                        return;
+                    }
 
                     const cardRect = card.getBoundingClientRect();
-                    const startX = cardRect.left + cardRect.width / 2 - canvasRect.left;
-                    const startY = cardRect.top + cardRect.height / 2 - canvasRect.top;
-
-                    for (let i = 0; i < 3; i++) {
-                        const delay = (cardNum - 1) * 500 + i * 1000;
-                        particles.push(new Particle(startX, startY, centerX, centerY, delay));
-                    }
-                }
-                console.log('Created', particles.length, 'particles');
+                    const startPoint = getEdgePoint(cardRect, canvasRect, config.fromEdge);
+                    const endPoint = getEdgePoint(centerRect, canvasRect, config.toEdge);
+                    
+                    const pathPoints = createLPath(
+                        startPoint.x, 
+                        startPoint.y, 
+                        endPoint.x, 
+                        endPoint.y, 
+                        config.horizontalFirst
+                    );
+                    
+                    const delay = index === 0 ? 0 : 999999999;
+                    const particle = new SnakeParticle(pathPoints, delay, config.num, onSnakeHit);
+                    particles.push(particle);
+                    particleQueue.push(particle);
+                });
+                
+                console.log('Created', particles.length, 'snake particles (sequential mode)');
             }
 
             function animate() {
@@ -2829,4 +3147,94 @@
             });
         })();
     </script>
+
+    <!-- Modal/Popup Structure -->
+    <div class="modal-overlay" id="cardModal">
+        <div class="modal-content">
+            <div class="modal-close" onclick="closeModal()">×</div>
+            <div class="modal-header">
+                <div class="modal-icon" id="modalIcon"></div>
+                <h2 class="modal-title" id="modalTitle"></h2>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // Modal functionality
+        const cardData = {
+            'Spreadsheets': {
+                icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>',
+                title: 'Spreadsheets',
+                description: '<p>Import data directly from Excel, Google Sheets, and other spreadsheet formats. Our intelligent parser automatically recognizes data structures and formats them for your financial model.</p><ul><li>Support for .xlsx, .xls, .csv, and .ods formats</li><li>Automatic data type detection</li><li>Real-time synchronization</li><li>Version control and audit trails</li></ul>'
+            },
+            'Cloud Storage': {
+                icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l5 5v9a2 2 0 01-2 2z"/><path d="M12 18v-6M9 15l3 3 3-3"/></svg>',
+                title: 'Cloud Storage',
+                description: '<p>Seamlessly connect to your cloud storage providers including Google Drive, Dropbox, OneDrive, and Box. Access your financial documents from anywhere.</p><ul><li>Direct integration with major cloud providers</li><li>Automatic file discovery</li><li>Secure OAuth authentication</li><li>Collaborative file sharing</li></ul>'
+            },
+            'SQL Database': {
+                icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>',
+                title: 'SQL Database',
+                description: '<p>Connect directly to your SQL databases including MySQL, PostgreSQL, SQL Server, and Oracle. Query and import financial data in real-time.</p><ul><li>Support for all major SQL databases</li><li>Custom query builder</li><li>Scheduled data refreshes</li><li>Encrypted connections</li></ul>'
+            },
+            'Market Data': {
+                icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 01 0-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 100 4 2 2 0 000-4z"/></svg>',
+                title: 'Market Data',
+                description: '<p>Access real-time and historical market data including stock prices, currency rates, commodities, and economic indicators from leading data providers.</p><ul><li>Real-time market data feeds</li><li>Historical data analysis</li><li>Multiple data providers</li><li>Currency conversion</li></ul>'
+            },
+            'Web APIs': {
+                icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>',
+                title: 'Web APIs',
+                description: '<p>Integrate with thousands of web APIs to pull data from CRM systems, payment processors, analytics platforms, and more into your financial models.</p><ul><li>RESTful API integration</li><li>Custom webhook support</li><li>Rate limiting and caching</li><li>Error handling and retry logic</li></ul>'
+            },
+            'ERP Systems': {
+                icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>',
+                title: 'ERP Systems',
+                description: '<p>Connect to enterprise resource planning systems like SAP, Oracle ERP, NetSuite, and Microsoft Dynamics. Import financial data directly from your core business systems.</p><ul><li>Pre-built ERP connectors</li><li>Custom field mapping</li><li>Multi-entity support</li><li>Automated data validation</li></ul>'
+            }
+        };
+
+        function openModal(cardName) {
+            const data = cardData[cardName];
+            if (!data) return;
+
+            document.getElementById('modalIcon').innerHTML = data.icon;
+            document.getElementById('modalTitle').textContent = data.title;
+            document.getElementById('modalBody').innerHTML = data.description;
+            document.getElementById('cardModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('cardModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('cardModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Add click handlers to all data source cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.data-source-card');
+            cards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const cardName = this.querySelector('.card-label').textContent;
+                    openModal(cardName);
+                });
+            });
+        });
+    </script>
+
 </html>
