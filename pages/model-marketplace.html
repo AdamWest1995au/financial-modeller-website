@@ -573,6 +573,131 @@
         html {
             scroll-behavior: smooth;
         }
+
+        .modeller-info-section {
+            padding: 80px 20px;
+            position: relative;
+            z-index: 2;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%);
+            border-top: 1px solid rgba(139, 92, 246, 0.1);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+        }
+
+        .modeller-info-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .modeller-info-content {
+            text-align: center;
+        }
+
+        .modeller-info-title {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modeller-info-description {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 800px;
+            margin: 0 auto 60px;
+            line-height: 1.6;
+        }
+
+        .modeller-benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-bottom: 60px;
+        }
+
+        .modeller-benefit {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px 32px;
+            transition: all 0.3s ease;
+        }
+
+        .modeller-benefit:hover {
+            transform: translateY(-4px);
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.2);
+        }
+
+        .benefit-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 12px rgba(139, 92, 246, 0.3));
+        }
+
+        .benefit-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 12px;
+            letter-spacing: -0.01em;
+        }
+
+        .benefit-description {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+        }
+
+        .modeller-cta {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .modeller-signup-btn {
+            padding: 18px 48px;
+            background: #8b5cf6;
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.15rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+            border: 2px solid #8b5cf6;
+        }
+
+        .modeller-signup-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(139, 92, 246, 0.5);
+        }
+
+        .modeller-cta-note {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .modeller-info-title {
+                font-size: 2rem;
+            }
+
+            .modeller-info-description {
+                font-size: 1rem;
+            }
+
+            .modeller-benefits-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -596,6 +721,40 @@
     <section class="hero-section">
         <h1>Model Marketplace</h1>
         <p>Browse our collection of professionally built financial models. Ready-made templates tailored for your industry, customizable to your specific needs.</p>
+    </section>
+
+    <section class="modeller-info-section">
+        <div class="modeller-info-container">
+            <div class="modeller-info-content">
+                <h2 class="modeller-info-title">Are You a Financial Modeller?</h2>
+                <p class="modeller-info-description">Join our marketplace and share your expertise with businesses worldwide. Upload your models, styles, and modules to earn revenue from your work.</p>
+                
+                <div class="modeller-benefits-grid">
+                    <div class="modeller-benefit">
+                        <div class="benefit-icon">📊</div>
+                        <h3 class="benefit-title">Templates</h3>
+                        <p class="benefit-description">Upload complete financial model templates and set your own prices. Retain full control over your pricing strategy.</p>
+                    </div>
+                    
+                    <div class="modeller-benefit">
+                        <div class="benefit-icon">🎨</div>
+                        <h3 class="benefit-title">Styles</h3>
+                        <p class="benefit-description">Create and share custom formatting styles. Earn royalties every time they're purchased through our modeling framework.</p>
+                    </div>
+                    
+                    <div class="modeller-benefit">
+                        <div class="benefit-icon">🧩</div>
+                        <h3 class="benefit-title">Modules</h3>
+                        <p class="benefit-description">Build reusable calculation modules. Earn ongoing royalties when users integrate them into their models.</p>
+                    </div>
+                </div>
+                
+                <div class="modeller-cta">
+                    <a href="modeller-signup.html" class="modeller-signup-btn">Become a Modeller</a>
+                    <p class="modeller-cta-note">Start earning from your financial modeling expertise today</p>
+                </div>
+            </div>
+        </div>
     </section>
 
     <div class="filter-container">
