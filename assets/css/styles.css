@@ -147,3 +147,45 @@ nav a.logo {
     text-decoration: none !important;
     color: rgba(255, 255, 255, 0.9) !important;
 }
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .dot-grid {
+        width: 36px !important;
+        height: 28px !important;
+    }
+
+    .logo {
+        gap: 10px !important;
+        font-size: 1.25rem !important;
+    }
+
+    .logo span {
+        font-size: 1.25rem !important;
+    }
+
+    /* Disable logo hover animation on mobile for performance */
+    .logo:hover .dot {
+        animation: none !important;
+    }
+
+    .logo:hover .dot-grid {
+        transform: perspective(200px) rotateY(-15deg) !important;
+        filter: none !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .dot-grid {
+        width: 32px !important;
+        height: 24px !important;
+    }
+
+    .logo {
+        font-size: 1.1rem !important;
+    }
+
+    .logo span {
+        font-size: 1.1rem !important;
+    }
+}
