@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>The Financial Modeller - Professional Financial Models</title>
     <style>
         * {
@@ -19,6 +21,9 @@
             background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
             background-size: 3.8px 3.8px;
             overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+            -moz-text-size-adjust: 100%;
+            text-size-adjust: 100%;
         }
 
         /* Mouse illumination effect */
@@ -304,6 +309,39 @@
 
         .nav-links a:hover {
             color: #ffffff;
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            z-index: 1001;
+        }
+
+        .mobile-menu-toggle span {
+            display: block;
+            width: 28px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
         }
 
         /* Hero Section */
@@ -1949,9 +1987,84 @@
         }
 
         /* Responsive Design */
+        
+        /* Tablet and below */
+        @media (max-width: 1024px) {
+            .hero {
+                padding: 100px 20px 60px;
+            }
+
+            .hero-text h1 {
+                font-size: 3rem;
+            }
+
+            .section-title {
+                font-size: 2.75rem;
+            }
+        }
+
+        /* Mobile and below */
         @media (max-width: 768px) {
+            body {
+                background-size: 3px 3px;
+            }
+
+            .header {
+                position: fixed;
+                width: 100%;
+            }
+
+            .nav-container {
+                padding: 0 16px;
+                height: 70px;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
             .nav-links {
-                display: none;
+                position: fixed;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: rgba(0, 0, 0, 0.98);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                gap: 0;
+                padding: 20px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                max-height: calc(100vh - 70px);
+                overflow-y: auto;
+            }
+
+            .nav-links.active {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .nav-links li {
+                width: 100%;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .nav-links li:last-child {
+                border-bottom: none;
+            }
+
+            .nav-links a {
+                display: block;
+                padding: 16px 0;
+                font-size: 1.05rem;
+            }
+
+            .hero {
+                padding: 90px 16px 50px;
             }
 
             .hero-content {
@@ -1960,11 +2073,18 @@
             }
 
             .hero-text h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
+                line-height: 1.2;
             }
 
             .hero-text p {
-                font-size: 1.1rem;
+                font-size: 1rem;
+                margin-bottom: 32px;
+            }
+
+            .new-badge {
+                font-size: 0.8rem;
+                padding: 4px 14px;
             }
 
             .cta-buttons {
@@ -1974,14 +2094,19 @@
 
             .btn {
                 width: 100%;
+                padding: 16px 28px;
+                font-size: 1rem;
+                min-height: 52px;
             }
 
             .section-title {
-                font-size: 2.5rem;
+                font-size: 2rem;
+                margin-bottom: 20px;
             }
 
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: 1fr;
+                gap: 24px;
             }
 
             .stat-number {
@@ -2006,12 +2131,151 @@
 
             /* Wave logo mobile styles */
             .dot-grid {
-                width: 40px;
-                height: 30px;
+                width: 36px;
+                height: 28px;
             }
             
             .logo {
-                gap: 12px !important;
+                gap: 10px !important;
+                font-size: 1.25rem !important;
+            }
+
+            .logo span {
+                font-size: 1.25rem;
+            }
+
+            /* Hide mouse effects on mobile */
+            body::after,
+            body::before {
+                display: none;
+            }
+
+            .mouse-icon {
+                display: none;
+            }
+
+            .scroll-prompt {
+                padding: 40px 16px;
+            }
+
+            .scroll-content {
+                font-size: 0.9rem;
+            }
+
+            /* Spreadsheet demo adjustments */
+            .spreadsheet-demo {
+                padding: 16px;
+            }
+
+            .cell {
+                padding: 8px 6px;
+                font-size: 0.75rem;
+                min-height: 32px;
+            }
+
+            /* Footer adjustments */
+            .footer {
+                padding: 40px 16px 30px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .footer-section h3 {
+                font-size: 1rem;
+                margin-bottom: 12px;
+            }
+
+            .footer-section ul li a {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Small mobile phones */
+        @media (max-width: 480px) {
+            .nav-container {
+                padding: 0 12px;
+            }
+
+            .hero {
+                padding: 80px 12px 40px;
+            }
+
+            .hero-text h1 {
+                font-size: 1.75rem;
+            }
+
+            .hero-text p {
+                font-size: 0.95rem;
+            }
+
+            .new-badge {
+                font-size: 0.75rem;
+                padding: 3px 12px;
+            }
+
+            .btn {
+                padding: 14px 24px;
+                font-size: 0.95rem;
+                min-height: 48px;
+            }
+
+            .section-title {
+                font-size: 1.75rem;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .stat-label {
+                font-size: 0.85rem;
+            }
+
+            .logo {
+                font-size: 1.1rem !important;
+            }
+
+            .logo span {
+                font-size: 1.1rem;
+            }
+
+            .dot-grid {
+                width: 32px;
+                height: 24px;
+            }
+
+            /* Make touch targets larger */
+            .nav-links a {
+                padding: 18px 0;
+                font-size: 1rem;
+            }
+
+            .cell {
+                padding: 6px 4px;
+                font-size: 0.7rem;
+                min-height: 28px;
+            }
+
+            .scroll-prompt {
+                padding: 30px 12px;
+            }
+        }
+
+        /* Landscape mobile optimization */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .hero {
+                padding: 70px 16px 40px;
+            }
+
+            .hero-text h1 {
+                font-size: 1.75rem;
+            }
+
+            .hero-content {
+                gap: 30px;
             }
         }
 
@@ -2034,7 +2298,12 @@
                 </div>
                 <span>The Financial Modeller</span>
             </a>
-            <ul class="nav-links">
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
                 <li><a href="pages/questionnaire/questionnaire.html">Build a Model</a></li>
                 <li><a href="pages/model-marketplace.html">Model Templates</a></li>
                 <li><a href="pages/how-it-works.html">How it works</a></li>
@@ -2366,6 +2635,36 @@
     </footer>
 
     <script>
+        // MOBILE MENU TOGGLE
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const navLinks = document.getElementById('navLinks');
+            
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    navLinks.classList.toggle('active');
+                });
+
+                // Close menu when clicking a link
+                const navLinkItems = navLinks.querySelectorAll('a');
+                navLinkItems.forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenuToggle.classList.remove('active');
+                        navLinks.classList.remove('active');
+                    });
+                });
+
+                // Close menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!event.target.closest('.nav-container')) {
+                        mobileMenuToggle.classList.remove('active');
+                        navLinks.classList.remove('active');
+                    }
+                });
+            }
+        });
+
         // GLOBAL MODAL FUNCTIONS - Using browser alerts like the preview page
         function showModal(type) {
             const messages = {
