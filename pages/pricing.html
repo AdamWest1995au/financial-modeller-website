@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Pricing - The Financial Modeller</title>
     <style>
         * {
@@ -19,6 +21,9 @@
             background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
             background-size: 3.8px 3.8px;
             overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+            -moz-text-size-adjust: 100%;
+            text-size-adjust: 100%;
         }
 
         /* Mouse illumination effect */
@@ -187,6 +192,39 @@
 
         .nav-links a:hover {
             color: #ffffff;
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            z-index: 1001;
+        }
+
+        .mobile-menu-toggle span {
+            display: block;
+            width: 28px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
         }
 
         .book-call-btn {
@@ -1103,13 +1141,29 @@
         }
 
         /* Responsive Design */
+        
+        /* Tablet and below */
+        @media (max-width: 1024px) {
+            .pricing-hero {
+                padding: 80px 20px 50px;
+            }
+
+            .pricing-hero h1 {
+                font-size: 3rem;
+            }
+
+            .section-header h2 {
+                font-size: 2.75rem;
+            }
+        }
+
         @media (max-width: 968px) {
             .pricing-hero h1 {
                 font-size: 2.5rem;
             }
 
             .section-header h2 {
-                font-size: 2.5rem;
+                font-size: 2.25rem;
             }
 
             .tiers-container {
@@ -1135,33 +1189,107 @@
             .custom-feeds-grid {
                 grid-template-columns: 1fr;
             }
+        }
+
+        /* Mobile and below */
+        @media (max-width: 768px) {
+            body {
+                background-size: 3px 3px;
+            }
+
+            .header {
+                position: fixed;
+                width: 100%;
+            }
+
+            .nav-container {
+                padding: 0 16px;
+                height: 70px;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
 
             .nav-links {
-                display: none;
+                position: fixed;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: rgba(0, 0, 0, 0.98);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                gap: 0;
+                padding: 20px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                max-height: calc(100vh - 70px);
+                overflow-y: auto;
+            }
+
+            .nav-links.active {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .nav-links li {
+                width: 100%;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .nav-links li:last-child {
+                border-bottom: none;
+            }
+
+            .nav-links a {
+                display: block;
+                padding: 16px 0;
+                font-size: 1.05rem;
             }
 
             .currency-selector-sticky {
-                left: 10px;
-                top: 90px;
+                left: 16px;
+                top: 80px;
+                padding: 6px 12px;
+                font-size: 0.85rem;
             }
 
-            .dot-grid {
-                width: 40px;
-                height: 30px;
+            .currency-selector-sticky label {
+                font-size: 0.85rem;
             }
-            
-            .logo {
-                gap: 12px !important;
-            }
-        }
 
-        @media (max-width: 640px) {
+            .currency-selector-sticky select {
+                font-size: 0.85rem;
+            }
+
+            .pricing-hero {
+                padding: 90px 16px 40px;
+            }
+
             .pricing-hero h1 {
                 font-size: 2rem;
+                line-height: 1.2;
+            }
+
+            .pricing-hero p {
+                font-size: 1rem;
             }
 
             .section-header h2 {
-                font-size: 2rem;
+                font-size: 1.75rem;
+            }
+
+            .section-header p {
+                font-size: 0.95rem;
+            }
+
+            .base-pricing-content,
+            .tier-card {
+                padding: 28px 20px;
             }
 
             .pricing-amount {
@@ -1170,6 +1298,134 @@
 
             .tier-price {
                 font-size: 2.5rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                max-width: 100%;
+            }
+
+            .feature-item {
+                font-size: 0.9rem;
+                padding: 12px 16px;
+            }
+
+            .data-feeds-list {
+                max-width: 100%;
+                padding: 0;
+            }
+
+            .custom-feeds-grid {
+                gap: 16px;
+            }
+
+            .dot-grid {
+                width: 36px;
+                height: 28px;
+            }
+            
+            .logo {
+                gap: 10px !important;
+                font-size: 1.25rem !important;
+            }
+
+            .logo span {
+                font-size: 1.25rem;
+            }
+
+            body::after,
+            body::before {
+                display: none;
+            }
+
+            .footer {
+                padding: 40px 16px 30px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .footer-section h3 {
+                font-size: 1rem;
+                margin-bottom: 12px;
+            }
+
+            .footer-section ul li a {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Small mobile phones */
+        @media (max-width: 480px) {
+            .nav-container {
+                padding: 0 12px;
+            }
+
+            .pricing-hero {
+                padding: 80px 12px 30px;
+            }
+
+            .pricing-hero h1 {
+                font-size: 1.75rem;
+            }
+
+            .pricing-hero p {
+                font-size: 0.95rem;
+            }
+
+            .section-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .pricing-amount {
+                font-size: 2rem;
+            }
+
+            .tier-price {
+                font-size: 2rem;
+            }
+
+            .currency-selector-sticky {
+                left: 12px;
+                padding: 5px 10px;
+                font-size: 0.8rem;
+            }
+
+            .logo {
+                font-size: 1.1rem !important;
+            }
+
+            .logo span {
+                font-size: 1.1rem;
+            }
+
+            .dot-grid {
+                width: 32px;
+                height: 24px;
+            }
+
+            .nav-links a {
+                padding: 18px 0;
+                font-size: 1rem;
+            }
+
+            .feature-item {
+                font-size: 0.85rem;
+                padding: 10px 14px;
+            }
+        }
+
+        /* Landscape mobile optimization */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .pricing-hero {
+                padding: 70px 16px 30px;
+            }
+
+            .pricing-hero h1 {
+                font-size: 1.75rem;
             }
         }
 
@@ -1199,7 +1455,12 @@
                 <div class="dot-grid" id="dotGrid"></div>
                 <span>The Financial Modeller</span>
             </a>
-            <ul class="nav-links">
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
                 <li><a href="../index.html">Home</a></li>
                 <li><a href="questionnaire/questionnaire.html">Questionnaire</a></li>
                 <li><a href="model-marketplace.html">Model Templates</a></li>
@@ -1498,6 +1759,36 @@
     </footer>
 
     <script>
+        // MOBILE MENU TOGGLE
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const navLinks = document.getElementById('navLinks');
+            
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    navLinks.classList.toggle('active');
+                });
+
+                // Close menu when clicking a link
+                const navLinkItems = navLinks.querySelectorAll('a');
+                navLinkItems.forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenuToggle.classList.remove('active');
+                        navLinks.classList.remove('active');
+                    });
+                });
+
+                // Close menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!event.target.closest('.nav-container')) {
+                        mobileMenuToggle.classList.remove('active');
+                        navLinks.classList.remove('active');
+                    }
+                });
+            }
+        });
+
         // GLOBAL MODAL FUNCTIONS - Matching model preview page
         function showModal(type) {
             const messages = {
