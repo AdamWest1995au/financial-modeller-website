@@ -1519,6 +1519,156 @@
             color: #8b5cf6;
             font-weight: bold;
         }
+
+        /* Section 5: Loading Bar Animation */
+        .loading-bar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            padding: 60px 40px;
+        }
+
+        .loading-bar-wrapper {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .loading-bar-track {
+            width: 100%;
+            height: 12px;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 100px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, 
+                #8b5cf6 0%, 
+                #a78bfa 50%, 
+                #8b5cf6 100%);
+            background-size: 200% 100%;
+            border-radius: 100px;
+            position: relative;
+            transition: width 0.1s ease-out;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.6),
+                        0 0 40px rgba(139, 92, 246, 0.4),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            animation: shimmer 2s linear infinite;
+        }
+
+        .loading-bar-fill::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.4) 50%, 
+                transparent 100%);
+            animation: shine 2s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+            100% {
+                background-position: 200% 50%;
+            }
+        }
+
+        @keyframes shine {
+            0% {
+                left: -100%;
+            }
+            50%, 100% {
+                left: 200%;
+            }
+        }
+
+        .loading-percentage {
+            margin-top: 24px;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            letter-spacing: -0.02em;
+            text-shadow: 0 0 30px rgba(139, 92, 246, 0.6),
+                         0 0 60px rgba(139, 92, 246, 0.3);
+        }
+
+        .loading-text {
+            margin-top: 16px;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+            letter-spacing: 0.05em;
+        }
+
+        .get-started-button {
+            margin-top: 40px;
+            padding: 18px 48px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4),
+                        0 0 40px rgba(139, 92, 246, 0.2);
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+            pointer-events: none;
+        }
+
+        .get-started-button.visible {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+            animation: buttonPulse 2s ease-in-out infinite;
+        }
+
+        .get-started-button:hover {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.6),
+                        0 0 60px rgba(139, 92, 246, 0.4);
+            animation: none;
+        }
+
+        @keyframes buttonPulse {
+            0%, 100% {
+                box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4),
+                            0 0 40px rgba(139, 92, 246, 0.2);
+            }
+            50% {
+                box-shadow: 0 6px 30px rgba(139, 92, 246, 0.6),
+                            0 0 60px rgba(139, 92, 246, 0.4);
+            }
+        }
+
+        .loading-subtitle {
+            margin-top: 12px;
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            letter-spacing: -0.01em;
+        }
     </style>
     <!-- Three.js and GSAP for 3D animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -1970,14 +2120,24 @@
         </div>
     </section>
 
-    <!-- Section 5: Placeholder -->
+    <!-- Section 5: Download & Deploy -->
     <section class="content-section" id="section-5">
         <div class="section-container">
             <div class="section-header">
                 <h2>Download & Deploy</h2>
             </div>
-            <div class="placeholder-content">
-                <p class="placeholder-text">Section 5 - Placeholder Content</p>
+            <div class="loading-bar-container">
+                <div class="loading-bar-wrapper">
+                    <div class="loading-bar-track">
+                        <div class="loading-bar-fill" id="loadingBarFill"></div>
+                    </div>
+                    <div class="loading-percentage" id="loadingPercentage">0%</div>
+                    <div class="loading-subtitle">Preparing your financial model...</div>
+                    <div class="loading-text">GENERATING MODEL</div>
+                </div>
+                <a href="questionnaire/questionnaire.html" class="get-started-button" id="getStartedButton">
+                    Get Started
+                </a>
             </div>
         </div>
     </section>
@@ -3390,6 +3550,63 @@
                     openModal(cardName);
                 });
             });
+        });
+
+        // Section 5: Loading Bar Animation
+        let loadingBarAnimated = false;
+
+        function startLoadingBarAnimation() {
+            if (loadingBarAnimated) return;
+            loadingBarAnimated = true;
+
+            const loadingBarFill = document.getElementById('loadingBarFill');
+            const loadingPercentage = document.getElementById('loadingPercentage');
+            const getStartedButton = document.getElementById('getStartedButton');
+
+            if (!loadingBarFill || !loadingPercentage || !getStartedButton) return;
+
+            let progress = 0;
+            const duration = 3500; // 3.5 seconds for the loading animation
+            const interval = 50; // Update every 50ms
+            const steps = duration / interval;
+            const increment = 100 / steps;
+
+            const animationInterval = setInterval(() => {
+                progress += increment;
+                
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(animationInterval);
+                    
+                    // Show the Get Started button after loading completes
+                    setTimeout(() => {
+                        getStartedButton.classList.add('visible');
+                    }, 300);
+                }
+
+                // Update the progress bar and percentage
+                loadingBarFill.style.width = progress + '%';
+                loadingPercentage.textContent = Math.floor(progress) + '%';
+            }, interval);
+        }
+
+        // Use Intersection Observer to detect when Section 5 is in view
+        const section5Observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !loadingBarAnimated) {
+                    startLoadingBarAnimation();
+                }
+            });
+        }, {
+            threshold: 0.3 // Trigger when 30% of the section is visible
+        });
+
+        // Start observing Section 5 when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const section5 = document.getElementById('section-5');
+            if (section5) {
+                section5Observer.observe(section5);
+            }
         });
     </script>
 
