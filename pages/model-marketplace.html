@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Marketplace - The Financial Modeller</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #ffffff;
+            background: #000000;
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+            background-size: 3.8px 3.8px;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background: radial-gradient(circle 180px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                        rgba(139, 92, 246, 0.4) 0%, 
+                        rgba(139, 92, 246, 0.25) 3%, 
+                        rgba(139, 92, 246, 0.12) 8%, 
+                        rgba(139, 92, 246, 0.06) 15%, 
+                        rgba(139, 92, 246, 0.02) 25%, 
+                        rgba(139, 92, 246, 0.005) 40%, 
+                        transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            filter: blur(6px);
+        }
+
+        body.mouse-active::after {
+            opacity: 1;
+        }
+
+        .logo::before {
+            display: none !important;
+            content: none !important;
+        }
+
+        .logo {
+            font-size: 1.5rem !important;
+            font-weight: 400 !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 16px !important;
+            letter-spacing: -0.03em !important;
+            cursor: pointer !important;
+        }
+
+        .logo:hover, 
+        .logo:focus, 
+        .logo:active,
+        .logo:visited {
+            text-decoration: none !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .dot-grid {
+            width: 48px;
+            height: 36px;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 0.5px;
+            position: relative;
+            transform: perspective(200px) rotateY(-15deg);
+        }
+
+        .dot {
+            width: 2px;
+            height: 2px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+        }
+
+        .dot {
+            opacity: 0.3;
+            transform: scale(0.6);
+        }
+
+        .dot-grid .dot:nth-child(12n+1) { opacity: 0.2; transform: scale(0.5); }
+        .dot-grid .dot:nth-child(12n+2) { opacity: 0.3; transform: scale(0.6); }
+        .dot-grid .dot:nth-child(12n+3) { opacity: 0.4; transform: scale(0.7); }
+        .dot-grid .dot:nth-child(12n+4) { opacity: 0.5; transform: scale(0.8); }
+        .dot-grid .dot:nth-child(12n+5) { opacity: 0.6; transform: scale(0.9); }
+        .dot-grid .dot:nth-child(12n+6) { opacity: 0.8; transform: scale(1.1); }
+        .dot-grid .dot:nth-child(12n+7) { opacity: 0.9; transform: scale(1.2); }
+        .dot-grid .dot:nth-child(12n+8) { opacity: 1; transform: scale(1.3); }
+        .dot-grid .dot:nth-child(12n+9) { opacity: 0.9; transform: scale(1.2); }
+        .dot-grid .dot:nth-child(12n+10) { opacity: 0.7; transform: scale(1); }
+        .dot-grid .dot:nth-child(12n+11) { opacity: 0.5; transform: scale(0.8); }
+        .dot-grid .dot:nth-child(12n+12) { opacity: 0.3; transform: scale(0.6); }
+
+        .dot {
+            background: linear-gradient(90deg, #6d28d9 0%, #8b5cf6 50%, #a78bfa 100%);
+        }
+
+        .logo span {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: -0.03em;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .logo:hover .dot-grid {
+            transform: perspective(200px) rotateY(-10deg) scale(1.05);
+        }
+
+        .logo:hover .dot {
+            animation: wave 2s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% {
+                transform: scale(var(--scale, 1)) translateY(0);
+                opacity: var(--opacity, 0.6);
+            }
+            50% {
+                transform: scale(calc(var(--scale, 1) * 1.3)) translateY(-2px);
+                opacity: calc(var(--opacity, 0.6) * 1.2);
+            }
+        }
+
+        .logo:hover .dot { animation-delay: calc(var(--delay, 0) * 1s); }
+
+        .logo:hover .dot-grid {
+            filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.3));
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        .book-call-btn {
+            background: #8b5cf6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            border: 1px solid #8b5cf6;
+        }
+
+        .book-call-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .hero-section {
+            padding: 120px 20px 60px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-section h1 {
+            font-size: 4rem;
+            margin-bottom: 24px;
+            font-weight: 600;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-section p {
+            font-size: 1.35rem;
+            color: rgba(255, 255, 255, 0.6);
+            max-width: 700px;
+            margin: 0 auto 60px;
+            line-height: 1.6;
+        }
+
+        .filter-container {
+            max-width: 1200px;
+            margin: 0 auto 60px;
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 0 20px;
+        }
+
+        .filter-btn {
+            padding: 12px 28px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 24px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: #8b5cf6;
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        .marketplace-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px 100px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 32px;
+            margin-bottom: 80px;
+        }
+
+        .model-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .model-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.3);
+        }
+
+        .model-preview {
+            height: 220px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .model-preview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .model-icon {
+            font-size: 4rem;
+            z-index: 1;
+            filter: drop-shadow(0 4px 12px rgba(139, 92, 246, 0.4));
+        }
+
+        .model-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 6px 14px;
+            background: rgba(139, 92, 246, 0.9);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            z-index: 2;
+        }
+
+        .model-badge.coming-soon {
+            background: rgba(236, 72, 153, 0.9);
+        }
+
+        .model-badge.new {
+            background: rgba(34, 197, 94, 0.9);
+        }
+
+        .model-content {
+            padding: 28px;
+        }
+
+        .model-header {
+            margin-bottom: 16px;
+        }
+
+        .model-category {
+            font-size: 0.85rem;
+            color: #8b5cf6;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .model-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 12px;
+            letter-spacing: -0.01em;
+        }
+
+        .model-description {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            min-height: 70px;
+        }
+
+        .model-features {
+            list-style: none;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: rgba(139, 92, 246, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(139, 92, 246, 0.1);
+        }
+
+        .model-features li {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 8px 0;
+            padding-left: 28px;
+            position: relative;
+        }
+
+        .model-features li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .model-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .model-price {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .model-price-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 400;
+        }
+
+        .model-btn {
+            padding: 12px 28px;
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .model-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .model-btn.coming-soon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            cursor: not-allowed;
+        }
+
+        .model-btn.coming-soon-btn:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .category-section {
+            margin-bottom: 80px;
+        }
+
+        .category-header {
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .category-title {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .category-description {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.6);
+            max-width: 800px;
+        }
+
+        .cta-section {
+            text-align: center;
+            padding: 80px 20px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+            border-top: 1px solid rgba(139, 92, 246, 0.2);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            position: relative;
+            z-index: 2;
+        }
+
+        .cta-section h2 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cta-btn-primary {
+            padding: 16px 40px;
+            background: #8b5cf6;
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .cta-btn-primary:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(139, 92, 246, 0.5);
+        }
+
+        .cta-btn-secondary {
+            padding: 16px 40px;
+            background: transparent;
+            color: white;
+            text-decoration: none;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .cta-btn-secondary:hover {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-section p {
+                font-size: 1.1rem;
+            }
+
+            .models-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .category-title {
+                font-size: 2rem;
+            }
+
+            .cta-section h2 {
+                font-size: 2rem;
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav-container">
+            <a href="../index.html" class="logo" id="logo">
+                <div class="dot-grid" id="dotGrid"></div>
+                <span>The Financial Modeller</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="questionnaire/questionnaire.html">Build a Model</a></li>
+                <li><a href="model-marketplace.html">Model Templates</a></li>
+                <li><a href="how-it-works.html">How It Works</a></li>
+                <li><a href="pricing.html">Pricing</a></li>
+                <li><a href="contact.html" class="book-call-btn">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero-section">
+        <h1>Model Marketplace</h1>
+        <p>Browse our collection of professionally built financial models. Ready-made templates tailored for your industry, customizable to your specific needs.</p>
+    </section>
+
+    <div class="filter-container">
+        <button class="filter-btn active" data-filter="all">All Models</button>
+        <button class="filter-btn" data-filter="startup">Startup & Growth</button>
+        <button class="filter-btn" data-filter="saas">SaaS & Tech</button>
+        <button class="filter-btn" data-filter="ecommerce">E-commerce</button>
+        <button class="filter-btn" data-filter="real-estate">Real Estate</button>
+        <button class="filter-btn" data-filter="services">Services</button>
+        <button class="filter-btn" data-filter="fundraising">Fundraising</button>
+    </div>
+
+    <div class="marketplace-container">
+        <section class="category-section" data-category="startup">
+            <div class="category-header">
+                <h2 class="category-title">Startup & Growth Models</h2>
+                <p class="category-description">Comprehensive financial models for early-stage companies, startups, and high-growth businesses.</p>
+            </div>
+            
+            <div class="models-grid">
+                <div class="model-card" data-category="startup">
+                    <div class="model-preview">
+                        <div class="model-icon">📊</div>
+                    </div>
+                    <span class="model-badge new">New</span>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Startup</div>
+                            <h3 class="model-title">Seed Stage Startup Model</h3>
+                        </div>
+                        <p class="model-description">Complete 5-year financial model for seed-stage startups. Includes runway calculator, investor metrics, and scenario planning.</p>
+                        <ul class="model-features">
+                            <li>Revenue & expense projections</li>
+                            <li>Cap table & dilution scenarios</li>
+                            <li>Burn rate & runway tracking</li>
+                            <li>Key investor metrics (ARR, CAC, LTV)</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$299</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="startup">
+                    <div class="model-preview">
+                        <div class="model-icon">🚀</div>
+                    </div>
+                    <span class="model-badge">Popular</span>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Growth Stage</div>
+                            <h3 class="model-title">Series A/B Financial Model</h3>
+                        </div>
+                        <p class="model-description">Advanced model for scaling businesses seeking Series A/B funding. Multiple revenue streams, detailed hiring plan, and investor dashboard.</p>
+                        <ul class="model-features">
+                            <li>Multi-revenue stream tracking</li>
+                            <li>Department-level budgeting</li>
+                            <li>Hiring plan & team scaling</li>
+                            <li>Investor presentation outputs</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$499</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="startup">
+                    <div class="model-preview">
+                        <div class="model-icon">📈</div>
+                    </div>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Startup</div>
+                            <h3 class="model-title">MVP to Market Model</h3>
+                        </div>
+                        <p class="model-description">Perfect for pre-revenue startups planning their go-to-market strategy. Includes customer acquisition modeling and product launch scenarios.</p>
+                        <ul class="model-features">
+                            <li>Pre-revenue planning</li>
+                            <li>Customer acquisition modeling</li>
+                            <li>Product launch scenarios</li>
+                            <li>Market sizing & TAM analysis</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$199</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="category-section" data-category="saas">
+            <div class="category-header">
+                <h2 class="category-title">SaaS & Tech Models</h2>
+                <p class="category-description">Specialized models for subscription-based businesses with MRR/ARR tracking, churn analysis, and SaaS metrics.</p>
+            </div>
+            
+            <div class="models-grid">
+                <div class="model-card" data-category="saas">
+                    <div class="model-preview">
+                        <div class="model-icon">💻</div>
+                    </div>
+                    <span class="model-badge">Popular</span>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">SaaS</div>
+                            <h3 class="model-title">B2B SaaS Financial Model</h3>
+                        </div>
+                        <p class="model-description">Comprehensive SaaS model with cohort analysis, multi-tier pricing, and customer lifetime value calculations.</p>
+                        <ul class="model-features">
+                            <li>MRR/ARR tracking & forecasting</li>
+                            <li>Cohort-based churn analysis</li>
+                            <li>Multi-tier subscription modeling</li>
+                            <li>Unit economics (CAC, LTV, Payback)</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$399</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="saas">
+                    <div class="model-preview">
+                        <div class="model-icon">📱</div>
+                    </div>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">SaaS</div>
+                            <h3 class="model-title">Mobile App Subscription Model</h3>
+                        </div>
+                        <p class="model-description">Designed for mobile apps with subscription revenue. Includes app store fees, user acquisition costs, and retention modeling.</p>
+                        <ul class="model-features">
+                            <li>In-app purchase modeling</li>
+                            <li>App store commission tracking</li>
+                            <li>User acquisition & retention</li>
+                            <li>Freemium conversion analysis</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$349</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="saas">
+                    <div class="model-preview">
+                        <div class="model-icon">🔧</div>
+                    </div>
+                    <span class="model-badge new">New</span>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Platform</div>
+                            <h3 class="model-title">API/Platform Business Model</h3>
+                        </div>
+                        <p class="model-description">For API-first and platform businesses with usage-based pricing and tiered access levels.</p>
+                        <ul class="model-features">
+                            <li>Usage-based revenue modeling</li>
+                            <li>API call volume forecasting</li>
+                            <li>Infrastructure cost scaling</li>
+                            <li>Enterprise tier analysis</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$449</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="category-section" data-category="ecommerce">
+            <div class="category-header">
+                <h2 class="category-title">E-commerce Models</h2>
+                <p class="category-description">Financial models for online retail, marketplace platforms, and direct-to-consumer brands.</p>
+            </div>
+            
+            <div class="models-grid">
+                <div class="model-card" data-category="ecommerce">
+                    <div class="model-preview">
+                        <div class="model-icon">🛒</div>
+                    </div>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">E-commerce</div>
+                            <h3 class="model-title">DTC Brand Financial Model</h3>
+                        </div>
+                        <p class="model-description">Direct-to-consumer brand model with inventory management, COGS tracking, and marketing spend optimization.</p>
+                        <ul class="model-features">
+                            <li>Inventory & COGS management</li>
+                            <li>Multi-channel sales tracking</li>
+                            <li>Marketing attribution modeling</li>
+                            <li>Customer acquisition & retention</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$349</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="ecommerce">
+                    <div class="model-preview">
+                        <div class="model-icon">🏪</div>
+                    </div>
+                    <span class="model-badge">Popular</span>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Marketplace</div>
+                            <h3 class="model-title">Marketplace Platform Model</h3>
+                        </div>
+                        <p class="model-description">Two-sided marketplace model tracking both supply and demand. Includes commission structures and GMV projections.</p>
+                        <ul class="model-features">
+                            <li>GMV & take rate modeling</li>
+                            <li>Supply/demand balance tracking</li>
+                            <li>Commission structure scenarios</li>
+                            <li>Seller/buyer acquisition costs</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$449</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="ecommerce">
+                    <div class="model-preview">
+                        <div class="model-icon">📦</div>
+                    </div>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">E-commerce</div>
+                            <h3 class="model-title">Subscription Box Model</h3>
+                        </div>
+                        <p class="model-description">Recurring revenue model for subscription box services with retention curves and product mix optimization.</p>
+                        <ul class="model-features">
+                            <li>Subscription revenue modeling</li>
+                            <li>Product mix & COGS</li>
+                            <li>Retention curve analysis</li>
+                            <li>Fulfillment cost tracking</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$299</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="category-section" data-category="real-estate">
+            <div class="category-header">
+                <h2 class="category-title">Real Estate Models</h2>
+                <p class="category-description">Investment analysis and property development models for commercial and residential real estate projects.</p>
+            </div>
+            
+            <div class="models-grid">
+                <div class="model-card" data-category="real-estate">
+                    <div class="model-preview">
+                        <div class="model-icon">🏢</div>
+                    </div>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Real Estate</div>
+                            <h3 class="model-title">Commercial Property Model</h3>
+                        </div>
+                        <p class="model-description">Comprehensive commercial real estate investment model with cash flow analysis, IRR calculations, and sensitivity scenarios.</p>
+                        <ul class="model-features">
+                            <li>Property valuation & DCF</li>
+                            <li>Lease schedule management</li>
+                            <li>Operating expense tracking</li>
+                            <li>IRR & cash-on-cash returns</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$399</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="real-estate">
+                    <div class="model-preview">
+                        <div class="model-icon">🏗️</div>
+                    </div>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Development</div>
+                            <h3 class="model-title">Property Development Model</h3>
+                        </div>
+                        <p class="model-description">Development project model with construction timeline, phased revenue, and debt financing structures.</p>
+                        <ul class="model-features">
+                            <li>Construction budget & timeline</li>
+                            <li>Phased development modeling</li>
+                            <li>Debt/equity financing structures</li>
+                            <li>Sales or lease-up scenarios</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$499</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="real-estate">
+                    <div class="model-preview">
+                        <div class="model-icon">🏠</div>
+                    </div>
+                    <span class="model-badge new">New</span>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Residential</div>
+                            <h3 class="model-title">Rental Property Portfolio Model</h3>
+                        </div>
+                        <p class="model-description">Multi-property rental portfolio tracker with vacancy rates, maintenance costs, and portfolio-level returns.</p>
+                        <ul class="model-features">
+                            <li>Multi-property tracking</li>
+                            <li>Rental income & vacancy modeling</li>
+                            <li>Maintenance & capex planning</li>
+                            <li>Portfolio performance metrics</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$249</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="category-section" data-category="services">
+            <div class="category-header">
+                <h2 class="category-title">Professional Services Models</h2>
+                <p class="category-description">Financial models for agencies, consultancies, and professional service businesses.</p>
+            </div>
+            
+            <div class="models-grid">
+                <div class="model-card" data-category="services">
+                    <div class="model-preview">
+                        <div class="model-icon">💼</div>
+                    </div>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Services</div>
+                            <h3 class="model-title">Agency Financial Model</h3>
+                        </div>
+                        <p class="model-description">Agency model with project-based revenue, resource utilization tracking, and team capacity planning.</p>
+                        <ul class="model-features">
+                            <li>Project revenue & margins</li>
+                            <li>Resource utilization rates</li>
+                            <li>Team capacity planning</li>
+                            <li>Retainer vs project mix</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$299</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="services">
+                    <div class="model-preview">
+                        <div class="model-icon">🎯</div>
+                    </div>
+                    <span class="model-badge">Popular</span>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Consulting</div>
+                            <h3 class="model-title">Consulting Practice Model</h3>
+                        </div>
+                        <p class="model-description">Consulting firm model with billable hours tracking, practice area profitability, and partner compensation.</p>
+                        <ul class="model-features">
+                            <li>Billable hours & utilization</li>
+                            <li>Practice area P&L</li>
+                            <li>Partner compensation modeling</li>
+                            <li>Client lifetime value</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$349</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="services">
+                    <div class="model-preview">
+                        <div class="model-icon">🎓</div>
+                    </div>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Education</div>
+                            <h3 class="model-title">Online Education Business</h3>
+                        </div>
+                        <p class="model-description">Model for online course creators and education platforms with enrollment projections and content production costs.</p>
+                        <ul class="model-features">
+                            <li>Course enrollment modeling</li>
+                            <li>Content production costs</li>
+                            <li>Platform & hosting expenses</li>
+                            <li>Student acquisition & retention</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$249</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="category-section" data-category="fundraising">
+            <div class="category-header">
+                <h2 class="category-title">Fundraising & Investor Models</h2>
+                <p class="category-description">Specialized models designed for fundraising rounds, investor pitches, and financial due diligence.</p>
+            </div>
+            
+            <div class="models-grid">
+                <div class="model-card" data-category="fundraising">
+                    <div class="model-preview">
+                        <div class="model-icon">💰</div>
+                    </div>
+                    <span class="model-badge">Popular</span>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Fundraising</div>
+                            <h3 class="model-title">Investor Pitch Deck Model</h3>
+                        </div>
+                        <p class="model-description">Investor-ready financial model with all key metrics, charts, and scenarios needed for fundraising presentations.</p>
+                        <ul class="model-features">
+                            <li>Executive summary dashboard</li>
+                            <li>Key investor metrics & KPIs</li>
+                            <li>5-year projections & scenarios</li>
+                            <li>Valuation & use of funds</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$449</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="fundraising">
+                    <div class="model-preview">
+                        <div class="model-icon">📊</div>
+                    </div>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Due Diligence</div>
+                            <h3 class="model-title">M&A Due Diligence Model</h3>
+                        </div>
+                        <p class="model-description">Comprehensive model for acquisition analysis with synergy calculations, integration costs, and deal scenarios.</p>
+                        <ul class="model-features">
+                            <li>Target company valuation</li>
+                            <li>Synergy & integration modeling</li>
+                            <li>Deal structure scenarios</li>
+                            <li>Pro-forma financials</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$599</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card" data-category="fundraising">
+                    <div class="model-preview">
+                        <div class="model-icon">🎯</div>
+                    </div>
+                    <span class="model-badge new">New</span>
+                    <div class="model-content">
+                        <div class="model-header">
+                            <div class="model-category">Valuation</div>
+                            <h3 class="model-title">Business Valuation Model</h3>
+                        </div>
+                        <p class="model-description">Multi-method valuation model using DCF, comparable companies, and precedent transactions for comprehensive business valuation.</p>
+                        <ul class="model-features">
+                            <li>DCF valuation</li>
+                            <li>Comparable company analysis</li>
+                            <li>Precedent transaction analysis</li>
+                            <li>Sensitivity & scenario analysis</li>
+                        </ul>
+                        <div class="model-footer">
+                            <div>
+                                <div class="model-price">$399</div>
+                                <div class="model-price-label">One-time purchase</div>
+                            </div>
+                            <button class="model-btn coming-soon-btn">Coming Soon</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section class="cta-section">
+        <h2>Need a Custom Solution?</h2>
+        <p>Can't find the perfect template? Let us build a tailored financial model specifically for your business in minutes.</p>
+        <div class="cta-buttons">
+            <a href="questionnaire/questionnaire.html" class="cta-btn-primary">Build Custom Model</a>
+            <a href="contact.html" class="cta-btn-secondary">Talk to an Expert</a>
+        </div>
+    </section>
+
+    <script>
+        const dotGrid = document.getElementById('dotGrid');
+        for (let i = 0; i < 96; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dotGrid.appendChild(dot);
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = (e.clientX / window.innerWidth) * 100;
+            const mouseY = (e.clientY / window.innerHeight) * 100;
+            document.body.style.setProperty('--mouse-x', `${mouseX}%`);
+            document.body.style.setProperty('--mouse-y', `${mouseY}%`);
+            document.body.classList.add('mouse-active');
+        });
+
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const modelCards = document.querySelectorAll('.model-card');
+        const categorySections = document.querySelectorAll('.category-section');
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const filter = btn.dataset.filter;
+                
+                if (filter === 'all') {
+                    categorySections.forEach(section => {
+                        section.style.display = 'block';
+                    });
+                } else {
+                    categorySections.forEach(section => {
+                        if (section.dataset.category === filter) {
+                            section.style.display = 'block';
+                        } else {
+                            section.style.display = 'none';
+                        }
+                    });
+                }
+            });
+        });
+
+        modelCards.forEach(card => {
+            card.addEventListener('mouseenter', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                card.style.setProperty('--mouse-x', `${x}%`);
+                card.style.setProperty('--mouse-y', `${y}%`);
+            });
+        });
+    </script>
+</body>
+</html>
