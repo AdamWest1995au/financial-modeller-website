@@ -227,3 +227,60 @@ The page is accessible at:
 - Design matches site aesthetic
 - Responsive and accessible
 - Ready for future backend integration
+
+## Recent Updates - Modeller Marketplace Feature
+
+### New Feature: Modeller Signup (Added)
+
+#### 1. Modeller Information Section
+Added a new section at the top of the marketplace page explaining:
+- Financial modellers can upload their own models, styles, and modules
+- Templates: Set your own prices with full control
+- Styles: Earn royalties when purchased through the modeling framework
+- Modules: Generate passive income from ongoing royalties
+- Three benefit cards with icons explaining each offering type
+
+#### 2. Modeller Signup Page
+Created new page at `/pages/modeller-signup.html` with:
+- Professional application form for financial modellers
+- Fields collected:
+  - First Name, Last Name
+  - Email Address
+  - Phone Number (optional)
+  - Years of Experience (dropdown)
+  - Area of Specialization (dropdown)
+  - Portfolio/Website URL (optional)
+  - LinkedIn Profile (optional)
+  - Interests checkboxes (Templates, Styles, Modules)
+  - Message/Bio textarea
+  - Terms and conditions acceptance
+- Left column with benefits list
+- Consistent design with site aesthetic
+- Form validation and error handling
+- Success/error message display
+
+#### 3. API Endpoint
+Created `/api/modeller-signup.js` for handling modeller applications:
+- Input validation and sanitization
+- Rate limiting (5-second cooldown)
+- Supabase database integration
+- Security features (honeypot protection ready)
+- Comprehensive error handling and logging
+
+#### 4. Database Schema
+Created `/DATABASE_SCHEMA.sql` with:
+- `modeller_signups` table definition
+- Indexes for performance
+- Row-level security policies
+- Update triggers
+- Full documentation
+
+#### Files Created/Modified
+- **Created**: `/pages/modeller-signup.html`
+- **Created**: `/api/modeller-signup.js`
+- **Created**: `/DATABASE_SCHEMA.sql`
+- **Modified**: `/pages/model-marketplace.html` (added modeller info section)
+- **Modified**: `/MARKETPLACE_SUMMARY.md` (this file)
+
+#### Database Setup Required
+Run the SQL in `DATABASE_SCHEMA.sql` to create the `modeller_signups` table in Supabase before deploying the modeller signup feature.
